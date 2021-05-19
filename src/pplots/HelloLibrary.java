@@ -1,4 +1,4 @@
-package template.library;
+package pplots;
 
 
 import processing.core.*;
