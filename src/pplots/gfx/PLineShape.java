@@ -1,0 +1,32 @@
+package pplots.gfx;
+
+import processing.core.PGraphics;
+
+public class PLineShape extends PPlotShape {
+	
+	private int col;
+	private float xstart,ystart,xend,yend;
+	private float sw;
+
+	public PLineShape(float x1, float y1, float x2, float y2) {
+		this(x1, y1, x2, y2, PPlotShape.strokeColour, PPlotShape.strokeWeight); }
+	public PLineShape(float x1, float y1, float x2, float y2, float stroke_weight) {
+		this(x1,y1,x2,y2,PPlotShape.strokeColour,stroke_weight); }
+	public PLineShape(float x1, float y1, float x2, float y2, int colour) {
+		this(x1, y1, x2, y2, colour, PPlotShape.strokeWeight); }
+	public PLineShape(float x1, float y1, float x2, float y2, int colour, float stroke_weight) {
+		xstart = x1;
+		ystart = y1;
+		xend = x2;
+		yend = y2;
+		col = colour;
+		sw = stroke_weight;
+	}
+
+	@Override
+	public void draw(PGraphics g) {
+		g.noFill(); g.stroke(col); g.strokeWeight(sw);
+		g.line(xstart, ystart, xend, yend);
+	}
+
+}

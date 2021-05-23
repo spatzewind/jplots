@@ -1,5 +1,6 @@
 package pplots;
 
+import pplots.gfx.PGroupShape;
 import processing.core.*;
 
 /**
@@ -17,7 +18,7 @@ public class PPlot {
 
 	private PApplet myParent;
 	private PGraphics plotImg;
-	private PShape plotShp;
+	private PGroupShape plotShp;
 
 	private boolean img_is_created, useDebug;
 	private int width, height, lastAxisNum;
@@ -144,14 +145,24 @@ public class PPlot {
 	 * creates image of the PPlot -- the figure
 	 */
 	public PPlot createImage() {
+		if(useDebug)
+			System.out.println("[DEBUG] Start image-creation ...");
 		plotImg = myParent.createGraphics(width, height, PApplet.P2D);
-		plotShp = myParent.createShape(PShape.GROUP);
+		if(useDebug)
+			System.out.println("[DEBUG]   - create PGraphics-object "+plotImg.width+"x"+plotImg.height+"px");
+		plotShp = new PGroupShape();
+		if(useDebug)
+			System.out.println("[DEBUG]   - add "+axes.length+" subplots to plotting queue");
 		for(PAxis ax: axes)
 			plotShp.addChild(ax.createPlot(myParent,width,height));
 		plotImg.beginDraw();
 		plotImg.clear();
-		plotImg.shape(plotShp);
+		if(useDebug)
+			System.out.println("[DEBUG]   - begin drawing ...");
+		plotShp.draw(plotImg);
 		plotImg.endDraw();
+		if(useDebug)
+			System.out.println("[DEBUG]   - end drawing");
 		img_is_created = true;
 		return this;
 	}
@@ -163,8 +174,13 @@ public class PPlot {
 	 * @return the figure as PImage
 	 */
 	public PImage show() {
-		if(!img_is_created)
+		if(!img_is_created) {
 			createImage();
+			if(useDebug)
+				System.out.println("[DEBUG] start image creation, because it ws not done before or changes happend.");
+		}
+		if(useDebug)
+			System.out.println("[DEBUG] check: \"plotImg\"="+plotImg);
 		return plotImg;
 	}
 
@@ -217,15 +233,25 @@ public class PPlot {
 		gca().plot(x,y); }
 	public void plot(double[] x, double[] y, int colour, double linewidth, String linestyle, Object... params) {
 		gca().plot(x,y,colour,linewidth,linestyle,params); }
+	public void scatter(float[] x, float[] y) {
+		gca().scatter(x,y); }
+	public void scatter(float[] x, float[] y, int colour, float iconsize, String symbol, Object... params) {
+		gca().scatter(x,y,colour,iconsize,symbol,params); }
 	public void scatter(double[] x, double[] y) {
-		gca().plot(x,y); }
+		gca().scatter(x,y); }
 	public void scatter(double[] x, double[] y, int colour, double iconsize, String symbol, Object... params) {
-		gca().plot(x,y,colour,iconsize,symbol,params); }
+		gca().scatter(x,y,colour,iconsize,symbol,params); }
 	public void contour(double[] x, double[] y, double[][] z) {
 		gca().contour(x,y,z); }
 	public void contour(double[] x, double[] y, double[][] z, int levels, Object... params) {
 		gca().contour(x, y, z, levels, params); }
 
+	public void setRange(float xmin, float xmax, float ymin, float ymax) {
+		gca().setRange(xmin, xmax, ymin, ymax);
+	}
+	public void setRange(double xmin, double xmax, double ymin, double ymax) {
+		gca().setRange(xmin, xmax, ymin, ymax);
+	}
 	public void setFont(PFont font) {
 		gca().setFont(font); }
 }
