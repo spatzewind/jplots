@@ -1,6 +1,6 @@
 package pplots;
 
-public class Constants {
+public class PConstants {
 
 	public final static String VERSION = "##library.prettyVersion##";
 

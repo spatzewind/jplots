@@ -1,4 +1,4 @@
-package pplots.gfx;
+package pplots.shapes;
 
 import java.util.ArrayList;
 import java.util.List;

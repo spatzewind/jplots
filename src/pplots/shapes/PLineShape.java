@@ -1,4 +1,4 @@
-package pplots.gfx;
+package pplots.shapes;
 
 import processing.core.PGraphics;
 

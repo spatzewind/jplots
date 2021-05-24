@@ -1,6 +1,7 @@
 package pplots;
 
-import pplots.gfx.PGroupShape;
+import pplots.shapes.PGroupShape;
+import pplots.transform.PProjection;
 import processing.core.*;
 
 /**
@@ -15,6 +16,8 @@ import processing.core.*;
  */
 
 public class PPlot {
+	
+	public static double dpi = 300d;
 
 	private PApplet myParent;
 	private PGraphics plotImg;
@@ -56,7 +59,7 @@ public class PPlot {
 	 * @return String
 	 */
 	public static String version() {
-		return Constants.VERSION;
+		return PConstants.VERSION;
 	}
 
 
@@ -69,7 +72,7 @@ public class PPlot {
 	 * 
 	 * @return the PPlot object
 	 */
-	public PPlot figure() { return subplots(0.6719160105d, 0.6719160105d, 1, 1); }
+	public PPlot figure() { return subplots(1.7066666667d, 1.7066666667d, 1, 1); }
 	/**
 	 * starts the new figure/plot with specified width and height in inch
 	 * 
@@ -86,7 +89,7 @@ public class PPlot {
 	 * @param ncols  number of columns for array of diagrams
 	 * @return the PPlot object
 	 */
-	public PPlot subplots(int nrows, int ncols) { return subplots(0.6719160105d, 0.6719160105d, nrows, ncols); }
+	public PPlot subplots(int nrows, int ncols) { return subplots(1.7066666667d, 1.7066666667d, nrows, ncols); }
 	/**
 	 * starts the new figure/plot with specified width and height in inch
 	 * 
@@ -97,19 +100,21 @@ public class PPlot {
 	 * @return the PPlot object
 	 */
 	public PPlot subplots(double width, double height, int nrows, int ncols) {
-		this.width  = (int) (762 * width);
-		this.height = (int) (762 * height);
+		this.width  = (int) (dpi * width);
+		this.height = (int) (dpi * height);
 		this.axes   = new PAxis[nrows*ncols];
 		if(useDebug)
 			System.out.println(
 				"[DEBUG] PPlot: width/height: "+this.width+"/"+this.height+"px ("+width+"/"+height+"inch)\n"+
 				"               axes:         "+ncols+"x"+nrows);
-		int pawid = (int) (762 * width / (0.25d+(ncols-1)*1.5d+1.25d));
-		int pahei = (int) (762 * height / (0.25d+(nrows-1)*1.5d+1.25d));
+		double ws = 1d / (0.25d+(ncols-1)*1.5d+1.25d);
+		double hs = 1d / (0.25d+(nrows-1)*1.5d+1.25d);
+		int pawid = (int) (dpi * width * ws);
+		int pahei = (int) (dpi * height * hs);
 		for(int r=0; r<nrows; r++) {
-			int py = (int) (762 * width * (0.25d+1.5d*r) / (0.25d+(nrows-1)*1.5d+1.25d));
+			int py = (int) (dpi * height * (0.25d+1.5d*r) * hs);
 			for(int c=0; c<ncols; c++) {
-				int px = (int) (762 * width * (0.25d+1.5d*c) / (0.25d+(ncols-1)*1.5d+1.25d));
+				int px = (int) (dpi * width * (0.25d+1.5d*c) * ws);
 				this.axes[r*ncols+c] = new PAxis(this, px, py, pawid, pahei);
 			}
 		}
@@ -141,13 +146,22 @@ public class PPlot {
 		return this;
 	}
 
+	public PPlot setGeoProjection(PProjection proj) {
+		gca().setGeoProjection(proj);
+		return this;
+	}
+	
 	/**
 	 * creates image of the PPlot -- the figure
 	 */
 	public PPlot createImage() {
 		if(useDebug)
 			System.out.println("[DEBUG] Start image-creation ...");
-		plotImg = myParent.createGraphics(width, height, PApplet.P2D);
+		if(plotImg==null) {
+			plotImg = myParent.createGraphics(width, height, PApplet.P2D);
+		} else if(plotImg.width!=width || plotImg.height!=height) {
+			plotImg = myParent.createGraphics(width, height, PApplet.P2D);
+		}
 		if(useDebug)
 			System.out.println("[DEBUG]   - create PGraphics-object "+plotImg.width+"x"+plotImg.height+"px");
 		plotShp = new PGroupShape();
@@ -183,7 +197,14 @@ public class PPlot {
 			System.out.println("[DEBUG] check: \"plotImg\"="+plotImg);
 		return plotImg;
 	}
-
+	public PGraphics getGraphic() {
+		return plotImg;
+	}
+	public PPlot redraw(boolean redraw) {
+		img_is_created = redraw?false:img_is_created;
+		return this;
+	}
+	
 	//....
 	/**
 	 * set debugmode on/off
@@ -245,6 +266,13 @@ public class PPlot {
 		gca().contour(x,y,z); }
 	public void contour(double[] x, double[] y, double[][] z, int levels, Object... params) {
 		gca().contour(x, y, z, levels, params); }
+
+	public void predefImgShow(String predefined_images) {
+		gca().predefImgShow(predefined_images);
+	}
+	public void imgShow(PImage img) {
+		gca().imgShow(img);
+	}
 
 	public void setRange(float xmin, float xmax, float ymin, float ymax) {
 		gca().setRange(xmin, xmax, ymin, ymax);

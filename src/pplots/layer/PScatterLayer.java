@@ -1,13 +1,13 @@
 package pplots.layer;
 
-import pplots.PMath;
+import pplots.PAxis;
+import pplots.PPlotMath;
+import pplots.shapes.PEllipseShape;
+import pplots.shapes.PGroupShape;
+import pplots.shapes.PLineShape;
+import pplots.shapes.PPlotShape;
+import pplots.shapes.PRectShape;
 import pplots.PPlot;
-import pplots.gfx.PEllipseShape;
-import pplots.gfx.PGroupShape;
-import pplots.gfx.PLineShape;
-import pplots.gfx.PPlotShape;
-import pplots.gfx.PRectShape;
-import processing.core.PApplet;
 import processing.core.PGraphics;
 
 public class PScatterLayer extends PLayer {
@@ -16,7 +16,6 @@ public class PScatterLayer extends PLayer {
 	private int col;
 	private double lw;
 	private String ls;
-	private double minX,maxX,minY,maxY;
 	
 	public PScatterLayer(float[] x, float[] y, int colour, float linewidth, String linestyle) {
 		xarrayx = new double[x.length];
@@ -25,10 +24,10 @@ public class PScatterLayer extends PLayer {
 		yarrayy = new double[y.length];
 		for(int i=0; i<y.length; i++)
 			yarrayy[i] = y[i];
-		minX = PMath.dmin(xarrayx);
-		maxX = PMath.dmax(xarrayx);
-		minY = PMath.dmin(yarrayy);
-		maxY = PMath.dmax(yarrayy);
+		minX = PPlotMath.dmin(xarrayx);
+		maxX = PPlotMath.dmax(xarrayx);
+		minY = PPlotMath.dmin(yarrayy);
+		maxY = PPlotMath.dmax(yarrayy);
 		col = colour;
 		lw = linewidth;
 		ls = linestyle;
@@ -36,46 +35,38 @@ public class PScatterLayer extends PLayer {
 	public PScatterLayer(double[] x, double[] y, int colour, double linewidth, String linestyle) {
 		xarrayx = x;
 		yarrayy = y;
-		minX = PMath.dmin(xarrayx);
-		maxX = PMath.dmax(xarrayx);
-		minY = PMath.dmin(yarrayy);
-		maxY = PMath.dmax(yarrayy);
+		minX = PPlotMath.dmin(xarrayx);
+		maxX = PPlotMath.dmax(xarrayx);
+		minY = PPlotMath.dmin(yarrayy);
+		maxY = PPlotMath.dmax(yarrayy);
 		col = colour;
 		lw = linewidth;
 		ls = linestyle;
 	}
 	
-	
-	@Override
-	public void setRange(double xmin, double xmax, double ymin, double ymax) {
-		minX = xmin; maxX = xmax;
-		minY = ymin; maxY = ymax;
-	}
-	
-	@Override
-	public double[] getRange() {
-		return new double[] {minX,maxX,minY,maxY};
-	}
 
 	@Override
 	public void createRasterImg(PPlot plot, PGraphics g) {
 	}
 
 	@Override
-	public void createVectorImg(PPlot plot, PGroupShape s, int x, int y, int w, int h) {
-		PApplet ap = plot.getApplet();
+	public void createVectorImg(PAxis ax, int layernum, PGroupShape s) {
+		int[] p = ax.getSize();
 		if("o".equals(ls) || "@".equals(ls)) {
 			PPlotShape.fill(col); } else { PPlotShape.noFill(); }
-		PPlotShape.stroke(col); ap.strokeWeight((float)lw);
+		PPlotShape.stroke(col); PPlotShape.strokeWeight((float)lw);
 		PGroupShape xyShape = new PGroupShape();
-		double xs = w/(maxX-minX), ys = h/(maxY-minY);
+		double xs = p[2]/(maxX-minX), ys = p[3]/(maxY-minY);
 		for(int i=0; i<xarrayx.length; i++)
 			if(Double.isFinite(xarrayx[i]) && Double.isFinite(yarrayy[i])) {
-				double x1 = x+xs*(xarrayx[i]-minX);
-				double y1 = y+ys*(maxY-yarrayy[i]);
-				if(x1<x || x1>x+w) continue;
-				if(y1<y || y1>y+h) continue;
-				if("c".equals(ls) || "o".equals(ls)) {
+				double[] xy = inputProj.fromPROJtoLATLON(xarrayx[i], yarrayy[i], false);
+				if(ax.isGeoAxis())
+					xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[0], xy[1], false);
+				double x1 = p[0]+xs*(xy[0]-minX);
+				double y1 = p[1]+ys*(maxY-xy[1]);
+				if(x1<p[0] || x1>p[0]+p[2]) continue;
+				if(y1<p[1] || y1>p[1]+p[3]) continue;
+				if("()".equals(ls) || "o".equals(ls)) {
 					xyShape.addChild(new PEllipseShape((float)x1, (float)y1, (float)(6*lw), (float)(6*lw))); }
 				if("[]".equals(ls) || "@".equals(ls)) {
 					xyShape.addChild(new PRectShape((float)(x1-2*lw), (float)(y1-2*lw), (float)(x1+2*lw), (float)(y1+2*lw))); }

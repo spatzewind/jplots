@@ -1,8 +1,9 @@
-package pplots.gfx;
+package pplots.shapes;
 
 import processing.core.PGraphics;
 
 public abstract class PPlotShape {
+
 	public static boolean useFill = true;
 	public static boolean useStroke = true;
 	public static int fillColour = 0xffffffff;

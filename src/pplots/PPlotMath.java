@@ -1,6 +1,9 @@
 package pplots;
 
-public class PMath {
+public class PPlotMath {
+
+	public final static double DEG_TO_RAD = Math.PI/180d;
+	public final static double RAD_TO_DEG = 180d/Math.PI;
 
 	public static int imin(int[] arr) {
 		int im = Integer.MAX_VALUE;
@@ -99,6 +102,14 @@ public class PMath {
 			f10 = 0.4d; vIn *= 1.25d; vAx *= 1.25d; }
 		if(vAx-vIn<6d) {
 			f10 = 0.2d; vIn *= 2d; vAx *= 2d; }
+		int p10o = Math.abs(p10i)%3;
+		p10o = p10i>=-3&&p10i<0 ? 0 : p10i<0 ? 2-p10o : p10o;
+		switch(p10o) {
+			default:
+			case 0: break;
+			case 1: p10 /=  10d; p10i -= 1; f10 *=  10d; break;
+			case 2: p10 /= 100d; p10i -= 2; f10 *= 100d; break;
+		}
 		int vS = (int) vIn - (vIn<0d ? 1 : 0), vE = (int) vAx - (vAx<0d ? 1 : 0);
 		if(vS>vE) { int vT = vS; vS = vE; vE = vT; }
 		double[] ticks = new double[vE+3-vS];
