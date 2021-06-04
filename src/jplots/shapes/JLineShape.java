@@ -1,5 +1,6 @@
 package jplots.shapes;
 
+import jplots.JPlot;
 import processing.core.PGraphics;
 
 public class JLineShape extends JPlotShape {
@@ -24,7 +25,7 @@ public class JLineShape extends JPlotShape {
 	}
 
 	@Override
-	public void draw(PGraphics g) {
+	public void draw(JPlot plot, PGraphics g) {
 		g.noFill(); g.stroke(col); g.strokeWeight(sw);
 		g.line(xstart, ystart, xend, yend);
 	}

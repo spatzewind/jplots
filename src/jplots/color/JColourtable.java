@@ -17,7 +17,7 @@ public abstract class JColourtable {
 		pctables = new HashMap<String,JColourtable>();
 		pctables.put("default", new LinearSegmentedJColourtable(0xff00007f, 0xff7f0000, 0x007f7f7f,
 				new double[] {0d, 0.4d,0.6d,1d},
-				new int[][] {{0xff0000ff,0xff00ffff},{0xff00ffff,0xffffff00},{0xffaa0000}}));
+				new int[][] {{0xff0000ff,0xff00ffff},{0xff00ffff,0xffffff00},{0xffffff00,0xffaa0000}}));
 	}
 	
 	public static JColourtable load(String path) {

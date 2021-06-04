@@ -16,7 +16,11 @@ import processing.core.*;
  */
 
 public class JPlot {
-	
+
+	/** the version of the Library. */
+	public final static String VERSION = "##library.prettyVersion##";
+
+	private static boolean hasWelcomed = false;
 	public static double dpi = 300d;
 
 	private PApplet myParent;
@@ -46,22 +50,14 @@ public class JPlot {
 		this.img_is_created = false;
 		this.useDebug = false;
 		//this.plotImg = applet.createGraphics(16, 16);
-		this.welcome();
+		if(!hasWelcomed)
+			this.welcome();
 	}
 
 
 	//************************************
 	//**** STATIC ************************
 	//************************************
-
-	/**
-	 * return the version of the Library.
-	 * 
-	 * @return String
-	 */
-	public static String version() {
-		return JPlotConstants.VERSION;
-	}
 
 
 	//************************************
@@ -182,7 +178,7 @@ public class JPlot {
 			System.out.println("[DEBUG]   - add "+axes.length+" subplots to plotting queue");
 		for(JAxis ax: axes)
 			plotShp.addChild(ax.createPlot(myParent,width,height));
-		plotShp.draw(g);
+		plotShp.draw(this, g);
 		return this;
 	}
 
@@ -198,8 +194,8 @@ public class JPlot {
 			if(useDebug)
 				System.out.println("[DEBUG] start image creation, because it ws not done before or changes happend.");
 		}
-		if(useDebug)
-			System.out.println("[DEBUG] check: \"plotImg\"="+plotImg);
+//		if(useDebug)
+//			System.out.println("[DEBUG] check: \"plotImg\"="+plotImg);
 		return plotImg;
 	}
 	public void draw(PGraphics g) {
@@ -210,6 +206,17 @@ public class JPlot {
 	}
 	public JPlot redraw(boolean redraw) {
 		img_is_created = redraw?false:img_is_created;
+		return this;
+	}
+
+	/**
+	 * removes all plotting infos
+	 * also all configurations except number and position of axes will be reseted
+	 */
+	public JPlot clear() {
+		for(JAxis ax: axes)
+			ax.clear();
+		redraw(true);
 		return this;
 	}
 	
@@ -248,6 +255,7 @@ public class JPlot {
 
 	private void welcome() {
 		System.out.println("##library.name## ##library.prettyVersion## by ##author##");
+		hasWelcomed = true;
 	}
 
 
@@ -255,6 +263,22 @@ public class JPlot {
 	//**** PASS ON ***********************
 	//************************************
 	
+	public void hline(float y) {
+		gca().axhline(y); }
+	public void hline(float y, int colour, float linewidth, String linestyle) {
+		gca().axhline(y, colour, linewidth, linestyle); }
+	public void hline(double y) {
+		gca().axhline(y); }
+	public void hline(double y, int colour, double linewidth, String linestyle) {
+		gca().axhline(y, colour, linewidth, linestyle); }
+	public void vline(float x) {
+		gca().axvline(x); }
+	public void vline(float x, int colour, float linewidth, String linestyle) {
+		gca().axvline(x, colour, linewidth, linestyle); }
+	public void vline(double x) {
+		gca().axvline(x); }
+	public void vline(double x, int colour, double linewidth, String linestyle) {
+		gca().axvline(x, colour, linewidth, linestyle); }
 	public void plot(float[] x, float[] y) {
 		gca().plot(x, y); }
 	public void plot(float[] x, float[] y, int colour, float linewidth, String linestyle, Object... params) {
@@ -271,9 +295,17 @@ public class JPlot {
 		gca().scatter(x,y); }
 	public void scatter(double[] x, double[] y, int colour, double iconsize, String symbol, Object... params) {
 		gca().scatter(x,y,colour,iconsize,symbol,params); }
+	public void contour(float[] x, float[] y, float[][] z) {
+		gca().contour(x,y,z); }
+	public void contour(float[] x, float[] y, float[][] z, int levels, Object... params) {
+		gca().contour(x, y, z, levels, params); }
+	public void contour(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
+		gca().contour(x, y, z, levels, params); }
 	public void contour(double[] x, double[] y, double[][] z) {
 		gca().contour(x,y,z); }
 	public void contour(double[] x, double[] y, double[][] z, int levels, Object... params) {
+		gca().contour(x, y, z, levels, params); }
+	public void contour(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
 		gca().contour(x, y, z, levels, params); }
 
 	public void predefImgShow(String predefined_images) {
@@ -283,6 +315,14 @@ public class JPlot {
 		gca().imgShow(img);
 	}
 
+	public void setXRange(float xmin, float xmax) {
+		gca().setXRange(xmin, xmax); }
+	public void setXRange(double xmin, double xmax) {
+		gca().setXRange(xmin, xmax); }
+	public void setYRange(float ymin, float ymax) {
+		gca().setYRange(ymin, ymax); }
+	public void setYRange(double ymin, double ymax) {
+		gca().setYRange(ymin, ymax); }
 	public void setRange(float xmin, float xmax, float ymin, float ymax) {
 		gca().setRange(xmin, xmax, ymin, ymax);
 	}
@@ -291,5 +331,9 @@ public class JPlot {
 	}
 	public void setFont(PFont font) {
 		gca().setFont(font); }
+	public void setXTitle(String xtitle) {
+		gca().setXTitle(xtitle); }
+	public void setYTitle(String ytitle) {
+		gca().setYTitle(ytitle); }
 }
 

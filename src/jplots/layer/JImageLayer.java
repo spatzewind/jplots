@@ -3,7 +3,7 @@ package jplots.layer;
 import jplots.JAxis;
 import jplots.JPlot;
 import jplots.shapes.JGroupShape;
-import jplots.shapes.JTextured2DShape;
+import jplots.shapes.JImageShape;
 import jplots.transform.JProjection;
 import jplots.transform.PlateCarreeJProjection;
 import processing.core.PApplet;
@@ -65,12 +65,7 @@ public class JImageLayer extends JPlotsLayer {
 			}
 		}
 		img.updatePixels();
-		JTextured2DShape texs = new JTextured2DShape(img);
-		texs.addVector(p[0],      p[1],      0,    0   );
-		texs.addVector(p[0]+p[2], p[1],      p[2], 0   );
-		texs.addVector(p[0]+p[2], p[1]+p[3], p[2], p[3]);
-		texs.addVector(p[0],      p[1]+p[3], 0,    p[3]);
-		s.addChild(texs);
+		s.addChild(new JImageShape(img, p[0], p[1], p[2], p[3]));
 	}
 
 }

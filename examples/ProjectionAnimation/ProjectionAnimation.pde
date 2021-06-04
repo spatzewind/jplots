@@ -1,8 +1,7 @@
-import com.metzner.enrico.JKriging.helper.FormatHelper;
-import pplots.*;
-import pplots.transform.*;
+import jplots.*;
+import jplots.transform.*;
 
-PPlot plt;
+JPlot plt;
 PImage img;
 
 void setup() {
@@ -23,20 +22,20 @@ void setup() {
   }
   
   //create plot
-  plt = new PPlot(this);
+  plt = new JPlot(this);
   //plt.debug(true);
   plt.subplots(4d,2d, 1,2);     //create figure twice big than high with 2 subplots
-  PAxis[] ax = plt.ga();        //access PAxis objects
+  JAxis[] ax = plt.ga();        //access JAxis objects
   //set first subplot to ortographic projection with center at 0°N, 0°E
-  ax[0].setGeoProjection(new POrthographicProjection(0,0,0,true));
+  ax[0].setGeoProjection(new OrthographicJProjection(0,0,0,true));
   ax[0].predefImgShow("earth2");
   ax[0].setGrid();
   //set stereographic projection with center at 0°N, 0°E and true scale at 45°N
-  ax[1].setGeoProjection(new PStereographicProjection(0,0,0,true));
+  ax[1].setGeoProjection(new StereographicJProjection(0,0,0,true));
   ax[1].predefImgShow("jupiter");
   ax[1].setGrid();
   //create parameters:
-  Object[] params = {"transform", new PPlateCarreeProjection(true)};
+  Object[] params = {"transform", new PlateCarreeJProjection(true)};
   //plot curves on both subplots:
   for(int i=0; i<2; i++) {
     ax[i].plot(longitude,curve1,color(0,0,0),3.0,"-",params);
@@ -48,11 +47,7 @@ void setup() {
 void draw() {
   background(255);
   int a = (1*frameCount) % 360;
-  PAxis[] ax = plt.ga();
-  ax[0].setGeoProjection(new POrthographicProjection(a,2*a,30*sin(radians(a)),true));
-  ax[1].setGeoProjection(new PStereographicProjection(a,2*a,30*sin(radians(a)),true));
-  //println("\nAngle: "+a);
-  //FormatHelper.printMat(System.out, ((POrthographicProjection) ax[0].getGeoProjection()).getRotmatP2X());
+  plt.ga(0).setGeoProjection(new OrthographicJProjection(a,2*a,30*sin(radians(a)),true));
+  plt.ga(1).setGeoProjection(new StereographicJProjection(a,2*a,30*sin(radians(a)),true));
   image(plt.show(),0,0,width,height);
-  //println(frameCount);
 }

@@ -1,7 +1,7 @@
 package jplots.transform;
 
 import jplots.JAxis;
-import jplots.JPlotMath;
+import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
 import jplots.shapes.JPlotShape;

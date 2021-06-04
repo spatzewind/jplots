@@ -6,7 +6,7 @@ public class LinearSegmentedJColourtable extends JColourtable {
 	private double[] linearColourPosition;
 	private int[][] linearColourBounds;
 	
-	LinearSegmentedJColourtable(int under, int over, int nan, double[] pos, int[][] cols) {
+	public LinearSegmentedJColourtable(int under, int over, int nan, double[] pos, int[][] cols) {
 		underflowColour = under;
 		overflowColour  = over;
 		invalidColour   = nan;

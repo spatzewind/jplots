@@ -1,6 +1,6 @@
-import pplots.*;
+import jplots.*;
 
-PPlot plt;
+JPlot plt;
 PImage img;
 
 void setup() {
@@ -21,7 +21,7 @@ void setup() {
   PFont font = createFont("",40);
   
   //create plot
-  plt = new PPlot(this);
+  plt = new JPlot(this);
   plt.debug(true);
   plt.figure();
   plt.plot(x,y);

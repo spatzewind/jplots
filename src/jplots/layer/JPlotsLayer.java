@@ -2,7 +2,8 @@ package jplots.layer;
 
 import jplots.JAxis;
 import jplots.JPlot;
-import jplots.JPlotMath;
+import jplots.color.JColourtable;
+import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.transform.IdentityJProjection;
 import jplots.transform.JProjection;
@@ -17,6 +18,7 @@ public abstract class JPlotsLayer {
 	double angleMode;
 	PImage img;
 	JProjection inputProj;
+	JColourtable colourtable;
 	
 	public JPlotsLayer() {
 		lw = 2d;
@@ -27,8 +29,12 @@ public abstract class JPlotsLayer {
 		angleMode = 1d;
 		img = null;
 		inputProj = new IdentityJProjection();
+		colourtable = JColourtable.pctables.get("default");
 	}
 	
+	public void setLinewidth(double lwd) {
+		lw = lwd;
+	}
 	public void setRange(double xmin, double xmax, double ymin, double ymax) {
 		minX = xmin; maxX = xmax;
 		minY = ymin; maxY = ymax;
@@ -38,6 +44,9 @@ public abstract class JPlotsLayer {
 	}
 	public void setSourceProjection(JProjection in_proj) {
 		inputProj = in_proj;
+	}
+	public void setColourtable(JColourtable ct) {
+		colourtable = ct;
 	}
 	public void angleMode(String angle_type) {
 		if(angle_type==null) {

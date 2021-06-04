@@ -2,7 +2,7 @@ package jplots.layer;
 
 import jplots.JAxis;
 import jplots.JPlot;
-import jplots.JPlotMath;
+import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
 import jplots.shapes.JPlotShape;

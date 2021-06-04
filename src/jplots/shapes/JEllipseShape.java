@@ -1,5 +1,6 @@
 package jplots.shapes;
 
+import jplots.JPlot;
 import processing.core.PApplet;
 import processing.core.PGraphics;
 
@@ -33,7 +34,7 @@ public class JEllipseShape extends JPlotShape {
 	}
 	
 	@Override
-	public void draw(PGraphics g) {
+	public void draw(JPlot plot, PGraphics g) {
 		if(isFilled) {
 			g.fill(inCol);
 		} else {

@@ -1,5 +1,7 @@
 package jplots.shapes;
 
+import jplots.JPlot;
+import processing.core.PApplet;
 import processing.core.PGraphics;
 
 public abstract class JPlotShape {
@@ -9,6 +11,8 @@ public abstract class JPlotShape {
 	public static int fillColour = 0xffffffff;
 	public static int strokeColour = 0xff000000;
 	public static float strokeWeight = 1f;
+	public static float ROTATE_CLOCKWISE        =  PApplet.HALF_PI;
+	public static float ROTATE_COUNTERCLOCKWISE = -PApplet.HALF_PI;
 	public static void fill(int col) {
 		fillColour = col;
 		useFill = true;
@@ -29,5 +33,5 @@ public abstract class JPlotShape {
 	}
 	
 	
-	public abstract void draw(PGraphics g);
+	public abstract void draw(JPlot plot, PGraphics g);
 }

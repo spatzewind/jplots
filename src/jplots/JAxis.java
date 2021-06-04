@@ -9,17 +9,19 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import jplots.color.JColourtable;
+import jplots.layer.JContourLayer;
 import jplots.layer.JImageLayer;
 import jplots.layer.JPlotsLayer;
 import jplots.layer.JScatterLayer;
 import jplots.layer.JXYLayer;
+import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
 import jplots.shapes.JPlotShape;
 import jplots.shapes.JTextShape;
 import jplots.transform.IdentityJProjection;
 import jplots.transform.JProjection;
-import jplots.transform.RectangleJProjection;
 import processing.core.PApplet;
 import processing.core.PFont;
 import processing.core.PImage;
@@ -34,6 +36,7 @@ public class JAxis {
 	private int px, py, pw, ph;
 	private double minX,maxX,minY,maxY;
 	private double txtsize;
+	private String titleX, titleY;
 	private List<JPlotsLayer> layers;
 	private PFont pfont;
 	private JProjection projection;
@@ -61,6 +64,9 @@ public class JAxis {
 		minY = -1d;
 		maxY =  1d;
 		txtsize = 300d*10d/72d;
+		titleX = "";
+		titleY = "";
+		layers.clear();
 		projection = new IdentityJProjection();
 	}
 
@@ -70,10 +76,25 @@ public class JAxis {
 	//************************************
 
 	//....
+	public void contour(float[] x, float[] y, float[][] z) {
+		this.contour(x, y, z, 10, (Object[])null); }
+	public void contour(float[] x, float[] y, float[][] z, int levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, JColourtable.pctables.get("default"), 2.0f, true, false);
+		layers.add(cnl); readContourParams(cnl, params); updateRange(cnl);
+	}
+	public void contour(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, true, false);
+		layers.add(cnl); readContourParams(cnl, params); updateRange(cnl);
+	}
 	public void contour(double[] x, double[] y, double[][] z) {
 		this.contour(x, y, z, 10, (Object[])null); }
 	public void contour(double[] x, double[] y, double[][] z, int levels, Object... params) {
-		
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, JColourtable.pctables.get("default"), 2.0d, true, false);
+		layers.add(cnl); readContourParams(cnl, params); updateRange(cnl);
+	}
+	public void contour(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, true, false);
+		layers.add(cnl); readContourParams(cnl, params); updateRange(cnl);
 	}
 
 	public void plot(float[] x, float[] y) {
@@ -98,6 +119,33 @@ public class JAxis {
 		JPlotsLayer scl = new JScatterLayer(x, y, colour, iconsize, symbol); layers.add(scl);
 		readLineParams(scl, params); updateRange(scl); }
 
+	public void axhline(float y) {
+		axhline(y, 0xff000000, 3f, "-"); }
+	public void axhline(float y, int colour, float linewidth, String linestyle) {
+		JPlotsLayer xyl = new JXYLayer(new double[] {-100d*JProjection.EARTH_RADIUS_MEAN,100d*JProjection.EARTH_RADIUS_MEAN},
+				new double[] {y,y}, colour, linewidth, linestyle); layers.add(xyl);
+		updateRange(xyl, "y"); }
+	public void axhline(double y) {
+		axhline(y, 0xff000000, 3f, "-"); }
+	public void axhline(double y, int colour, double linewidth, String linestyle) {
+		JPlotsLayer xyl = new JXYLayer(new double[] {-100d*JProjection.EARTH_RADIUS_MEAN,100d*JProjection.EARTH_RADIUS_MEAN},
+				new double[] {y,y}, colour, linewidth, linestyle); layers.add(xyl);
+		updateRange(xyl, "y"); }
+	public void axvline(float x) {
+		axvline(x, 0xff000000, 3f, "-"); }
+	public void axvline(float x, int colour, float linewidth, String linestyle) {
+		JPlotsLayer xyl = new JXYLayer(new double[] {x,x},
+				new double[] {-100d*JProjection.EARTH_RADIUS_MEAN,100d*JProjection.EARTH_RADIUS_MEAN},
+				colour, linewidth, linestyle); layers.add(xyl);
+		updateRange(xyl, "x"); }
+	public void axvline(double x) {
+		axvline(x, 0xff000000, 3f, "-"); }
+	public void axvline(double x, int colour, double linewidth, String linestyle) {
+		JPlotsLayer xyl = new JXYLayer(new double[] {x,x},
+				new double[] {-100d*JProjection.EARTH_RADIUS_MEAN,100d*JProjection.EARTH_RADIUS_MEAN},
+				colour, linewidth, linestyle); layers.add(xyl);
+		updateRange(xyl, "x"); }
+	
 	/**
 	 * predefined images are used as background images in plot, especially with geographical projections
 	 * <p>
@@ -123,6 +171,14 @@ public class JAxis {
 		//updateRange(iml);
 	}
 
+	/**
+	 * removes all plotting infos
+	 * also all configuration will be reseted
+	 */
+	public void clear() {
+		defaults();
+	}
+	
 	//....
 	public JAxis setPositionAndSize(int pos_x, int pos_y, int width, int height) {
 		px = pos_x;
@@ -183,6 +239,10 @@ public class JAxis {
 		pfont = font; }
 	public void setTextSize(double ts) {
 		txtsize = JPlot.dpi*ts/72d; }
+	public void setXTitle(String xtitle) {
+		titleX = xtitle; }
+	public void setYTitle(String ytitle) {
+		titleY = ytitle; }
 
 
 	//************************************
@@ -195,6 +255,7 @@ public class JAxis {
 	public boolean isGeoAxis() { return isGeoAxis; }
 	public JProjection getGeoProjection() { return projection; }
 	public JPlotsLayer getLayer(int layernum) { return layers.get(layernum); }
+	public void addJPlotsLayer(JPlotsLayer layer) { layers.add(layer); }
 
 
 	//************************************
@@ -261,26 +322,87 @@ public class JAxis {
 			o++;
 		}
 	}
+	private void readContourParams(JPlotsLayer layer, Object... params) {
+		if(params==null)
+			return;
+		int o=0;
+		while(o<params.length) {
+			if(params[o] instanceof String) {
+				String p = ((String) params[0]).toLowerCase();
+				boolean isunread = true;
+				if(isunread && "transform".equals(p) && o+1<params.length) {
+					layer.setSourceProjection((JProjection) params[o+1]); o++; isunread=false; }
+				if(isunread && "linewidth".equals(p) && o+1<params.length) {
+					layer.setLinewidth(params[o+1] instanceof Float ? (float)params[o+1] : (double)params[o+1]);
+					o++; isunread=false; }
+				if(isunread && "".equals(p) && o+1<params.length) {
+					layer.setColourtable((JColourtable) params[o+1]); o++; isunread=false; }
+			} else {
+				System.err.println("[ERROR] Cannot interprete param "+o+": "+params[o]);
+			}
+			o++;
+		}
+	}
 	
 	private void updateRange(JPlotsLayer layer) {
 		double[] r = layer.getRange();
+		double xmin=r[0],xmax=r[1], ymin=r[2],ymax=r[3];
+		if(r[1]-r[0]<1.e-20) {
+			double xm=0.5d*(r[0]+r[1]); double xr = Math.max(1.0e-10d, Math.abs(xm)*1.0e-10d);
+			xmin = xm-xr; xmax = xm+xr;
+		}
+		if(r[3]-r[2]<1.e-20) {
+			double ym=0.5d*(r[2]+r[3]); double yr = Math.max(1.0e-10d, Math.abs(ym)*1.e-10d);
+			ymin = ym-yr; ymax = ym+yr;
+		}
 		if(layers.size()==1) {
 			if(!xRangeFix) {
-				minX = r[0];
-				maxX = r[1];
+				minX = xmin;
+				maxX = xmax;
 			}
 			if(!yRangeFix) {
-				minY = r[2];
-				maxY = r[3];
+				minY = ymin;
+				maxY = ymax;
 			}
 		} else {
 			if(!xRangeFix) {
-				if(r[0]<minX) minX = r[0];
-				if(r[1]>maxX) maxX = r[1];
+				if(xmin<minX) minX = xmin;
+				if(xmax>maxX) maxX = xmax;
 			}
 			if(!yRangeFix) {
-				if(r[2]<minY) minY = r[2];
-				if(r[3]>maxY) maxY = r[3];
+				if(ymin<minY) minY = ymin;
+				if(ymax>maxY) maxY = ymax;
+			}
+		}
+	}
+	private void updateRange(JPlotsLayer layer, String axis) {
+		double[] r = layer.getRange();
+		double xmin=r[0],xmax=r[1], ymin=r[2],ymax=r[3];
+		if(r[1]-r[0]<1.e-20) {
+			double xm=0.5d*(r[0]+r[1]); double xr = Math.max(1.0e-10d, Math.abs(xm)*1.0e-10d);
+			xmin = xm-xr; xmax = xm+xr;
+		}
+		if(r[3]-r[2]<1.e-20) {
+			double ym=0.5d*(r[2]+r[3]); double yr = Math.max(1.0e-10d, Math.abs(ym)*1.e-10d);
+			ymin = ym-yr; ymax = ym+yr;
+		}
+		if(layers.size()==1) {
+			if(!xRangeFix && axis.equals("x")) {
+				minX = xmin;
+				maxX = xmax;
+			}
+			if(!yRangeFix && axis.equals("y")) {
+				minY = ymin;
+				maxY = ymax;
+			}
+		} else {
+			if(!xRangeFix && axis.equals("x")) {
+				if(xmin<minX) minX = xmin;
+				if(xmax>maxX) maxX = xmax;
+			}
+			if(!yRangeFix && axis.equals("y")) {
+				if(ymin<minY) minY = ymin;
+				if(ymax>maxY) maxY = ymax;
 			}
 		}
 	}
@@ -313,8 +435,9 @@ public class JAxis {
 				if(ticks[t]>=Math.min(minX, maxX) && ticks[t]<=Math.max(minX, maxX)) {
 					axisgrid.addChild(new JLineShape((float)tcpos[t],py+ph,(float)tcpos[t],py+1.02f*ph));
 					//axisgrid.addChild(ap.createShape(PShape.TEXT, "H", (float)tcpos[t],py-0.1f*ph,(float)tcpos[t],py));
-					axisgrid.addChild(new JTextShape(PApplet.nf((float)(ticks[t]*vf),0,decimal), (float)tcpos[t], py+1.03f*ph, (float)txtsize, PApplet.CENTER, PApplet.TOP, 0xff000000));
+					axisgrid.addChild(new JTextShape(PApplet.nf((float)(ticks[t]*vf),0,decimal), (float)tcpos[t], py+1.03f*ph, (float)txtsize, PApplet.CENTER, PApplet.TOP, 0xff000000, 0));
 				}
+			axisgrid.addChild(new JTextShape(titleX, px+0.5f*pw, py+1.04f*ph+(float)txtsize, (float)(1.1d*txtsize), PApplet.CENTER, PApplet.TOP, 0xff000000, 0));
 		}
 		return axisgrid;
 	}
@@ -343,12 +466,16 @@ public class JAxis {
 			double vf = 1d/(ticks[0]);
 			int decimal = (int) (1000d*ticks[1]+0.5d);
 			decimal = decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
+			float tw = 0f;
 			for(int t=2; t<ticks.length; t++)
 				if(ticks[t]>=Math.min(minY, maxY) && ticks[t]<=Math.max(minY, maxY)) {
 					axisgrid.addChild(new JLineShape(px-0.02f*pw,(float)tcpos[t],px,(float)tcpos[t]));
-					//axisgrid.addChild(ap.createShape(PShape.TEXT, "H", (float)tcpos[t],py-0.1f*ph,(float)tcpos[t],py));
-					axisgrid.addChild(new JTextShape(PApplet.nf((float)(ticks[t]*vf),0,decimal), px-0.03f*pw, (float)tcpos[t], (float)txtsize, PApplet.RIGHT, PApplet.CENTER, 0xff000000));
+					String tmstr = PApplet.nf((float)(ticks[t]*vf),0,decimal);
+					tw = Math.max(tw, (float)txtsize * pplot.getGraphic().textWidth(tmstr)/pplot.getGraphic().textSize);
+					axisgrid.addChild(new JTextShape(tmstr, px-0.03f*pw, (float)tcpos[t], (float)txtsize,
+							PApplet.RIGHT, PApplet.CENTER, 0xff000000, 0));
 				}
+			axisgrid.addChild(new JTextShape(titleY, px-0.03f*pw-tw, py+0.5f*ph, (float)(1.1d*txtsize), PApplet.CENTER, PApplet.BOTTOM, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE));
 		}
 		return axisgrid;
 	}

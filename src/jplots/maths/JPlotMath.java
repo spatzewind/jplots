@@ -1,4 +1,4 @@
-package jplots;
+package jplots.maths;
 
 public class JPlotMath {
 
@@ -119,4 +119,5 @@ public class JPlotMath {
 			ticks[t+2-vS] = t*f10*p10;
 		return ticks;
 	}
+
 }

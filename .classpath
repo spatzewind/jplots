@@ -2,6 +2,8 @@
 <classpath>
 	<classpathentry kind="src" output="bin" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="D:/processing-3.5.3/core/library/core.jar"/>
+	<classpathentry kind="lib" path="D:/eclipse/tests/PPlots/dependend_libs/core.jar"/>
+	<classpathentry kind="lib" path="D:/eclipse/tests/PPlots/dependend_libs/itext.jar"/>
+	<classpathentry kind="lib" path="D:/eclipse/tests/PPlots/dependend_libs/pdf.jar"/>
 	<classpathentry kind="output" path="resources/code"/>
 </classpath>

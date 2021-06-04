@@ -1,7 +1,7 @@
 package jplots.transform;
 
 import jplots.JAxis;
-import jplots.JPlotMath;
+import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
 import jplots.shapes.JPlotShape;
@@ -64,9 +64,16 @@ public class PlateCarreeJProjection implements JProjection {
 	public void drawBorder(JAxis ax, JGroupShape s) {
 		JPlotShape.stroke(0xff000000); JPlotShape.strokeWeight(3f);
 		int[] p = ax.getSize();
-		s.addChild(new JLineShape(p[0],     p[1],     p[0]+p[2],p[1]));
-		s.addChild(new JLineShape(p[0],     p[1]+p[3],p[0]+p[2],p[1]+p[3]));
-		s.addChild(new JLineShape(p[0],     p[1],     p[0],     p[1]+p[3]));
-		s.addChild(new JLineShape(p[0]+p[2],p[1],     p[0]+p[2],p[1]+p[3]));
+		double[] r = ax.getRange();
+		float[] e = {
+			(float)(p[0]+p[2]*Math.max(0d, Math.min(1d, JPlotMath.dlerp(-180d,r[0],r[1],0d,1d)))),
+			(float)(p[0]+p[2]*Math.max(0d, Math.min(1d, JPlotMath.dlerp( 180d,r[0],r[1],0d,1d)))),
+			(float)(p[1]+p[3]*Math.max(0d, Math.min(1d, JPlotMath.dlerp( -90d,r[2],r[3],0d,1d)))),
+			(float)(p[1]+p[3]*Math.max(0d, Math.min(1d, JPlotMath.dlerp(  90d,r[2],r[3],0d,1d))))
+		};
+		s.addChild(new JLineShape(e[0],e[3],e[1],e[3]));
+		s.addChild(new JLineShape(e[0],e[2],e[1],e[2]));
+		s.addChild(new JLineShape(e[0],e[3],e[0],e[2]));
+		s.addChild(new JLineShape(e[1],e[3],e[1],e[2]));
 	}
 }

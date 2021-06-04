@@ -3,6 +3,7 @@ package jplots.shapes;
 import java.util.ArrayList;
 import java.util.List;
 
+import jplots.JPlot;
 import processing.core.PGraphics;
 
 public class JGroupShape extends JPlotShape {
@@ -14,9 +15,9 @@ public class JGroupShape extends JPlotShape {
 	}
 	
 	@Override
-	public void draw(PGraphics g) {
+	public void draw(JPlot plot, PGraphics g) {
 		for(JPlotShape ppe: childs)
-			ppe.draw(g);
+			ppe.draw(plot, g);
 	}
 	
 	public void addChild(JPlotShape child) {
