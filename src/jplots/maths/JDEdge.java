@@ -4,11 +4,13 @@ public class JDEdge {
 
 	public JDPoint a;
 	public JDPoint b;
+	public boolean rightGradient; //left of edge are lower values than to the right
 
 	public JDEdge(JDPoint a, JDPoint b) {
 		boolean swap = 0 < a.compareTo(b);
 		this.a = swap ? b : a;
 		this.b = swap ? a : b;
+		this.rightGradient = !swap;
 	}
 
 	public JDTriangle A;
@@ -34,6 +36,10 @@ public class JDEdge {
 	
 	public boolean has2triangles() {
 		return (this.A!=null && this.B!=null);
+	}
+	
+	public boolean hasRightGradient() {
+		return rightGradient;
 	}
 
 	@Override

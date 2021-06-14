@@ -62,8 +62,8 @@ public class JScatterLayer extends JPlotsLayer {
 				double[] xy = inputProj.fromPROJtoLATLON(xarrayx[i], yarrayy[i], false);
 				if(ax.isGeoAxis())
 					xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[0], xy[1], false);
-				double x1 = p[0]+xs*(xy[0]-minX);
-				double y1 = p[1]+ys*(maxY-xy[1]);
+				double x1 = p[0]+xs*(invertAxisX ? maxX-xy[0] : xy[0]-minX);
+				double y1 = p[1]+ys*(invertAxisY ? xy[1]-minY : maxY-xy[1]);
 				if(x1<p[0] || x1>p[0]+p[2]) continue;
 				if(y1<p[1] || y1>p[1]+p[3]) continue;
 				if("()".equals(ls) || "o".equals(ls)) {

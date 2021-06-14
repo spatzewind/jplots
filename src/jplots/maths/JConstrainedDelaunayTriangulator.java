@@ -7,18 +7,24 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
-public class JDelaunayTriangulator {
+import processing.data.IntList;
 
-	private static final double EPSILON = Math.pow(2, -52);
+public class JConstrainedDelaunayTriangulator {
+
 	private static final int    SUCCESS        = 0;
 	private static final int    ERROR_CENTER   = 1;
+	private static double EPSILON  = Math.pow(2, -52);
+	private static double EPSILON2 = Math.pow(2, -52);
 	private int[] EDGE_STACK = new int[512];
 
 	public int[] triangles;
 	public int[] halfedges;
+	public JDPoint[] ep;
 	public JDPoint[] points;
+	public JDEdge[] constrain;
 
 	private int hashSize;
 	private int[] hullPrev;
@@ -26,7 +32,7 @@ public class JDelaunayTriangulator {
 	private int[] hullTria;
 	private int[] hullHash;
 
-	private double minX, maxX, minY, maxY;
+	private double minX=-1d, maxX=1d, minY=-1d, maxY=1d;
 	private double i0x,i0y, i1x,i1y, i2x,i2y;
 	private double cx, cy;
 	private int   i0, i1, i2;
@@ -35,23 +41,18 @@ public class JDelaunayTriangulator {
 
 	private int trianglesLen;
 	private double[] coords;
+	private int[] cceeids;
 	private int hullStart;
 	private int hullSize;
 	public int[] hull;
 
-	public JDelaunayTriangulator(List<JDPoint> points) {
-		this(unique(points));
+	public JConstrainedDelaunayTriangulator(List<JDEdge> constrains, List<JDPoint> extra_points) {
+		this(uniquee(constrains), uniquep(extra_points));
 	}
 
-	public JDelaunayTriangulator(JDPoint[] points) {
-		if (points.length < 3) {
-			System.err.println("Need at least 3 points");
-			return;
-		}
-
-		points = unique(Arrays.asList(points));
-
-		this.points = points;
+	public JConstrainedDelaunayTriangulator(JDEdge[] constrains, JDPoint[] extra_points) {
+		ep = extra_points;
+		merge(constrains, null, extra_points, null);
 		
 		//initialise and find seed-point;
 		initialise();
@@ -72,10 +73,58 @@ public class JDelaunayTriangulator {
 		quicksort(ids, dists, 0, n - 1);
 
 		//create convex hull
+		//check delaunay condition and flip edges automatically
 		findConvexHull();
 
-		//generate delaunay triangulation
+		//remember the constrains
+		//flip edges accordingly to satisfy the constrains
+//		System.out.println("all edges:");
+//		for(JDEdge e: constrain)
+//			System.out.println("    "+e);
+//		int iter = 0;
+//		boolean checkConstrains = true;
+//		while(checkConstrains && iter<2) {
+//			checkConstrains = false;
+//			iter++;
+//			if(checkConstrainCrossings()) {
+//				initialise();
+//				err = findCenter();
+//				if(err!=SUCCESS) {
+//					System.err.print(err);
+//					return;
+//				}
+//				n = this.points.length;
+//				dists = new double[n];
+//				for (int i = 0; i < n; i++) {
+//					dists[i] = dist(coords[2 * i], coords[2 * i + 1], center.x, center.y);
+//				}
+//				quicksort(ids, dists, 0, n - 1);
+//				findConvexHull();
+//				checkConstrains = true;
+//			}
+//		}
+//		System.out.println("all edges:");
+//		for(JDEdge e: constrain)
+//			System.out.println("    "+e);
+
+		// generates Lists of
+		// -- all triangles as JDTriangle with JDPoint's and JDEdge's
+		// -- all edges of the convex hull as JDEdge with JDPoint's
+		// -- voronoi edges as JDEdge with JDPoint's
+		// -- voronoi hull edges (must be implement) as JDEdge with JDPoint's
 		generate();
+
+//		initialise();
+//		
+//		generateConvexHull();
+//		
+//		addConstrains();
+//		
+//		orderEdgesViaHashtable();
+//		
+//		makeDelaunayOfNonConstrainedEdges();
+//		
+//		generate();
 	}
 
 	///////////////////////////////////////////////////////////////////////////
@@ -117,7 +166,13 @@ public class JDelaunayTriangulator {
 		return lst;
 	}
 
-	public static JDPoint[] unique(List<JDPoint> points) {
+	/**
+	 * make every point unique with offsetting by as small amount when overlap
+	 * 
+	 * @param points list of JDPoint objects to make unique
+	 * @return
+	 */
+	public static JDPoint[] uniquep(List<JDPoint> points) {
 		Set<JDPoint> unq = new LinkedHashSet<>();
 		for (int i = 0; i < points.size(); i++) {
 			JDPoint v = points.get(i);
@@ -131,6 +186,28 @@ public class JDelaunayTriangulator {
 		}
 
 		return unq.toArray(new JDPoint[] {});
+	}
+
+	/**
+	 * make every edge unique with offsetting points by as small amount when overlap
+	 * 
+	 * @param edges list of JDEdge objects to make unique
+	 * @return
+	 */
+	public static JDEdge[] uniquee(List<JDEdge> edges) {
+		Set<JDEdge> unq = new LinkedHashSet<>();
+		for (int i = 0; i < edges.size(); i++) {
+			JDEdge e = edges.get(i);
+			if (unq.contains(e)) {
+				while (unq.contains(e) == false) {
+					System.err.printf("[INF] found duplicated edge (%f/%f, %f/%f), fix it will be plus +1e-6... \n", (float) e.a.x, (float) e.a.y, (float) e.b.x, (float) e.b.y);
+					e = new JDEdge(new JDPoint(e.a.x() + 1e-6, e.a.y() + 1e-6, e.a.value), new JDPoint(e.b.x() + 1e-6, e.b.y() + 1e-6, e.b.value));
+				}
+			}
+			unq.add(e);
+		}
+
+		return unq.toArray(new JDEdge[] {});
 	}
 
 	private void generate() {
@@ -257,11 +334,20 @@ public class JDelaunayTriangulator {
 			 * the circumcircle of [p0, pl, pr]), flip them, then do the same check/flip
 			 * recursively for the new pair of triangles
 			 *
-			 * pl pl /||\ / \ al/ || \bl al/ \a / || \ / \ / a||b \ flip /___ar___\ p0\ ||
-			 * /p1 => p0\---bl---/p1 \ || / \ / ar\ || /br b\ /br \||/ \ / pr pr
+			 *       pl                  pl
+			 *      /||\                /  \
+			 *   al/ || \bl          al/    \a
+			 *    /  ||  \            /      \
+			 *   /  a||b  \   flip   /___ar___\
+			 * p0\   ||   /p1  =>  p0\---bl---/p1
+			 *    \  ||  /            \      /
+			 *   ar\ || /br           b\    /br
+			 *      \||/                \  /
+			 *       pr                  pr
 			 */
 			int a0 = a - a % 3;
 			ar = a0 + (a + 2) % 3;
+			// ar = a - (a%3) + (a+2)%3 = a + { a%3==0 ? 2 : -1 }
 
 			if (b == -1) { // convex hull edge
 				if (i == 0) {
@@ -281,28 +367,29 @@ public class JDelaunayTriangulator {
 			int p1 = triangles[bl];
 
 			boolean illegal = inCircle(coords[2 * p0], coords[2 * p0 + 1], coords[2 * pr], coords[2 * pr + 1], coords[2 * pl],
-					coords[2 * pl + 1], coords[2 * p1], coords[2 * p1 + 1]);
+						coords[2 * pl + 1], coords[2 * p1], coords[2 * p1 + 1]);
 
 			if (illegal) {
-				triangles[a] = p1;
-				triangles[b] = p0;
-
-				int hbl = halfedges[bl];
-
-				// edge swapped on the other side of the hull (rare); fix the halfedge reference
-				if (hbl == -1) {
-					int e = hullStart;
-					do {
-						if (hullTria[e] == bl) {
-							hullTria[e] = a;
-							break;
-						}
-						e = hullPrev[e];
-					} while (e != hullStart);
-				}
-				link(a, hbl);
-				link(b, halfedges[ar]);
-				link(ar, bl);
+				flipEdge(p0,pr,pl,p1, ar,a,al);
+//				triangles[a] = p1;
+//				triangles[b] = p0;
+//
+//				int hbl = halfedges[bl];
+//
+//				// edge swapped on the other side of the hull (rare); fix the halfedge reference
+//				if (hbl == -1) {
+//					int e = hullStart;
+//					do {
+//						if (hullTria[e] == bl) {
+//							hullTria[e] = a;
+//							break;
+//						}
+//						e = hullPrev[e];
+//					} while (e != hullStart);
+//				}
+//				link(a, hbl);
+//				link(b, halfedges[ar]);
+//				link(ar, bl);
 
 				int br = b0 + (b + 1) % 3;
 
@@ -321,6 +408,194 @@ public class JDelaunayTriangulator {
 
 		return ar;
 	}
+	private void legalize(int si, int ei) {
+	    /*
+	     * if the pair of triangles doesn't satisfy the constrain condition (halfedges a||b
+	     * crosses constrain si--ei), flip them, put it on stack and check delaunay condition
+	     * for edges on the stack afterwards
+	     *
+	     *       pl                  pl
+	     *      /||\                /  \
+	     *   al/ || \bl          al/    \a
+	     *    /  ||  \            /      \
+	     *   /  a||b  \   flip   /___ar___\
+	     * p0\   ||   /p1  =>  p0\---bl---/p1
+	     *    \  ||  /            \      /
+	     *   ar\ || /br           b\    /br
+	     *      \||/                \  /
+	     *       pr                  pr
+	     * 
+	     * constrain existing DT by algorithm of
+	     * S. W. Sloan (1993): A FAST ALGORITHM FOR GENERATING CONSTRAINED DELAUNAY TRIANGULATIONS; Computers & Structures Vol. 47, No. 3, pp. 441-450
+	     * 
+	     * for given constrain:
+	     * 1] find all edges which are crossed by constrain and flip them
+	     *    a] find triangle wich contains vertex s
+	     *    b] if an edge of triangle is crossed by constrain, goto c, else goto a for next triangle
+	     *    c] flip edge and put it on the stack. if the flipped edge equals the constrain goto 2, else goto a for the next triangle
+	     * 2] check delaunay condition for all edges on the stack and flip them, except the constrain
+	     */
+	    
+	    //TODO improve search for start triangle
+	    int startT = -1;
+	    for(int t=0; t<trianglesLen && startT<0; t++)
+	    	if(triangles[t]==si)
+	    		startT = t;
+	    if(startT<0) {
+	    	System.err.println("[ERR] Severe error: endpoints of constrain are not part of triangulation!");
+	    	return;
+	    }
+
+	    double sx = coords[2 * si];
+	    double sy = coords[2 * si + 1];
+	    double tx = coords[2 * ei];
+	    double ty = coords[2 * ei + 1];
+	    
+	    int i = 0;
+	    int a = startT;
+	    while(true) {
+	        int a0 = a - a % 3;
+	        if(triangles[a]!=si) {
+	            a = a0 + (a+1)%3;
+	            if(triangles[a]!=si)
+	                a = a0 + (a+1)%3;
+	        }
+	        int al = a0 + (a + 1) % 3;
+	        int ar = a0 + (a + 2) % 3;
+
+	        int p0 = triangles[ar];
+	        int pr = triangles[a];
+	        int pl = triangles[al];
+
+	        /*  tco        pr          tbo
+	         *   \--------//\\--------/
+	         *    \      //  \\      /
+	         *     \  ao//a   \\co  /
+	         *      \  //    ar\\  /
+	         *       \//__al____\\/
+	         *      pl \----bo--/ p0
+	         *          \      /
+	         *           \    /
+	         *            \  /
+	         *             \/tao
+	         */
+
+	        if(pl==ei || p0==ei)
+	            break;
+	        
+	        if(inLine(coords[2*pl], coords[2*pl+1], coords[2*pr], coords[2*pr+1], coords[2*p0], coords[2*p0+1])) {
+	        	undoEdgeFlips(i);
+	        	legalize(ei, si);
+	        	return;
+	        }
+
+            int b = halfedges[al];
+            int b0 = b - b % 3;
+            int bl = b0 + (b + 2) % 3;
+            int p1 = triangles[bl];
+            
+	        if(inLine(coords[2*pl], coords[2*pl+1], coords[2*p0], coords[2*p0+1], coords[2*p1], coords[2*p1+1])) {
+	        	undoEdgeFlips(i);
+	        	legalize(ei, si);
+	        	return;
+	        }
+	        
+	        if(cross(sx,sy,tx,ty, coords[2*pl], coords[2*pl+1], coords[2*p0], coords[2*p0+1])) {
+	            
+	            flipEdge(pr,pl,p0,p1, a,al,ar);
+	            
+	            if (i < EDGE_STACK.length) {
+	                EDGE_STACK[i++] = bl;
+	            }
+	            
+	            //next triangle will be the triangle with the same current halfedge
+	            //a = a;
+	            
+	            //prevent degenerated triangles after edge flip!
+	            //retry algorithm by turning constrain by 180°
+//	            if(inLine(coords[2*pr],coords[2*pr+1],coords[2*p0],coords[2*p0+1],coords[2*p1],coords[2*p1+1]) ||
+//	                inLine(coords[2*pr],coords[2*pr+1],coords[2*p1],coords[2*p1+1],coords[2*pl],coords[2*pl+1])) {
+//	            	//undo edge flips
+//	            	undoEdgeFlips(i);
+//	                //retry with mirrored constrain
+//	                legalize(ei,si);
+//	                return;
+//	            }
+	        } else {
+	            int nextT = halfedges[a];
+	            if(nextT<0) {
+	                int e = hullStart;
+	                while(true) {
+	                    if((a0==hullTria[e]) || (a0+1==hullTria[e]) || (a0+2==hullTria[e]))
+	                        break;
+	                    
+	                    e = hullNext[e];
+	                    if(e==hullStart) {
+	                        System.err.println("[ERR] could not find next triangle");
+	                        return;
+	                    }
+	                }
+	                e = hullPrev[e];
+	                nextT = hullTria[e];
+	                nextT -= nextT%3;
+	                if(si==triangles[nextT+0]) a = nextT+0;
+	                if(si==triangles[nextT+1]) a = nextT+1;
+	                if(si==triangles[nextT+2]) a = nextT+2;
+	            } else {
+	                a = nextT - (nextT%3) + ((nextT+1)%3);
+	            }
+	            continue;
+	        }
+	    }
+	    
+	    //no edges on stack, no flipping occured and no delaunay check necessary
+	    if(i==0)
+	        return;
+	    
+	    //check every edge on edge stack for delaunay condition except constrain
+	    a = EDGE_STACK[--i];
+	    while(true) {
+	        int b = halfedges[a];
+	        int a0 = a - a % 3;
+	        int ar = a0 + (a + 2) % 3;
+
+	        if (b == -1) { // convex hull edge
+	            if (i == 0) {
+	                break;
+	            }
+	            a = EDGE_STACK[--i];
+	            continue;
+	        }
+
+	        int b0 = b - b % 3;
+	        int al = a0 + (a + 1) % 3;
+	        int bl = b0 + (b + 2) % 3;
+
+	        int p0 = triangles[ar];
+	        int pr = triangles[a];
+	        int pl = triangles[al];
+	        int p1 = triangles[bl];
+	        
+	        if((pr==si && pl==ei) || (pr==ei && pl==si)) {
+	            if (i == 0) {
+	                break;
+	            }
+	            a = EDGE_STACK[--i];
+	            continue;
+	        }
+
+	        boolean illegal = inCircle(coords[2 * p0], coords[2 * p0 + 1], coords[2 * pr], coords[2 * pr + 1], coords[2 * pl],
+	                        coords[2 * pl + 1], coords[2 * p1], coords[2 * p1 + 1]);
+
+	        if (illegal) {
+	            flipEdge(p0,pr,pl,p1, ar,a,al);
+	        }
+	        if (i == 0) {
+	            break;
+	        }
+	        a = EDGE_STACK[--i];
+	    }
+	}
 
 	private int addTriangle(int i0, int i1, int i2, int a, int b, int c) {
 		int t = trianglesLen;
@@ -337,15 +612,81 @@ public class JDelaunayTriangulator {
 		return t;
 	}
 
+	private int hashKey(double x, double y) {
+		return (int) (Math.floor(pseudoAngle(x - cx, y - cy) * hashSize) % hashSize);
+	}
+
 	private void link(int a, int b) {
 		halfedges[a] = b;
 		if (b != -1) {
 			halfedges[b] = a;
 		}
 	}
+	private void flipEdge(int ta, int tb, int tc, int td, int ea, int eb, int ec) {
+		int ce = halfedges[eb];
+		int b0 = ce - ce % 3;
+		int de = b0 + (ce+2) % 3;
+		/*
+		 *       tc                  tc
+		 *      /||\                /  \
+		 *   ec/ || \de          ec/    \eb
+		 *    /  ||  \            /      \
+		 *   / eb||ce \   flip   /___ea___\
+		 * ta\   ||   /td  =>  ta\---de---/td
+		 *    \  ||  /            \      /
+		 *   ea\ || /be          ce\    /be
+		 *      \||/                \  /
+		 *       tb                  tb
+		 */
+		triangles[eb] = td;
+		triangles[ce] = ta;
 
-	private int hashKey(double x, double y) {
-		return (int) (Math.floor(pseudoAngle(x - cx, y - cy) * hashSize) % hashSize);
+		int hbl = halfedges[de];
+		int har = halfedges[ea];
+
+		// edge swapped on the other side of the hull (rare); fix the halfedge reference
+		if (hbl == -1 || har == -1) {
+			int e = hullStart;
+			do {
+				if (hullTria[e] == de)
+					hullTria[e] = eb;
+				if (hullTria[e] == ea)
+					hullTria[e] = ce;
+				e = hullPrev[e];
+			} while (e != hullStart);
+		}
+		link(eb, hbl);
+		link(ce, halfedges[ea]);
+		link(ea, de);
+	}
+	private void undoEdgeFlips(int ii) {
+		int i = ii;
+		int a = EDGE_STACK[--i];
+		while(true) {
+			int b = halfedges[a];
+			int a0 = a - a % 3;
+			int ar = a0 + (a + 2) % 3;
+			if (b == -1) { // convex hull edge
+				if (i == 0) {
+					break;
+				}
+				a = EDGE_STACK[--i];
+				continue;
+			}
+			int b0 = b - b % 3;
+			int al = a0 + (a + 1) % 3;
+			int bl = b0 + (b + 2) % 3;
+			int p0 = triangles[ar];
+			int pr = triangles[a];
+			int pl = triangles[al];
+			int p1 = triangles[bl];
+			flipEdge(p0,pr,pl,p1, ar,a,al);
+			if(i==0) {
+				break;
+			} else {
+				a = EDGE_STACK[--i];
+			}
+		}
 	}
 
 	private static boolean inCircle(double ax, double ay, double bx, double by, double cx, double cy, double px, double py) {
@@ -361,6 +702,45 @@ public class JDelaunayTriangulator {
 		double cp = fx * fx + fy * fy;
 
 		return dx * (ey * cp - bp * fy) - dy * (ex * cp - bp * fx) + ap * (ex * fy - ey * fx) < 0;
+	}
+
+	private static boolean cross(double asx, double asy, double aex, double aey, double bsx, double bsy, double bex, double bey) {
+		double adx = aex - asx;
+		double ady = aey - asy;
+		double bdx = bex - bsx;
+		double bdy = bey - bsy;
+		double ppx = bsx - asx;
+		double ppy = bsy - asy;
+		
+		if( Math.abs(bsx-asx)<EPSILON && Math.abs(bsy-asy)<EPSILON)
+			return false;
+		if( Math.abs(bsx-aex)<EPSILON && Math.abs(bsy-aey)<EPSILON)
+			return false;
+		if( Math.abs(bex-asx)<EPSILON && Math.abs(bey-asy)<EPSILON)
+			return false;
+		if( Math.abs(bex-aex)<EPSILON && Math.abs(bey-aey)<EPSILON)
+			return false;
+		
+		double u = ( ppx*ady - ppy*adx ) / ( adx*bdy - ady*bdx );
+		double v = ( ppx*bdy - ppy*bdx ) / ( adx*bdy - ady*bdx );
+		
+		if( 0d<u && u<1d && 0d<v && v<1d )
+			return true;
+		
+		return false;
+	}
+	private static boolean inLine(double ax, double ay, double bx, double by, double cx, double cy) {
+		double abx = ax - bx;
+		double aby = ay - by;
+		double bcx = cx - bx;
+		double bcy = cy - by;
+		
+		double s = Math.abs(bcx*aby - abx*bcy);
+		
+		if(Math.abs(s)<EPSILON2)
+			return true;
+		
+		return false;
 	}
 
 	private static double pseudoAngle(double dx, double dy) {
@@ -464,8 +844,70 @@ public class JDelaunayTriangulator {
 		return dx * dx + dy * dy;
 	}
 
+	private int findID(JDPoint p) {
+		for(int t=0; t<trianglesLen; t++) {
+			int i = triangles[t];
+			if(Math.abs(p.x-points[i].x)<EPSILON && Math.abs(p.y-points[i].y)<EPSILON)
+				return i;
+		}
+		return -1;
+	}
+
 	///////////////////////////////////////////////////////////////////////////
 
+
+	private void merge(JDEdge[] edges1, List<JDEdge> edges2, JDPoint[] points1, List<JDPoint> points2) {
+		List<JDPoint> pointsN = new ArrayList<>();
+		List<JDEdge> edgesN   = new ArrayList<>();
+		if(edges1 != null)
+			for(JDEdge e: edges1) {
+				pointsN.add(e.a); pointsN.add(e.b); edgesN.add(e); }
+		if(edges2 != null)
+			for(JDEdge e: edges2) {
+				pointsN.add(e.a); pointsN.add(e.b); edgesN.add(e); }
+		if(points1 != null)
+			for(JDPoint p: points1)
+				pointsN.add(p);
+		if(points2 != null)
+			for(JDPoint p: points2)
+				pointsN.add(p);
+		
+		//remove duplicates
+		minX = Double.MAX_VALUE; maxX = -Double.MAX_VALUE;
+		minY = Double.MAX_VALUE; maxY = -Double.MAX_VALUE;
+		for(int p1=pointsN.size()-1; p1>=0; p1--) {
+			JDPoint p = pointsN.get(p1);
+			if(p.x<minX) minX = p.x;
+			if(p.x>maxX) maxX = p.x;
+			if(p.y<minY) minY = p.y;
+			if(p.y>maxY) maxY = p.y;
+		}
+		double xyScale = Math.max(Math.max(-minX,maxX), Math.max(-minY, maxY));
+		xyScale = Math.max(xyScale, Math.max(maxX-minX, maxY-minY));
+		EPSILON  =     xyScale     * 1.e-12d;
+		EPSILON2 = xyScale*xyScale * 1.e-18d;
+		//System.out.println("EPSILON = "+EPSILON+"  /  EPSILON2 = "+EPSILON2);
+		
+		for(int p1=pointsN.size()-1; p1>0; p1--)
+			for(int p2=p1-1; p2>=0; p2--)
+				if(pointsN.get(p1).equals(pointsN.get(p2),EPSILON)) {
+					pointsN.remove(p1); break; }
+		
+		if (pointsN.size() < 3) {
+			System.err.println("Need at least 3 points");
+			points = new JDPoint[0];
+			cceeids = new int[0];
+			return;
+		}
+		
+		points = uniquep(pointsN);
+		constrain = uniquee(edgesN);
+		cceeids = new int[constrain.length*2];
+		for(int c=0; c<constrain.length; c++) {
+			cceeids[2 * c]     = -1;
+			cceeids[2 * c + 1] = -1;
+		}
+	}
 	private void initialise() {
 		this.coords = new double[points.length * 2];
 
@@ -588,7 +1030,6 @@ public class JDelaunayTriangulator {
 		
 		return SUCCESS;
 	}
-
 	private void findConvexHull() {
 		// set up the seed triangle as the starting hull
 		hullStart = i0;
@@ -709,6 +1150,15 @@ public class JDelaunayTriangulator {
 		for (int i = 0; i < hullSize; i++) {
 			hull[i] = s;
 			s = hullNext[s];
+		}
+		
+		//consider constrains!
+		for(int c=0; c<constrain.length; c++) {
+			cceeids[2 * c]     = findID(constrain[c].a);
+			cceeids[2 * c + 1] = findID(constrain[c].b);
+		}
+		for(int c=0; c<cceeids.length; c+=2) {
+			legalize(cceeids[c], cceeids[c + 1]);
 		}
 
 		hullPrev = hullNext = hullTria = null; // get rid of temporary arrays
@@ -835,4 +1285,5 @@ public class JDelaunayTriangulator {
 		}
 		return adjacentTriangles;
 	}
+
 }

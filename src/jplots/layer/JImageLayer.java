@@ -45,7 +45,9 @@ public class JImageLayer extends JPlotsLayer {
 		for(int j=0; j<p[3]; j++) {
 			for(int i=0; i<p[2]; i++) {
 				int idx = j*p[2]+i;
-				double[] xy = ax.getGeoProjection().fromPROJtoLATLON(minX+i/xs, maxY-j/ys, false);
+				double[] xy = { invertAxisX ? maxX-i/xs : minX+i/xs,
+								invertAxisY ? minY+j/ys : maxY-j/ys };
+				xy = ax.getGeoProjection().fromPROJtoLATLON(xy[0], xy[1], false);
 				xy = srcProj.fromLATLONtoPROJ(xy[0], xy[1], false);
 				if(Double.isNaN(xy[0]) || Double.isNaN(xy[1])) {
 					img.pixels[idx] = 0x00ffffff;

@@ -9,7 +9,7 @@ import java.util.Map;
 import processing.core.PApplet;
 
 public abstract class JColourtable {
-	
+
 	public static List<String> ctpaths;
 	public static Map<String,JColourtable> pctables;
 	static {

@@ -9,7 +9,9 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import jplots.color.ColourSequenceJColourtable;
 import jplots.color.JColourtable;
+import jplots.color.LinearSegmentedJColourtable;
 import jplots.layer.JContourLayer;
 import jplots.layer.JImageLayer;
 import jplots.layer.JPlotsLayer;
@@ -80,44 +82,65 @@ public class JAxis {
 		this.contour(x, y, z, 10, (Object[])null); }
 	public void contour(float[] x, float[] y, float[][] z, int levels, Object... params) {
 		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, JColourtable.pctables.get("default"), 2.0f, true, false);
-		layers.add(cnl); readContourParams(cnl, params); updateRange(cnl);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
 	}
 	public void contour(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
 		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, true, false);
-		layers.add(cnl); readContourParams(cnl, params); updateRange(cnl);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
 	}
 	public void contour(double[] x, double[] y, double[][] z) {
 		this.contour(x, y, z, 10, (Object[])null); }
 	public void contour(double[] x, double[] y, double[][] z, int levels, Object... params) {
 		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, JColourtable.pctables.get("default"), 2.0d, true, false);
-		layers.add(cnl); readContourParams(cnl, params); updateRange(cnl);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
 	}
 	public void contour(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
 		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, true, false);
-		layers.add(cnl); readContourParams(cnl, params); updateRange(cnl);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+
+	public void contourf(float[] x, float[] y, float[][] z) {
+		this.contourf(x, y, z, 10, (Object[])null); }
+	public void contourf(float[] x, float[] y, float[][] z, int levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, JColourtable.pctables.get("default"), 2.0f, false, true);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourf(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, false, true);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourf(double[] x, double[] y, double[][] z) {
+		this.contourf(x, y, z, 10, (Object[])null); }
+	public void contourf(double[] x, double[] y, double[][] z, int levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, JColourtable.pctables.get("default"), 2.0d, false, true);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourf(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, false, false);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
 	}
 
 	public void plot(float[] x, float[] y) {
 		this.plot(x, y, 0xff000000, 3f, "-", (Object)null); }
 	public void plot(float[] x, float[] y, int colour, float linewidth, String linestyle, Object... params) {
 		JPlotsLayer xyl = new JXYLayer(x, y, colour, linewidth, linestyle); layers.add(xyl);
-		readLineParams(xyl, params); updateRange(xyl); }
+		readParams(xyl, params); updateRange(xyl); }
 	public void plot(double[] x, double[] y) {
 		this.plot(x, y, 0xff000000, 3d, "-", (Object)null); }
 	public void plot(double[] x, double[] y, int colour, double linewidth, String linestyle, Object... params) {
 		JPlotsLayer xyl = new JXYLayer(x, y, colour, linewidth, linestyle); layers.add(xyl);
-		readLineParams(xyl, params); updateRange(xyl); }
+		readParams(xyl, params); updateRange(xyl); }
 
 	public void scatter(float[] x, float[] y) {
 		this.scatter(x, y, 0xff000000, 1f, "c", (Object)null); }
 	public void scatter(float[] x, float[] y, int colour, float iconsize, String symbol, Object... params) {
 		JPlotsLayer scl = new JScatterLayer(x, y, colour, iconsize, symbol); layers.add(scl);
-		readLineParams(scl, params); updateRange(scl); }
+		readParams(scl, params); updateRange(scl); }
 	public void scatter(double[] x, double[] y) {
 		this.scatter(x, y, 0xff000000, 1d, "c", (Object)null); }
 	public void scatter(double[] x, double[] y, int colour, double iconsize, String symbol, Object... params) {
 		JPlotsLayer scl = new JScatterLayer(x, y, colour, iconsize, symbol); layers.add(scl);
-		readLineParams(scl, params); updateRange(scl); }
+		readParams(scl, params); updateRange(scl); }
 
 	public void axhline(float y) {
 		axhline(y, 0xff000000, 3f, "-"); }
@@ -304,7 +327,7 @@ public class JAxis {
 	//**** PRIVATE ***********************
 	//************************************
 	
-	private void readLineParams(JPlotsLayer layer, Object... params) {
+	private void readParams(JPlotsLayer layer, Object... params) {
 		if(params==null)
 			return;
 		int o=0;
@@ -312,31 +335,53 @@ public class JAxis {
 			if(params[o] instanceof String) {
 				String p = ((String) params[o]).toLowerCase();
 				boolean isunread = true;
-				if(isunread && "transform".equals(p) && o+1<params.length) {
-					layer.setSourceProjection((JProjection) params[o+1]); o++; isunread=false; }
-				if(isunread && "anglemode".equals(p) && o+1<params.length) {
-					layer.angleMode((String) params[o+1]); o++; isunread=false; }
-			} else {
-				System.err.println("[ERROR] Cannot interprete param "+o+": "+params[o]);
-			}
-			o++;
-		}
-	}
-	private void readContourParams(JPlotsLayer layer, Object... params) {
-		if(params==null)
-			return;
-		int o=0;
-		while(o<params.length) {
-			if(params[o] instanceof String) {
-				String p = ((String) params[0]).toLowerCase();
-				boolean isunread = true;
-				if(isunread && "transform".equals(p) && o+1<params.length) {
-					layer.setSourceProjection((JProjection) params[o+1]); o++; isunread=false; }
-				if(isunread && "linewidth".equals(p) && o+1<params.length) {
-					layer.setLinewidth(params[o+1] instanceof Float ? (float)params[o+1] : (double)params[o+1]);
-					o++; isunread=false; }
-				if(isunread && "".equals(p) && o+1<params.length) {
-					layer.setColourtable((JColourtable) params[o+1]); o++; isunread=false; }
+				if(isunread && ("tf".equals(p) || "transform".equals(p)) && o+1<params.length) {
+					layer.setSourceProjection((JProjection) params[o+1]);
+					o++; isunread=false;
+				}
+				if(isunread && ("am".equals(p) || "anglemode".equals(p)) && o+1<params.length) {
+					layer.angleMode((String) params[o+1]);
+					o++; isunread=false;
+				}
+				if(isunread && ("l".equals(p) || "lines".equals(p)) && o+1<params.length) {
+					layer.lines((boolean)params[o+1]);
+					o++; isunread=false;
+				}
+				if(isunread && ("ls".equals(p) || "linestyle".equals(p)) && o+1<params.length) {
+					layer.setLineStyle((String)params[o+1]);
+					o++; isunread=false;
+				}
+				if(isunread && ("lw".equals(p) || "linewidth".equals(p)) && o+1<params.length) {
+					layer.setLineWidth(params[o+1] instanceof Float ? (float)params[o+1] : (double)params[o+1]);
+					o++; isunread=false;
+				}
+				if(isunread && ("lc".equals(p) || "linecolor".equals(p) || "linecolour".equals(p)) && o+1<params.length) {
+					if(params[o+1] instanceof Integer) {
+						layer.setLineColour((int)params[o+1]);
+						o++; isunread=false;
+					} else if(params[o+1] instanceof int[]) {
+						layer.setLineColour((int[])params[o+1]);
+						o++; isunread=false;
+					}
+				}
+				if(isunread && ("ct".equals(p) || "colortable".equals(p) || "colourtable".equals(p)) && o+1<params.length) {
+					if(params[o+1] instanceof ColourSequenceJColourtable) {
+						layer.setColourtable((ColourSequenceJColourtable) params[o+1]);
+						o++; isunread=false;
+					} else
+					if(params[o+1] instanceof LinearSegmentedJColourtable) {
+						layer.setColourtable((LinearSegmentedJColourtable) params[o+1]);
+						o++; isunread=false;
+					} else
+					if(params[o+1] instanceof JColourtable){
+						layer.setColourtable((JColourtable) params[o+1]);
+						o++; isunread=false;
+					}
+				}
+				if(isunread && "invertXaxis".equals(p)) {
+					layer.invert("x", true); isunread=false; }
+				if(isunread && "invertYaxis".equals(p)) {
+					layer.invert("y", true); isunread=false; }
 			} else {
 				System.err.println("[ERROR] Cannot interprete param "+o+": "+params[o]);
 			}

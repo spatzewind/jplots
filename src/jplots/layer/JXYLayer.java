@@ -12,7 +12,6 @@ public class JXYLayer extends JPlotsLayer {
 	
 	private double[] xarrayx, yarrayy;
 	private int col;
-	private String ls;
 	
 	public JXYLayer(float[] x, float[] y, int colour, float linewidth, String linestyle) {
 		xarrayx = new double[x.length];
@@ -67,10 +66,10 @@ public class JXYLayer extends JPlotsLayer {
 					xy0 = ax.getGeoProjection().fromLATLONtoPROJ(xy0[0], xy0[1], false);
 					xy1 = ax.getGeoProjection().fromLATLONtoPROJ(xy1[0], xy1[1], false);
 				}
-				x1 = p[0]+xs*(xy0[0]-minX);
-				x2 = p[0]+xs*(xy1[0]-minX);
-				y1 = p[1]+ys*(maxY-xy0[1]);
-				y2 = p[1]+ys*(maxY-xy1[1]);
+				x1 = p[0]+xs*(invertAxisX ? maxX-xy0[0] : xy0[0]-minX);
+				x2 = p[0]+xs*(invertAxisX ? maxX-xy1[0] : xy1[0]-minX);
+				y1 = p[1]+ys*(invertAxisY ? xy0[1]-minY : maxY-xy0[1]);
+				y2 = p[1]+ys*(invertAxisY ? xy1[1]-minY : maxY-xy1[1]);
 				double dx = x2-x1, dy = y2-y1;
 				double l = Math.sqrt(dx*dx+dy*dy);
 				dx /= l; dy /= l;

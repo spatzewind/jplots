@@ -307,6 +307,18 @@ public class JPlot {
 		gca().contour(x, y, z, levels, params); }
 	public void contour(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
 		gca().contour(x, y, z, levels, params); }
+	public void contourf(float[] x, float[] y, float[][] z) {
+		gca().contourf(x,y,z); }
+	public void contourf(float[] x, float[] y, float[][] z, int levels, Object... params) {
+		gca().contourf(x, y, z, levels, params); }
+	public void contourf(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
+		gca().contourf(x, y, z, levels, params); }
+	public void contourf(double[] x, double[] y, double[][] z) {
+		gca().contourf(x,y,z); }
+	public void contourf(double[] x, double[] y, double[][] z, int levels, Object... params) {
+		gca().contourf(x, y, z, levels, params); }
+	public void contourf(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
+		gca().contourf(x, y, z, levels, params); }
 
 	public void predefImgShow(String predefined_images) {
 		gca().predefImgShow(predefined_images);

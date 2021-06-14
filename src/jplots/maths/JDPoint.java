@@ -69,6 +69,25 @@ public class JDPoint implements Comparable<JDPoint> {
 		}
 		return true;
 	}
+
+	public boolean equals(Object obj, double tolerance) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		JDPoint a = this;
+		JDPoint b = (JDPoint) obj;
+		if (Math.abs(a.x-b.x)>tolerance || Math.abs(a.y-b.y)>tolerance) {
+			return false;
+		}
+		return true;
+	}
 	
 	
 	

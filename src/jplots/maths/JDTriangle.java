@@ -2,7 +2,7 @@ package jplots.maths;
 
 import java.util.Arrays;
 
-public class JDTriangle implements Comparable<JDTriangle> {
+public class JDTriangle {
 
 	public int lev;
 	public JDPoint a;
@@ -30,7 +30,7 @@ public class JDTriangle implements Comparable<JDTriangle> {
 	
 	public void contourIntervalLevel(double[] intervals) {
 		JDPoint[] tmpP = { a, b, c };
-		int[] tmpL = {-9999, -9999, -9999};
+		int[] tmpL = {-1, -1, -1};
 		for(int c=0; c<3; c++) {
 			if(Double.isNaN(tmpP[c].value))
 				continue;
@@ -39,7 +39,12 @@ public class JDTriangle implements Comparable<JDTriangle> {
 				if(tmpP[c].value>intervals[l])
 					tmpL[c]++;
 		}
-		lev = (tmpL[0]+tmpL[1]+tmpL[2])/3;
+		lev = tmpL[0]+tmpL[1]+tmpL[2];
+		if(lev>=0) {
+			lev /= 3;
+		} else {
+			lev = -1;
+		}
 	}
 
 	@Override
@@ -62,11 +67,6 @@ public class JDTriangle implements Comparable<JDTriangle> {
 		hash = prime * hash + b.hashCode();
 		hash = prime * hash + c.hashCode();
 		return hash;
-	}
-
-	@Override
-	public int compareTo(JDTriangle p) {
-		return this.lev - p.lev;
 	}
 
 	@Override

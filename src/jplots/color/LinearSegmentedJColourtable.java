@@ -12,13 +12,18 @@ public class LinearSegmentedJColourtable extends JColourtable {
 		invalidColour   = nan;
 		linearColourPosition = new double[pos.length];
 		linearColourBounds = new int[pos.length-1][2];
+		double cpmin = Double.MAX_VALUE, cpmax = -Double.MAX_VALUE;
 		for(int c=0; c<pos.length; c++) {
-			linearColourPosition[c]  = pos[c];
+			if(pos[c]<cpmin) cpmin = pos[c];
+			if(pos[c]>cpmax) cpmax = pos[c];
 			if(c+1<pos.length) {
 				linearColourBounds[c][0] = cols[c][0];
 				linearColourBounds[c][1] = cols[c][1];
 			}
 		}
+		double cpf = 1d / (cpmax-cpmin);
+		for(int c=0; c<pos.length; c++)
+			linearColourPosition[c] = (pos[c] - cpmin) * cpf;
 	}
 	public int getColour(double percentage) {
 		if(Double.isNaN(percentage))
