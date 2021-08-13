@@ -2,7 +2,7 @@ import jplots.*;
 import jplots.color.*;
 import jplots.layer.*;
 
-int n = 125;
+int n = 25;
 JPlot plt;
 
 void setup() {
@@ -58,6 +58,7 @@ void newPlot() {
     ////float[][] zz = {{5f,3f},{2f,0f}};
     //float[][] zz = {{0f,2f},{3f,5f}};
     plt.clear();
-    plt.contourf(xx,yy,zz,15, "lines",true,"linewidth",3f,"linecolor",0xff7f0000);
+    plt.contourp(xx,yy,zz,15, "lines",true,"linewidth",3f,"linecolor",0xff7f0000);
+    plt.colourbar(); plt.debug(true);
     //plt.contour(xx,yy,zz,8);
 }

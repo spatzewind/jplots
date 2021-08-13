@@ -21,9 +21,11 @@ public abstract class JPlotsLayer {
 	double minX,maxX,minY,maxY;
 	double angleMode;
 	String ls;
+	String label;
 	PImage img;
 	JProjection inputProj;
 	JColourtable colourtable;
+	Object parallelArray;
 	
 	public JPlotsLayer() {
 		lw = 2d;
@@ -36,12 +38,14 @@ public abstract class JPlotsLayer {
 		maxY =  1d;
 		angleMode = 1d;
 		img = null;
+		label = "";
 		inputProj = new IdentityJProjection();
 		colourtable = JColourtable.pctables.get("default");
 		invertAxisX = false;
 		invertAxisY = false;
 		logAxisX = false;
 		logAxisY = false;
+		parallelArray = null;
 	}
 	
 	public void setRange(double xmin, double xmax, double ymin, double ymax) {
@@ -87,6 +91,14 @@ public abstract class JPlotsLayer {
 		if(ix) invertAxisX = _invert;
 		if(iy) invertAxisY = _invert;
 	}
+	public void addParallelArray(Object parallel) {
+		parallelArray = parallel; }
+	public void setLabel(String _l) {
+		label = _l; }
+	public String getLabel() {
+		return label; }
+	
+	public JColourtable getColourtable() { return colourtable; }
 	
 	public abstract void createRasterImg(JPlot plot, PGraphics g);
 	public abstract void createVectorImg(JAxis ax, int layernum, JGroupShape s);

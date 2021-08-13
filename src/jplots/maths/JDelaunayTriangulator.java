@@ -26,7 +26,7 @@ public class JDelaunayTriangulator {
 	private int[] hullTria;
 	private int[] hullHash;
 
-	private double minX, maxX, minY, maxY;
+	private double minX=-1d, maxX=1d, minY=-1d, maxY=1d;
 	private double i0x,i0y, i1x,i1y, i2x,i2y;
 	private double cx, cy;
 	private int   i0, i1, i2;

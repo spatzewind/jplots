@@ -48,7 +48,16 @@ public class JXYLayer extends JPlotsLayer {
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 		int[] p = ax.getSize();
 		JGroupShape xyShape = new JGroupShape();
-		JPlotShape.stroke(col); JPlotShape.strokeWeight((float)lw);
+		JPlotShape.strokeWeight((float)lw);
+		int[] cols = new int[xarrayx.length-1];
+		if(parallelArray!=null) {
+			if(parallelArray instanceof double[]) {
+				double[] pa = (double[]) parallelArray;
+				double pmin = JPlotMath.dmin(pa), pmax = JPlotMath.dmax(pa);
+				for(int i=0; i<cols.length; i++)
+					cols[i] = colourtable.getColour(0.5d*(pa[i]+pa[i+1]), pmin, pmax);
+			}
+		}
 		double lln=1d, llf=0d, lpn=0d, lpf=0d, loff = 0d;
 		if("-".equals(ls)) { lln=1000*lw; llf=0; lpn=0; lpf=0; }
 		if(".".equals(ls)) { lln=0; llf=0; lpn=1*lw; lpf=3*lw; }
@@ -57,60 +66,63 @@ public class JXYLayer extends JPlotsLayer {
 		double xs = p[2]/(maxX-minX), ys = p[3]/(maxY-minY);
 		int li = 0;
 		double x1,x2,y1,y2;
-		for(int i=0; i+1<xarrayx.length; i++)
-			if(Double.isFinite(xarrayx[i]) && Double.isFinite(xarrayx[i+1]) &&
-					Double.isFinite(yarrayy[i]) && Double.isFinite(yarrayy[i+1])) {
-				double[] xy0 = inputProj.fromPROJtoLATLON(xarrayx[i  ], yarrayy[i  ], false);
-				double[] xy1 = inputProj.fromPROJtoLATLON(xarrayx[i+1], yarrayy[i+1], false);
-				if(ax.isGeoAxis()) {
-					xy0 = ax.getGeoProjection().fromLATLONtoPROJ(xy0[0], xy0[1], false);
-					xy1 = ax.getGeoProjection().fromLATLONtoPROJ(xy1[0], xy1[1], false);
-				}
-				x1 = p[0]+xs*(invertAxisX ? maxX-xy0[0] : xy0[0]-minX);
-				x2 = p[0]+xs*(invertAxisX ? maxX-xy1[0] : xy1[0]-minX);
-				y1 = p[1]+ys*(invertAxisY ? xy0[1]-minY : maxY-xy0[1]);
-				y2 = p[1]+ys*(invertAxisY ? xy1[1]-minY : maxY-xy1[1]);
-				double dx = x2-x1, dy = y2-y1;
-				double l = Math.sqrt(dx*dx+dy*dy);
-				dx /= l; dy /= l;
-				double lpos = 0d, ldif = 0d;
-				while(lpos<l) {
-					ldif = 0d;
-					switch(li) {
-						case 0: if(lln==0d) break; ldif = Math.min(l-lpos, lln-loff); break;
-						case 1: if(llf==0d) break; ldif = Math.min(l-lpos, llf-loff); break;
-						case 2: if(lpn==0d) break; ldif = Math.min(l-lpos, lpn-loff); break;
-						case 3: if(lpf==0d) break; ldif = Math.min(l-lpos, lpf-loff); break;
-					}
-					float xf1 = (float)(x1+lpos*dx), yf1 = (float)(y1+lpos*dy),
-							  xf2 = (float)(x1+(lpos+ldif)*dx), yf2 = (float)(y1+(lpos+ldif)*dy);
-					if(xf1<p[0]      && xf2>=p[0])      { yf1 = JPlotMath.flerp(p[0],      xf1, xf2, yf1, yf2); }
-					if(xf1>p[0]+p[2] && xf2<=p[0]+p[2]) { yf1 = JPlotMath.flerp(p[0]+p[2], xf1, xf2, yf1, yf2); }
-					if(xf2<p[0]      && xf1>=p[0])      { yf2 = JPlotMath.flerp(p[0],      xf1, xf2, yf1, yf2); }
-					if(xf2>p[0]+p[2] && xf1<=p[0]+p[2]) { yf2 = JPlotMath.flerp(p[0]+p[2], xf1, xf2, yf1, yf2); }
-					
-					if(yf1<p[1]      && yf2>=p[1])      { xf1 = JPlotMath.flerp(p[1],      yf1, yf2, xf1, xf2); }
-					if(yf1>p[1]+p[3] && yf2<=p[1]+p[3]) { xf1 = JPlotMath.flerp(p[1]+p[3], yf1, yf2, xf1, xf2); }
-					if(yf2<p[1]      && yf1>=p[1])      { xf2 = JPlotMath.flerp(p[1],      yf1, yf2, xf1, xf2); }
-					if(yf2>p[1]+p[3] && yf1<=p[1]+p[3]) { xf2 = JPlotMath.flerp(p[1]+p[3], yf1, yf2, xf1, xf2); }
-					if(xf1>=p[0] && xf1<=p[0]+p[2] && xf2>=p[0] && xf2<=p[0]+p[2] &&
-							yf1>=p[1] && yf1<=p[1]+p[3] && yf2>=p[1] && yf2<=p[1]+p[3]) {
-						if(li%2==0 && ldif>0d)
-							xyShape.addChild(new JLineShape(xf1,yf1,xf2,yf2));
-						loff += ldif;
-						switch(li) {
-							case 0: if(loff>=lln) {loff -= lln; li=1; } break;
-							case 1: if(loff>=llf) {loff -= llf; li=2; } break;
-							case 2: if(loff>=lpn) {loff -= lpn; li=3; } break;
-							case 3: if(loff>=lpf) {loff -= lpf; li=0; } break;
-						}
-					}
-					lpos += ldif;
-				}
-			} else {
-				loff = 0d;
-				li = 0;
+		for(int i=0; i+1<xarrayx.length; i++) {
+			if(!(Double.isFinite(xarrayx[i]) && Double.isFinite(xarrayx[i+1]) &&
+					Double.isFinite(yarrayy[i]) && Double.isFinite(yarrayy[i+1]))) {
+//				loff = 0d;
+//				li = 0;
+				continue;
 			}
+			double[] xy0 = inputProj.fromPROJtoLATLON(xarrayx[i  ], yarrayy[i  ], false);
+			double[] xy1 = inputProj.fromPROJtoLATLON(xarrayx[i+1], yarrayy[i+1], false);
+			if(ax.isGeoAxis()) {
+				xy0 = ax.getGeoProjection().fromLATLONtoPROJ(xy0[0], xy0[1], false);
+				xy1 = ax.getGeoProjection().fromLATLONtoPROJ(xy1[0], xy1[1], false);
+			}
+			x1 = p[0]+xs*(invertAxisX ? maxX-xy0[0] : xy0[0]-minX);
+			x2 = p[0]+xs*(invertAxisX ? maxX-xy1[0] : xy1[0]-minX);
+			y1 = p[1]+ys*(invertAxisY ? xy0[1]-minY : maxY-xy0[1]);
+			y2 = p[1]+ys*(invertAxisY ? xy1[1]-minY : maxY-xy1[1]);
+			double dx = x2-x1, dy = y2-y1;
+			double l = Math.sqrt(dx*dx+dy*dy);
+			dx /= l; dy /= l;
+			double lpos = 0d, ldif = 0d;
+			JPlotShape.stroke(col);
+			if(parallelArray!=null) JPlotShape.stroke(cols[i]);
+			while(lpos<l) {
+				ldif = 0d;
+				switch(li) {
+					case 0: if(lln==0d) break; ldif = Math.min(l-lpos, lln-loff); break;
+					case 1: if(llf==0d) break; ldif = Math.min(l-lpos, llf-loff); break;
+					case 2: if(lpn==0d) break; ldif = Math.min(l-lpos, lpn-loff); break;
+					case 3: if(lpf==0d) break; ldif = Math.min(l-lpos, lpf-loff); break;
+				}
+				float xf1 = (float)(x1+lpos*dx), yf1 = (float)(y1+lpos*dy),
+						  xf2 = (float)(x1+(lpos+ldif)*dx), yf2 = (float)(y1+(lpos+ldif)*dy);
+				if(xf1<p[0]      && xf2>=p[0])      { yf1 = JPlotMath.flerp(p[0],      xf1, xf2, yf1, yf2); }
+				if(xf1>p[0]+p[2] && xf2<=p[0]+p[2]) { yf1 = JPlotMath.flerp(p[0]+p[2], xf1, xf2, yf1, yf2); }
+				if(xf2<p[0]      && xf1>=p[0])      { yf2 = JPlotMath.flerp(p[0],      xf1, xf2, yf1, yf2); }
+				if(xf2>p[0]+p[2] && xf1<=p[0]+p[2]) { yf2 = JPlotMath.flerp(p[0]+p[2], xf1, xf2, yf1, yf2); }
+				
+				if(yf1<p[1]      && yf2>=p[1])      { xf1 = JPlotMath.flerp(p[1],      yf1, yf2, xf1, xf2); }
+				if(yf1>p[1]+p[3] && yf2<=p[1]+p[3]) { xf1 = JPlotMath.flerp(p[1]+p[3], yf1, yf2, xf1, xf2); }
+				if(yf2<p[1]      && yf1>=p[1])      { xf2 = JPlotMath.flerp(p[1],      yf1, yf2, xf1, xf2); }
+				if(yf2>p[1]+p[3] && yf1<=p[1]+p[3]) { xf2 = JPlotMath.flerp(p[1]+p[3], yf1, yf2, xf1, xf2); }
+				if(xf1>=p[0] && xf1<=p[0]+p[2] && xf2>=p[0] && xf2<=p[0]+p[2] &&
+						yf1>=p[1] && yf1<=p[1]+p[3] && yf2>=p[1] && yf2<=p[1]+p[3]) {
+					if(li%2==0 && ldif>0d)
+						xyShape.addChild(new JLineShape(xf1,yf1,xf2,yf2));
+					loff += ldif;
+					switch(li) {
+						case 0: if(loff>=lln) {loff -= lln; li=1; } break;
+						case 1: if(loff>=llf) {loff -= llf; li=2; } break;
+						case 2: if(loff>=lpn) {loff -= lpn; li=3; } break;
+						case 3: if(loff>=lpf) {loff -= lpf; li=0; } break;
+					}
+				}
+				lpos += ldif;
+			}
+		}
 		s.addChild(xyShape);
 	}
 

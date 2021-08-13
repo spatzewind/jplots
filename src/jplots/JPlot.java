@@ -1,8 +1,10 @@
 package jplots;
 
-import jplots.shapes.JGroupShape;
+import jplots.color.JColourbar;
+import jplots.shapes.JPlotShape;
 import jplots.transform.JProjection;
 import processing.core.*;
+import processing.data.IntList;
 
 /**
  * This is a template class and can be used to start a new processing Library.
@@ -25,10 +27,10 @@ public class JPlot {
 
 	private PApplet myParent;
 	private PGraphics plotImg;
-	private JGroupShape plotShp;
 
 	private boolean img_is_created, useDebug;
 	private int width, height, lastAxisNum;
+	private int n_cols, n_rows;
 	private JAxis[] axes;
 
 
@@ -65,9 +67,9 @@ public class JPlot {
 	//************************************
 	
 	/**
-	 * starts the new figure/plot with specified width and height in inch
+	 * starts the new figure/plot width standard width and height about 1.7067inch x 1.7067inch and 300dpi
 	 * 
-	 * @return the PPlot object
+	 * @return the JPlot object
 	 */
 	public JPlot figure() { return subplots(1.7066666667d, 1.7066666667d, 1, 1); }
 	/**
@@ -75,16 +77,15 @@ public class JPlot {
 	 * 
 	 * @param width  width of figure in inch
 	 * @param height height of figure in inch
-	 * @return the PPlot object
+	 * @return the JPlot object
 	 */
 	public JPlot figure(double width, double height) { return subplots(width, height, 1, 1); }
-
 	/**
-	 * starts the new figure/plot
+	 * starts the new figure/plot width standard width and height about 1.7067inch x 1.7067inch and 300dpi
 	 * 
 	 * @param nrows  number of rows for array of diagrams
 	 * @param ncols  number of columns for array of diagrams
-	 * @return the PPlot object
+	 * @return the JPlot object
 	 */
 	public JPlot subplots(int nrows, int ncols) { return subplots(1.7066666667d, 1.7066666667d, nrows, ncols); }
 	/**
@@ -94,7 +95,7 @@ public class JPlot {
 	 * @param height height of figure in inch
 	 * @param nrows  number of rows for array of diagrams
 	 * @param ncols  number of columns for array of diagrams
-	 * @return the PPlot object
+	 * @return the JPlot object
 	 */
 	public JPlot subplots(double width, double height, int nrows, int ncols) {
 		this.width  = (int) (dpi * width);
@@ -108,6 +109,8 @@ public class JPlot {
 		double hs = 1d / (0.25d+(nrows-1)*1.5d+1.25d);
 		int pawid = (int) (dpi * width * ws);
 		int pahei = (int) (dpi * height * hs);
+		n_rows = nrows;
+		n_cols = ncols;
 		for(int r=0; r<nrows; r++) {
 			int py = (int) (dpi * height * (0.25d+1.5d*r) * hs);
 			for(int c=0; c<ncols; c++) {
@@ -119,13 +122,13 @@ public class JPlot {
 		return this;
 	}
 	/**
-	 * add new PAxis object as a subplot in the PPlot object
+	 * add new JAxis object as a subplot in the JPlot object
 	 * 
 	 * @param pos_x  left horizontal position relative to figure width
 	 * @param pos_y  top vertical position relative to figure height
 	 * @param width  width relative to the figure width
 	 * @param height height relative to the figure height
-	 * @return the PPlot object
+	 * @return the JPlot object
 	 */
 	public JPlot addSubplot(double pos_x, double pos_y, double width, double height) {
 		JAxis[] tempa = new JAxis[axes.length+1];
@@ -142,11 +145,95 @@ public class JPlot {
 			System.out.println("[DEBUG] addSubplot: "+axes.length+" PAxis-objects");
 		return this;
 	}
-
-	public JPlot setGeoProjection(JProjection proj) {
-		gca().setGeoProjection(proj);
+	/**
+	 * add new JAxis object as a subplot in the JPlot object
+	 * 
+	 * @param axis new JAxis object
+	 * @return the JPlot object
+	 */
+	public JPlot addSubplot(JAxis axis) {
+		JAxis[] tempa = new JAxis[axes.length+1];
+		for(int a=0; a<axes.length; a++)
+			tempa[a] = axes[a];
+		tempa[axes.length] = axis;
+		axes = new JAxis[tempa.length];
+		for(int a=0; a<axes.length; a++)
+			axes[a] = tempa[a];
+		lastAxisNum = axes.length-1;
+		if(useDebug)
+			System.out.println("[DEBUG] addSubplot: "+axes.length+" PAxis-objects");
 		return this;
 	}
+	/**
+	 * removes subplot with indices a
+	 * 
+	 * @param a  indicex of subplot
+	 * @return this JPlot object
+	 */
+	public JPlot removeSubplots(int... a) {
+		IntList il = new IntList(a);
+		for(int ai=il.size()-1; ai>=0; ai--) {
+			boolean isDublicate = false;
+			for(int aj=0; aj<ai && !isDublicate; aj++)
+				if(il.get(ai)==il.get(aj))
+					isDublicate = true;
+			if(isDublicate || il.get(ai)>=n_rows*n_cols || il.get(ai)<0)
+				il.remove(ai);
+		}
+		il.sort();
+		if(useDebug)
+			System.out.println(il.toString());
+		int[] srcIdx = new int[axes.length-il.size()];
+		for(int ai=0; ai<srcIdx.length; ai++)
+			srcIdx[ai] = ai;
+		for(int aj: il)
+			for(int ai=0; ai<srcIdx.length; ai++)
+				if(srcIdx[ai]>=aj)
+					srcIdx[ai]++;
+		JAxis[] tempa = new JAxis[srcIdx.length];
+		for(int ai=0; ai<tempa.length; ai++) {
+			tempa[ai] = axes[srcIdx[ai]];
+		}
+		axes = new JAxis[tempa.length];
+		for(int ai=0; ai<axes.length; ai++)
+			axes[ai] = tempa[ai];
+		lastAxisNum = axes.length-1;
+		if(useDebug)
+			System.out.println("[DEBUG] addSubplot: "+axes.length+" PAxis-objects");
+		return this;
+	}
+	/**
+	 * set spacing between different subplots in the plot
+	 * 
+	 * @param wspacing horizontal spacing as fraction of width of subplots
+	 * @param hspacing vertical spacing as fraction of height of subplots
+	 * @return this JPlot object
+	 */
+	public JPlot setSpacing(double wspacing, double hspacing) {
+		if(axes.length!=n_rows*n_cols) {
+			System.err.println("JAxis-configuration altered, cannot reorder images!");
+			return this;
+		}
+		double ws = 1d / (0.5d*wspacing+(n_cols-1)*(1.0d+wspacing)+1.0d+0.5d*wspacing);
+		double hs = 1d / (0.5d*hspacing+(n_rows-1)*(1.0d+hspacing)+1.0d+0.5d*hspacing);
+		int pawid = (int) (width * ws+0.1d);
+		int pahei = (int) (height * hs+0.1d);
+		for(int r=0; r<n_rows; r++) {
+			int py = (int) (height * (0.5d*hspacing+(1.0d+hspacing)*r) * hs + 0.1d);
+			for(int c=0; c<n_cols; c++) {
+				int px = (int) (width * (0.5d*wspacing+(1.0d+wspacing)*c) * ws + 0.1d);
+				this.axes[r*n_cols+c].setPositionAndSize(px,py,pawid,pahei);
+			}
+		}
+		return this;
+	}
+	
+	public JPlot setGeoProjection(JProjection proj) {
+		gca().setGeoProjection(proj);
+		return this; }
+	public JPlot setGeoProjection(JProjection proj, int axis_num) {
+		ga(axis_num).setGeoProjection(proj);
+		return this; }
 	
 	/**
 	 * creates image of the PPlot -- the figure
@@ -165,6 +252,7 @@ public class JPlot {
 		}
 		plotImg.beginDraw();
 		plotImg.clear();
+		plotImg.textSize(200);
 		createImage(plotImg);
 		if(useDebug)
 			System.out.println("[DEBUG]   - end drawing");
@@ -173,12 +261,24 @@ public class JPlot {
 		return this;
 	}
 	private JPlot createImage(PGraphics g) {
-		plotShp = new JGroupShape();
 		if(useDebug)
 			System.out.println("[DEBUG]   - add "+axes.length+" subplots to plotting queue");
-		for(JAxis ax: axes)
-			plotShp.addChild(ax.createPlot(myParent,width,height));
-		plotShp.draw(this, g);
+		for(JAxis ax: axes) {
+			if(ax instanceof JColourbar)
+				continue;
+			JPlotShape plotShp = ax.createPlot(myParent,width,height);
+			if(ax.getFont()!=null)
+				g.textFont(ax.getFont());
+			plotShp.draw(this, g);
+		}
+		for(JAxis ax: axes) {
+			if(ax instanceof JColourbar) {
+				JPlotShape plotShp = ax.createPlot(myParent,width,height);
+				if(ax.getFont()!=null)
+					g.textFont(ax.getFont());
+				plotShp.draw(this, g);
+			}
+		}
 		return this;
 	}
 
@@ -214,8 +314,27 @@ public class JPlot {
 	 * also all configurations except number and position of axes will be reseted
 	 */
 	public JPlot clear() {
-		for(JAxis ax: axes)
+		int cb_count = 0;
+		for(JAxis ax: axes) {
+			if(ax instanceof JColourbar)
+				cb_count++;
 			ax.clear();
+		}
+		if(cb_count>0) {
+			JAxis[] tempa = new JAxis[axes.length-cb_count];
+			cb_count = 0;
+			for(int a=0; a<axes.length; a++) {
+				if(axes[a] instanceof JColourbar) {
+					cb_count++;
+					continue;
+				}
+				tempa[a-cb_count] = axes[a];
+			}
+			axes = new JAxis[tempa.length];
+			for(int a=0; a<axes.length; a++)
+				axes[a] = tempa[a];
+			lastAxisNum = axes.length-1;
+		}
 		redraw(true);
 		return this;
 	}
@@ -301,11 +420,23 @@ public class JPlot {
 		gca().contour(x, y, z, levels, params); }
 	public void contour(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
 		gca().contour(x, y, z, levels, params); }
+	public void contour(float[][] x, float[][] y, float[][] z) {
+		gca().contour(x,y,z); }
+	public void contour(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
+		gca().contour(x, y, z, levels, params); }
+	public void contour(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
+		gca().contour(x, y, z, levels, params); }
 	public void contour(double[] x, double[] y, double[][] z) {
 		gca().contour(x,y,z); }
 	public void contour(double[] x, double[] y, double[][] z, int levels, Object... params) {
 		gca().contour(x, y, z, levels, params); }
 	public void contour(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
+		gca().contour(x, y, z, levels, params); }
+	public void contour(double[][] x, double[][] y, double[][] z) {
+		gca().contour(x,y,z); }
+	public void contour(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
+		gca().contour(x, y, z, levels, params); }
+	public void contour(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
 		gca().contour(x, y, z, levels, params); }
 	public void contourf(float[] x, float[] y, float[][] z) {
 		gca().contourf(x,y,z); }
@@ -313,12 +444,62 @@ public class JPlot {
 		gca().contourf(x, y, z, levels, params); }
 	public void contourf(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
 		gca().contourf(x, y, z, levels, params); }
+	public void contourf(float[][] x, float[][] y, float[][] z) {
+		gca().contourf(x,y,z); }
+	public void contourf(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
+		gca().contourf(x, y, z, levels, params); }
+	public void contourf(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
+		gca().contourf(x, y, z, levels, params); }
 	public void contourf(double[] x, double[] y, double[][] z) {
 		gca().contourf(x,y,z); }
 	public void contourf(double[] x, double[] y, double[][] z, int levels, Object... params) {
 		gca().contourf(x, y, z, levels, params); }
 	public void contourf(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
 		gca().contourf(x, y, z, levels, params); }
+	public void contourf(double[][] x, double[][] y, double[][] z) {
+		gca().contourf(x,y,z); }
+	public void contourf(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
+		gca().contourf(x, y, z, levels, params); }
+	public void contourf(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
+		gca().contourf(x, y, z, levels, params); }
+	public void contourp(float[] x, float[] y, float[][] z) {
+		gca().contourp(x,y,z); }
+	public void contourp(float[] x, float[] y, float[][] z, int levels, Object... params) {
+		gca().contourp(x, y, z, levels, params); }
+	public void contourp(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
+		gca().contourp(x, y, z, levels, params); }
+	public void contourp(float[][] x, float[][] y, float[][] z) {
+		gca().contourp(x,y,z); }
+	public void contourp(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
+		gca().contourp(x, y, z, levels, params); }
+	public void contourp(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
+		gca().contourp(x, y, z, levels, params); }
+	public void contourp(double[] x, double[] y, double[][] z) {
+		gca().contourp(x,y,z); }
+	public void contourp(double[] x, double[] y, double[][] z, int levels, Object... params) {
+		gca().contourp(x, y, z, levels, params); }
+	public void contourp(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
+		gca().contourp(x, y, z, levels, params); }
+	public void contourp(double[][] x, double[][] y, double[][] z) {
+		gca().contourp(x,y,z); }
+	public void contourp(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
+		gca().contourp(x, y, z, levels, params); }
+	public void contourp(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
+		gca().contourp(x, y, z, levels, params); }
+
+	public void coastLines() {
+		gca().coastLines(); }
+	public void coastLines(int resolution) {
+		gca().coastLines(resolution); }
+
+	public void colourbar() {
+		colourbar(gca(), ""); }
+	public void colourbar(JAxis axis) {
+		colourbar(axis, ""); }
+	public void colourbar(String name) {
+		colourbar(gca(), name); }
+	public void colourbar(JAxis axis, String name) {
+		addSubplot(new JColourbar(axis, name)); }
 
 	public void predefImgShow(String predefined_images) {
 		gca().predefImgShow(predefined_images);
@@ -347,5 +528,7 @@ public class JPlot {
 		gca().setXTitle(xtitle); }
 	public void setYTitle(String ytitle) {
 		gca().setYTitle(ytitle); }
+	public void setTitle(String _title) {
+		gca().setTitle(_title); }
 }
 

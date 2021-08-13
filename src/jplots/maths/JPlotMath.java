@@ -29,42 +29,58 @@ public class JPlotMath {
 	public static float fmin(float[] arr) {
 		float fm = Float.POSITIVE_INFINITY;
 		for(float f: arr) if(Float.isFinite(f) && f<fm) fm = f;
+		if(fm>0 && Float.isInfinite(fm))
+			return Float.NaN;
 		return fm;
 	}
 	public static float fmax(float[] arr) {
 		float fm = Float.NEGATIVE_INFINITY;
 		for(float f: arr) if(Float.isFinite(f) && f>fm) fm = f;
+		if(fm<0 && Float.isInfinite(fm))
+			return Float.NaN;
 		return fm;
 	}
 	public static float fmin(float[][] arr) {
 		float fm = Float.POSITIVE_INFINITY;
 		for(float[] fa: arr) for(float f: fa) if(Float.isFinite(f) && f<fm) fm = f;
+		if(fm>0 && Float.isInfinite(fm))
+			return Float.NaN;
 		return fm;
 	}
 	public static float fmax(float[][] arr) {
 		float fm = Float.NEGATIVE_INFINITY;
 		for(float[] fa: arr) for(float f: fa) if(Float.isFinite(f) && f>fm) fm = f;
+		if(fm<0 && Float.isInfinite(fm))
+			return Float.NaN;
 		return fm;
 	}
 	
 	public static double dmin(double[] arr) {
 		double dm = Double.POSITIVE_INFINITY;
 		for(double d: arr) if(Double.isFinite(d) && d<dm) dm = d;
+		if(dm>0 && Double.isInfinite(dm))
+			return Double.NaN;
 		return dm;
 	}
 	public static double dmax(double[] arr) {
 		double dm = Double.NEGATIVE_INFINITY;
 		for(double d: arr) if(Double.isFinite(d) && d>dm) dm = d;
+		if(dm<0 && Double.isInfinite(dm))
+			return Double.NaN;
 		return dm;
 	}
 	public static double dmin(double[][] arr) {
 		double dm = Double.POSITIVE_INFINITY;
 		for(double[] da: arr) for(double d: da) if(Double.isFinite(d) && d<dm) dm = d;
+		if(dm>0 && Double.isInfinite(dm))
+			return Double.NaN;
 		return dm;
 	}
 	public static double dmax(double[][] arr) {
 		double dm = Double.NEGATIVE_INFINITY;
 		for(double[] da: arr) for(double d: da) if(Double.isFinite(d) && d>dm) dm = d;
+		if(dm<0 && Double.isInfinite(dm))
+			return Double.NaN;
 		return dm;
 	}
 
@@ -88,29 +104,34 @@ public class JPlotMath {
 	}
 
 	public static double[] optimalLinearTicks(double vmin, double vmax) {
+		return optimalLinearTicks(vmin, vmax, 10);
+	}
+	public static double[] optimalLinearTicks(double vmin, double vmax, int maxTickCount) {
 		double vin = Math.min(vmin,vmax), vax = Math.max(vmin,vmax);
-		double p10 = Math.log(vax-vin) / Math.log(10d);
-		int p10i = (int) p10 - (p10<0d ? 1 : 0);
-		double f10 = 1d;
+		double p10 = Math.log10(Math.max(vax, -vin))/3d;
+		int p10i = (int) (p10) - (p10<0d ? 1 : 0);
+		if(p10i==-1) p10i = 0;
+		p10i *= 3;
 		p10 = Math.pow(10d, p10i);
+		double f10 = 1d;
 		double vIn = vin/p10, vAx = vax/p10;
-		while(vAx-vIn<1d) {
-			p10i--; p10 /= 10d; vIn *= 10d; vAx *= 10d; }
-		if(vAx-vIn<6d) {
-			f10 = 0.5d; vIn *= 2d; vAx *= 2d; }
-		if(vAx-vIn<6d) {
-			f10 = 0.4d; vIn *= 1.25d; vAx *= 1.25d; }
-		if(vAx-vIn<6d) {
-			f10 = 0.2d; vIn *= 2d; vAx *= 2d; }
-		int p10o = Math.abs(p10i)%3;
-		p10o = p10i>=-3&&p10i<0 ? 0 : p10i<0 ? 2-p10o : p10o;
-		switch(p10o) {
-			default:
-			case 0: break;
-			case 1: p10 /=  10d; p10i -= 1; f10 *=  10d; break;
-			case 2: p10 /= 100d; p10i -= 2; f10 *= 100d; break;
+		while(vAx-vIn>maxTickCount+0.00000001d) {
+			f10 *= 10d; vIn /= 10d; vAx /= 10d; }
+		while(true) {
+			if(vAx-vIn<=0.5d*maxTickCount+0.00000001d) {
+				f10 *= 0.5d; vIn *= 2d; vAx *= 2d;
+			} else { break; }
+			if(vAx-vIn<=0.8d*maxTickCount+0.00000001d) {
+				f10 *= 0.8d; vIn *= 1.25d; vAx *= 1.25d;
+			} else { break; }
+			if(vAx-vIn<=0.5d*maxTickCount+0.00000001d) {
+				f10 *= 0.5d; vIn *= 2d; vAx *= 2d;
+			} else { break; }
+			if(vAx-vIn<=0.5d*maxTickCount+0.00000001d) {
+				f10 *= 0.5d; vIn *= 2d; vAx *= 2d;
+			} else { break; }
 		}
-		int vS = (int) vIn - (vIn<0d ? 1 : 0), vE = (int) vAx - (vAx<0d ? 1 : 0);
+		int vS = (int) vIn - (vIn<0d ? 1 : 0), vE = (int) vAx + (vAx<0d ? 0 : 1);
 		if(vS>vE) { int vT = vS; vS = vE; vE = vT; }
 		double[] ticks = new double[vE+3-vS];
 		ticks[0] = p10;

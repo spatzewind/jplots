@@ -12,11 +12,14 @@ import javax.imageio.ImageIO;
 import jplots.color.ColourSequenceJColourtable;
 import jplots.color.JColourtable;
 import jplots.color.LinearSegmentedJColourtable;
+import jplots.helper.FileLoader;
 import jplots.layer.JContourLayer;
 import jplots.layer.JImageLayer;
+import jplots.layer.JLineLayer;
 import jplots.layer.JPlotsLayer;
 import jplots.layer.JScatterLayer;
 import jplots.layer.JXYLayer;
+import jplots.layer.JShapesLayer;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
@@ -32,18 +35,18 @@ public class JAxis {
 	
 	private static Map<String, PImage> loadedPreDefImgs = new HashMap<>();
 
-	private JPlot pplot;
+	protected JPlot pplot;
 	private boolean xRangeFix,yRangeFix, isGeoAxis;
-	private boolean xAxOn, yAxOn, xGrdOn, yGrdOn;
-	private int px, py, pw, ph;
+	private boolean xAxOn, yAxOn, xGrdOn, yGrdOn, xTkOn, yTkOn, xAxInv, yAxInv;
+	protected int px, py, pw, ph;
 	private double minX,maxX,minY,maxY;
-	private double txtsize;
-	private String titleX, titleY;
+	protected double txtsize;
+	private String titleX, titleY, titleP;
 	private List<JPlotsLayer> layers;
-	private PFont pfont;
+	protected PFont pfont;
 	private JProjection projection;
 	
-	JAxis(JPlot plot, int pos_x, int pos_y, int width, int height) {
+	public JAxis(JPlot plot, int pos_x, int pos_y, int width, int height) {
 		pplot = plot;
 		px = pos_x;
 		py = pos_y;
@@ -61,6 +64,10 @@ public class JAxis {
 		yAxOn = true;
 		xGrdOn = false;
 		yGrdOn = false;
+		xTkOn = true;
+		yTkOn = true;
+		xAxInv = false;
+		yAxInv = false;
 		minX = -1d;
 		maxX =  1d;
 		minY = -1d;
@@ -68,6 +75,7 @@ public class JAxis {
 		txtsize = 300d*10d/72d;
 		titleX = "";
 		titleY = "";
+		titleP = "";
 		layers.clear();
 		projection = new IdentityJProjection();
 	}
@@ -81,42 +89,123 @@ public class JAxis {
 	public void contour(float[] x, float[] y, float[][] z) {
 		this.contour(x, y, z, 10, (Object[])null); }
 	public void contour(float[] x, float[] y, float[][] z, int levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, JColourtable.pctables.get("default"), 2.0f, true, false);
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, JColourtable.pctables.get("default"), 2.0f, true, false, false);
 		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
 	}
 	public void contour(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, true, false);
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, true, false, false);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contour(float[][] x, float[][] y, float[][] z) {
+		this.contour(x, y, z, 10, (Object[])null); }
+	public void contour(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, JColourtable.pctables.get("default"), 2.0f, true, false, false);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contour(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, true, false, false);
 		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
 	}
 	public void contour(double[] x, double[] y, double[][] z) {
 		this.contour(x, y, z, 10, (Object[])null); }
 	public void contour(double[] x, double[] y, double[][] z, int levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, JColourtable.pctables.get("default"), 2.0d, true, false);
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, JColourtable.pctables.get("default"), 2.0d, true, false, false);
 		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
 	}
 	public void contour(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, true, false);
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, true, false, false);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contour(double[][] x, double[][] y, double[][] z) {
+		this.contour(x, y, z, 10, (Object[])null); }
+	public void contour(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, JColourtable.pctables.get("default"), 2.0d, true, false, false);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contour(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, true, false, false);
 		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
 	}
 
 	public void contourf(float[] x, float[] y, float[][] z) {
 		this.contourf(x, y, z, 10, (Object[])null); }
 	public void contourf(float[] x, float[] y, float[][] z, int levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, JColourtable.pctables.get("default"), 2.0f, false, true);
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, JColourtable.pctables.get("default"), 2.0f, false, true, false);
 		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
 	}
 	public void contourf(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, false, true);
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, false, true, false);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourf(float[][] x, float[][] y, float[][] z) {
+		this.contourf(x, y, z, 10, (Object[])null); }
+	public void contourf(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, JColourtable.pctables.get("default"), 2.0f, false, true, false);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourf(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, false, true, false);
 		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
 	}
 	public void contourf(double[] x, double[] y, double[][] z) {
 		this.contourf(x, y, z, 10, (Object[])null); }
 	public void contourf(double[] x, double[] y, double[][] z, int levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, JColourtable.pctables.get("default"), 2.0d, false, true);
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, JColourtable.pctables.get("default"), 2.0d, false, true, false);
 		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
 	}
 	public void contourf(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, false, false);
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, false, true, false);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourf(double[][] x, double[][] y, double[][] z) {
+		this.contourf(x, y, z, 10, (Object[])null); }
+	public void contourf(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, JColourtable.pctables.get("default"), 2.0d, false, true, false);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourf(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, false, true, false);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+
+	public void contourp(float[] x, float[] y, float[][] z) {
+		this.contourf(x, y, z, 10, (Object[])null); }
+	public void contourp(float[] x, float[] y, float[][] z, int levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, JColourtable.pctables.get("default"), 2.0f, false, true, true);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourp(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, false, true, true);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourp(float[][] x, float[][] y, float[][] z) {
+		this.contourf(x, y, z, 10, (Object[])null); }
+	public void contourp(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, JColourtable.pctables.get("default"), 2.0f, false, true, true);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourp(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, false, true, true);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourp(double[] x, double[] y, double[][] z) {
+		this.contourf(x, y, z, 10, (Object[])null); }
+	public void contourp(double[] x, double[] y, double[][] z, int levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, JColourtable.pctables.get("default"), 2.0d, false, true, true);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourp(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, false, true, true);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourp(double[][] x, double[][] y, double[][] z) {
+		this.contourf(x, y, z, 10, (Object[])null); }
+	public void contourp(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, JColourtable.pctables.get("default"), 2.0d, false, true, true);
+		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
+	}
+	public void contourp(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
+		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, false, true, true);
 		layers.add(cnl); readParams(cnl, params); updateRange(cnl);
 	}
 
@@ -145,35 +234,41 @@ public class JAxis {
 	public void axhline(float y) {
 		axhline(y, 0xff000000, 3f, "-"); }
 	public void axhline(float y, int colour, float linewidth, String linestyle) {
-		JPlotsLayer xyl = new JXYLayer(new double[] {-100d*JProjection.EARTH_RADIUS_MEAN,100d*JProjection.EARTH_RADIUS_MEAN},
-				new double[] {y,y}, colour, linewidth, linestyle); layers.add(xyl);
+		JPlotsLayer xyl = new JLineLayer(y, 'h', colour, linewidth, linestyle); layers.add(xyl);
 		updateRange(xyl, "y"); }
 	public void axhline(double y) {
 		axhline(y, 0xff000000, 3f, "-"); }
 	public void axhline(double y, int colour, double linewidth, String linestyle) {
-		JPlotsLayer xyl = new JXYLayer(new double[] {-100d*JProjection.EARTH_RADIUS_MEAN,100d*JProjection.EARTH_RADIUS_MEAN},
-				new double[] {y,y}, colour, linewidth, linestyle); layers.add(xyl);
+		JPlotsLayer xyl = new JLineLayer(y, 'h', colour, linewidth, linestyle); layers.add(xyl);
 		updateRange(xyl, "y"); }
 	public void axvline(float x) {
 		axvline(x, 0xff000000, 3f, "-"); }
 	public void axvline(float x, int colour, float linewidth, String linestyle) {
-		JPlotsLayer xyl = new JXYLayer(new double[] {x,x},
-				new double[] {-100d*JProjection.EARTH_RADIUS_MEAN,100d*JProjection.EARTH_RADIUS_MEAN},
-				colour, linewidth, linestyle); layers.add(xyl);
+		JPlotsLayer xyl = new JLineLayer(x, 'v', colour, linewidth, linestyle); layers.add(xyl);
 		updateRange(xyl, "x"); }
 	public void axvline(double x) {
 		axvline(x, 0xff000000, 3f, "-"); }
 	public void axvline(double x, int colour, double linewidth, String linestyle) {
-		JPlotsLayer xyl = new JXYLayer(new double[] {x,x},
-				new double[] {-100d*JProjection.EARTH_RADIUS_MEAN,100d*JProjection.EARTH_RADIUS_MEAN},
-				colour, linewidth, linestyle); layers.add(xyl);
+		JPlotsLayer xyl = new JLineLayer(x, 'v', colour, linewidth, linestyle); layers.add(xyl);
 		updateRange(xyl, "x"); }
+	
+	public void colourbar() {
+		pplot.colourbar(this); }
+	public void colourbar(String name) {
+		pplot.colourbar(this, name); }
+	
+	public void coastLines() {
+		coastLines(110); }
+	public void coastLines(int resolution) {
+		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile("/data/ne_"+resolution+"m_coastline"), "line");
+		layers.add(shl); }
 	
 	/**
 	 * predefined images are used as background images in plot, especially with geographical projections
 	 * <p>
 	 *     earth&nbsp; -- NASA image of earths surface<br>
 	 *     earth2 -- ETOPO-like image of earths surface<br>
+	 *     etopo1 -- ETOPO image from <a href="https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO1/image/">NOAA</a><br>
 	 *     mercury,venus,mars,jupiter,saturn,uranus,neptune -- NASA images of surfaces of planets in our solar system<br>
 	 *     hsbpalette -- rainbow palette of all possible hsb-colors
 	 * </p>
@@ -222,15 +317,18 @@ public class JAxis {
 		minX = xmin; maxX = xmax; minY = ymin; maxY = ymax; xRangeFix = true; yRangeFix = true; return this; }
 	public void setAxis(String axis, String which, boolean onoff) {
 		boolean setX=false, setY=false;
-		boolean setAx=false, setGrd=false;
+		boolean setAx=false, setGrd=false, setTck=false;
 		if("both".equals(axis.toLowerCase())) { setX=true; setY=true; }
 		if("x".equals(axis.toLowerCase())) setX=true;
 		if("y".equals(axis.toLowerCase())) setY=true;
-		if("both".equals(which.toLowerCase())) { setAx=true; setGrd=true; }
-		if("a".equals(which.toLowerCase()) || "axis".equals(which.toLowerCase())) setAx=true;
-		if("g".equals(which.toLowerCase()) || "grid".equals(which.toLowerCase())) setGrd=true;
+		String w = which.toLowerCase();
+		if("all".equals(w)) { setAx=true; setGrd=true; }
+		if("a".equals(w) || "axis".equals(w)) setAx=true;
+		if("g".equals(w) || "grid".equals(w)) setGrd=true;
+		if("t".equals(w) || "tick".equals(w) || "ticks".equals(w)) setTck=true;
 		if(setAx) { if(setX) xAxOn=onoff; if(setY) yAxOn=onoff; }
 		if(setGrd) { if(setX) xGrdOn=onoff; if(setY) yGrdOn=onoff; }
+		if(setTck) { if(setX) xTkOn=onoff; if(setY) yTkOn=onoff; }
 	}
 	public void setGrid() {
 		setGrid("both", true); }
@@ -266,6 +364,8 @@ public class JAxis {
 		titleX = xtitle; }
 	public void setYTitle(String ytitle) {
 		titleY = ytitle; }
+	public void setTitle(String _title) {
+		titleP = _title; }
 
 
 	//************************************
@@ -278,24 +378,26 @@ public class JAxis {
 	public boolean isGeoAxis() { return isGeoAxis; }
 	public JProjection getGeoProjection() { return projection; }
 	public JPlotsLayer getLayer(int layernum) { return layers.get(layernum); }
+	public List<JPlotsLayer> getLayers() { return layers; }
 	public void addJPlotsLayer(JPlotsLayer layer) { layers.add(layer); }
+	public PFont getFont() { return pfont; }
 
 
 	//************************************
 	//**** PACKAGE PRIVATE ***************
 	//************************************
 	
-	JGroupShape createPlot(PApplet applet, int w, int h) {
+	public JGroupShape createPlot(PApplet applet, int w, int h) {
 		if(isGeoAxis) {
 			double r = 0.5d * Math.max((maxX-minX)/pw, (maxY-minY)/ph);
 			double xm = 0.5d*(minX+maxX);
 			double ym = 0.5d*(minY+maxY);
 			minX = xm - r*pw; maxX = xm + r*pw;
-			minY = ym - r*pw; maxY = ym + r*pw;
+			minY = ym - r*ph; maxY = ym + r*ph;
 		}
 		if(pplot.isDebug())
-			System.out.println("[DEBUG] PAxis-object: min/max={x:"+minX+"/"+maxX+", y:"+minY+"/"+maxY+
-				"} with "+layers.size()+" layers");
+			System.out.println("[DEBUG] JAxis-object: min/max={x:"+minX+"/"+maxX+", y:"+minY+"/"+maxY+
+				"} with "+layers.size()+" layer"+(layers.size()>1?"s":""));
 		JGroupShape graph = new JGroupShape();
 		if(isGeoAxis) {
 			projection.drawBorder(this, graph);
@@ -316,11 +418,18 @@ public class JAxis {
 		for(int l=0; l<layers.size(); l++) {
 			JPlotsLayer layer = layers.get(l);
 			layer.setRange(minX,maxX,minY,maxY);
+			if(xAxInv || yAxInv)
+				layer.invert(xAxInv ? (yAxInv ? "both" : "x") : "y", true);
 			layer.createVectorImg(this, l, graph);
+		}
+		if(titleP.length()>0) {
+			if(pplot.isDebug())
+				System.out.println("[DEBUG] JAxis: add title \""+titleP+"\" to graphic.");
+			graph.addChild(createTitle());
 		}
 		return graph;
 	}
-	JProjection getProjection() {
+	public JProjection getProjection() {
 		return projection; }
 
 	//************************************
@@ -364,6 +473,12 @@ public class JAxis {
 						o++; isunread=false;
 					}
 				}
+				if(isunread && ("lb".equals(p) || "label".equals(p))) {
+					if(params[o+1] instanceof String) {
+						layer.setLabel((String) params[o+1]);
+						o++; isunread=false;
+					}
+				}
 				if(isunread && ("ct".equals(p) || "colortable".equals(p) || "colourtable".equals(p)) && o+1<params.length) {
 					if(params[o+1] instanceof ColourSequenceJColourtable) {
 						layer.setColourtable((ColourSequenceJColourtable) params[o+1]);
@@ -378,10 +493,12 @@ public class JAxis {
 						o++; isunread=false;
 					}
 				}
-				if(isunread && "invertXaxis".equals(p)) {
-					layer.invert("x", true); isunread=false; }
-				if(isunread && "invertYaxis".equals(p)) {
-					layer.invert("y", true); isunread=false; }
+				if(isunread && ("z".equals(p)) && o+1<params.length) {
+					layer.addParallelArray(params[o+1]); o++; isunread=false; }
+				if(isunread && "invertxaxis".equals(p)) {
+					layer.invert("x", true); xAxInv=true; isunread=false; }
+				if(isunread && "invertyaxis".equals(p)) {
+					layer.invert("y", true); yAxInv=true; isunread=false; }
 			} else {
 				System.err.println("[ERROR] Cannot interprete param "+o+": "+params[o]);
 			}
@@ -453,17 +570,45 @@ public class JAxis {
 	}
 	private JGroupShape createXAxis() {
 		JGroupShape axisgrid = new JGroupShape();
-		double[] ticks = JPlotMath.optimalLinearTicks(minX, maxX);
+		//first estimate of ticks
+		double[] oticks = JPlotMath.optimalLinearTicks(minX, maxX);
+		double vf = 1d/(oticks[0]);
+		int decimal = (int) (1000d*oticks[1]+0.5d);
+		decimal = decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
+		double tmlen = 0d, tmlc = 0d;
+		pplot.getGraphic().textSize(200);
+		pplot.getGraphic().textAlign(PApplet.LEFT,PApplet.TOP);
+		//create tickmark strings and calc mean tickmark text width
+		for(int t=2; t<oticks.length; t++) {
+			String tm = PApplet.nf((float)(oticks[t]*vf),0,decimal).replace(",",".");
+			tmlen += pplot.getGraphic().textWidth(tm) / 200f;
+			tmlc += 1d;
+		}
+		tmlen *= this.txtsize / (oticks.length-2);
+		//with upper bound of number of ticks
+		int tickcount = Math.max(2, (int) (pw/(1.2d*tmlen)+0.99999999d));
+		if(pplot.isDebug())
+			System.out.println("[DEBUG] JAxis-object: tmlen="+tmlen+" -> tickcount approx. "+tickcount);
+		//create new ticks
+		double[] ticks = JPlotMath.optimalLinearTicks(minX, maxX, tickcount);
 		double[] tcpos = JPlotMath.dlerp(ticks,minX,maxX,px,px+pw);
+		String[] tickmark = new String[ticks.length];
+		if(xAxInv)
+			for(int t=0; t<tcpos.length; t++)
+				tcpos[t] = 2*px+pw-tcpos[t];
+		vf = 1d/(ticks[0]); decimal = (int) (1000d*ticks[1]+0.5d);
+		decimal = decimal%1000==0 ? 0 : decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
+		for(int t=0; t<ticks.length; t++)
+			tickmark[t] = PApplet.nf((float)(ticks[t]*vf),0,decimal).replace(",",".");
 		if(pplot.isDebug()) {
 			String tickStr = "", posStr = "";
 			for(int t=2; t<ticks.length; t++) {
-				tickStr += ", "+PApplet.nf((float)ticks[t],0,2);
-				posStr  += ", "+PApplet.nf((float)tcpos[t],0,2);
+				tickStr += ", "+tickmark[t];
+				posStr  += ", "+PApplet.nf((float)tcpos[t],0,2).replace(",",".");
 			}
-			System.out.println("[DEBUG] PAxis-object: Xtickfactors={p10: "+ticks[0]+", f: "+ticks[1]+"}");
-			System.out.println("[DEBUG] PAxis-object: Xtickval={"+tickStr.substring(2)+"}");
-			System.out.println("[DEBUG] PAxis-object: Xtickpos={"+posStr.substring(2)+"}");
+			System.out.println("[DEBUG] JAxis-object: Xtickfactors={p10: "+ticks[0]+", f: "+ticks[1]+"}");
+			System.out.println("[DEBUG] JAxis-object: Xtickval={"+tickStr.substring(2)+"}");
+			System.out.println("[DEBUG] JAxis-object: Xtickpos={"+posStr.substring(2)+"}");
 		}
 		if(xGrdOn) {
 			JPlotShape.stroke(0xff999999); JPlotShape.strokeWeight(2f);
@@ -472,17 +617,20 @@ public class JAxis {
 					axisgrid.addChild(new JLineShape((float)tcpos[t],py,(float)tcpos[t],py+ph));
 		}
 		if(xAxOn) {
-			JPlotShape.stroke(0xff000000); JPlotShape.strokeWeight(2f);
-			double vf = 1d/(ticks[0]);
-			int decimal = (int) (1000d*ticks[1]+0.5d);
-			decimal = decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
-			for(int t=2; t<ticks.length; t++)
-				if(ticks[t]>=Math.min(minX, maxX) && ticks[t]<=Math.max(minX, maxX)) {
-					axisgrid.addChild(new JLineShape((float)tcpos[t],py+ph,(float)tcpos[t],py+1.02f*ph));
-					//axisgrid.addChild(ap.createShape(PShape.TEXT, "H", (float)tcpos[t],py-0.1f*ph,(float)tcpos[t],py));
-					axisgrid.addChild(new JTextShape(PApplet.nf((float)(ticks[t]*vf),0,decimal), (float)tcpos[t], py+1.03f*ph, (float)txtsize, PApplet.CENTER, PApplet.TOP, 0xff000000, 0));
-				}
-			axisgrid.addChild(new JTextShape(titleX, px+0.5f*pw, py+1.04f*ph+(float)txtsize, (float)(1.1d*txtsize), PApplet.CENTER, PApplet.TOP, 0xff000000, 0));
+			if(xTkOn) {
+				JPlotShape.stroke(0xff000000); JPlotShape.strokeWeight(2f);
+				for(int t=2; t<ticks.length; t++)
+					if(ticks[t]>=Math.min(minX, maxX) && ticks[t]<=Math.max(minX, maxX)) {
+						axisgrid.addChild(new JLineShape((float)tcpos[t],py+ph,(float)tcpos[t],py+1.02f*ph));
+						//axisgrid.addChild(ap.createShape(PShape.TEXT, "H", (float)tcpos[t],py-0.1f*ph,(float)tcpos[t],py));
+						axisgrid.addChild(new JTextShape(tickmark[t], (float)tcpos[t], py+1.03f*ph, (float)txtsize, PApplet.CENTER, PApplet.TOP, 0xff000000, 0));
+					}
+			}
+			if(titleX.length()>0) {
+				if(pplot.isDebug())
+					System.out.println("[DEBUG] JAxi-object: add x-axis title \""+titleX+"\"");
+				axisgrid.addChild(new JTextShape(titleX, px+0.5f*pw, py+1.04f*ph+(float)txtsize, (float)(1.1d*txtsize), PApplet.CENTER, PApplet.TOP, 0xff000000, 0));
+			}
 		}
 		return axisgrid;
 	}
@@ -490,15 +638,18 @@ public class JAxis {
 		JGroupShape axisgrid = new JGroupShape();
 		double[] ticks = JPlotMath.optimalLinearTicks(minY, maxY);
 		double[] tcpos = JPlotMath.dlerp(ticks,minY,maxY,py+ph,py);
+		if(yAxInv)
+			for(int t=0; t<tcpos.length; t++)
+				tcpos[t] = 2*py+ph-tcpos[t];
 		if(pplot.isDebug()) {
 			String tickStr = "", posStr = "";
 			for(int t=2; t<ticks.length; t++) {
 				tickStr += ", "+PApplet.nf((float)ticks[t],0,2);
 				posStr  += ", "+PApplet.nf((float)tcpos[t],0,2);
 			}
-			System.out.println("[DEBUG] PAxis-object: Ytickfactors={p10: "+ticks[0]+", f: "+ticks[1]+"}");
-			System.out.println("[DEBUG] PAxis-object: Ytickval={"+tickStr.substring(2)+"}");
-			System.out.println("[DEBUG] PAxis-object: Ytickpos={"+posStr.substring(2)+"}");
+			System.out.println("[DEBUG] JAxis-object: Ytickfactors={p10: "+ticks[0]+", f: "+ticks[1]+"}");
+			System.out.println("[DEBUG] JAxis-object: Ytickval={"+tickStr.substring(2)+"}");
+			System.out.println("[DEBUG] JAxis-object: Ytickpos={"+posStr.substring(2)+"}");
 		}
 		if(yGrdOn) {
 			JPlotShape.stroke(0xff999999); JPlotShape.strokeWeight(2f);
@@ -508,23 +659,29 @@ public class JAxis {
 		}
 		if(yAxOn) {
 			JPlotShape.stroke(0xff000000); JPlotShape.strokeWeight(2f);
-			double vf = 1d/(ticks[0]);
-			int decimal = (int) (1000d*ticks[1]+0.5d);
-			decimal = decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
 			float tw = 0f;
-			for(int t=2; t<ticks.length; t++)
-				if(ticks[t]>=Math.min(minY, maxY) && ticks[t]<=Math.max(minY, maxY)) {
-					axisgrid.addChild(new JLineShape(px-0.02f*pw,(float)tcpos[t],px,(float)tcpos[t]));
-					String tmstr = PApplet.nf((float)(ticks[t]*vf),0,decimal);
-					tw = Math.max(tw, (float)txtsize * pplot.getGraphic().textWidth(tmstr)/pplot.getGraphic().textSize);
-					axisgrid.addChild(new JTextShape(tmstr, px-0.03f*pw, (float)tcpos[t], (float)txtsize,
-							PApplet.RIGHT, PApplet.CENTER, 0xff000000, 0));
-				}
-			axisgrid.addChild(new JTextShape(titleY, px-0.03f*pw-tw, py+0.5f*ph, (float)(1.1d*txtsize), PApplet.CENTER, PApplet.BOTTOM, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE));
+			if(yTkOn) {
+				double vf = 1d/(ticks[0]);
+				int decimal = (int) (1000d*ticks[1]+0.5d);
+				decimal = decimal%1000==0 ? 0 : decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
+				for(int t=2; t<ticks.length; t++)
+					if(ticks[t]>=Math.min(minY, maxY) && ticks[t]<=Math.max(minY, maxY)) {
+						axisgrid.addChild(new JLineShape(px-0.02f*pw,(float)tcpos[t],px,(float)tcpos[t]));
+						String tmstr = PApplet.nf((float)(ticks[t]*vf),0,decimal).replace(",",".");
+						tw = Math.max(tw, (float)txtsize * pplot.getGraphic().textWidth(tmstr)/pplot.getGraphic().textSize);
+						axisgrid.addChild(new JTextShape(tmstr, px-0.03f*pw, (float)tcpos[t], (float)txtsize,
+								PApplet.RIGHT, PApplet.CENTER, 0xff000000, 0));
+					}
+			}
+			if(titleY.length()>0)
+				axisgrid.addChild(new JTextShape(titleY, px-0.03f*pw-tw, py+0.5f*ph, (float)(1.1d*txtsize), PApplet.CENTER, PApplet.BOTTOM, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE));
 		}
 		return axisgrid;
 	}
-
+	private JTextShape createTitle() {
+		return new JTextShape(titleP, px+0.5f*pw, py-0.04f*ph, (float)(1.3d*txtsize), PApplet.CENTER, PApplet.BOTTOM, 0xff000000, 0f);
+	}
+	
 	private static PImage loadPreDefImg(PApplet applet, String name) {
 		BufferedImage bimg;
 		try {
