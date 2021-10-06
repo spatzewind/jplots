@@ -2,7 +2,7 @@ package jplots.layer;
 
 import jplots.JAxis;
 import jplots.JPlot;
-import jplots.color.JColourtable;
+import jplots.colour.JColourtable;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.transform.IdentityJProjection;
@@ -30,6 +30,7 @@ public abstract class JPlotsLayer {
 	public JPlotsLayer() {
 		lw = 2d;
 		lc = 0xff000000;
+		ls = "";
 		singleLineColour = true;
 		lcs = new int[] { 0xff000000 };
 		minX = -1d;
@@ -79,10 +80,16 @@ public abstract class JPlotsLayer {
 		lc = _lc; singleLineColour=true; }
 	public void setLineColour(int[] _lcs) {
 		lcs = _lcs; singleLineColour=false; }
+	public int getColour() {
+		return singleLineColour ? lc : 0; }
 	public void setLineWidth(double lwd) {
 		lw = lwd; }
-	public void setLineStyle(String lst) {
+	public double getLineWidth() {
+		return lw; }
+	public void setStyle(String lst) {
 		ls = lst; }
+	public String getStyle() {
+		return ls; }
 	public void invert(String which, boolean _invert) {
 		boolean ix = false, iy = false;
 		if("both".equalsIgnoreCase(which)) { ix=true; iy=true; }

@@ -28,9 +28,9 @@ public class JScatterLayer extends JPlotsLayer {
 		maxX = JPlotMath.dmax(xarrayx);
 		minY = JPlotMath.dmin(yarrayy);
 		maxY = JPlotMath.dmax(yarrayy);
-		col = colour;
+		setLineColour(colour); col = colour;
 		lw = linewidth;
-		ls = linestyle;
+		setStyle(linestyle); ls = linestyle;
 	}
 	public JScatterLayer(double[] x, double[] y, int colour, double linewidth, String linestyle) {
 		xarrayx = x;
@@ -39,9 +39,9 @@ public class JScatterLayer extends JPlotsLayer {
 		maxX = JPlotMath.dmax(xarrayx);
 		minY = JPlotMath.dmin(yarrayy);
 		maxY = JPlotMath.dmax(yarrayy);
-		col = colour;
+		setLineColour(colour); col = colour;
 		lw = linewidth;
-		ls = linestyle;
+		setStyle(linestyle); ls = linestyle;
 	}
 	
 

@@ -1,6 +1,6 @@
 package jplots;
 
-import jplots.color.JColourbar;
+import jplots.colour.JColourbar;
 import jplots.shapes.JPlotShape;
 import jplots.transform.JProjection;
 import processing.core.*;
@@ -500,6 +500,8 @@ public class JPlot {
 		colourbar(gca(), name); }
 	public void colourbar(JAxis axis, String name) {
 		addSubplot(new JColourbar(axis, name)); }
+	public void legend() {
+		gca().legend(); }
 
 	public void predefImgShow(String predefined_images) {
 		gca().predefImgShow(predefined_images);

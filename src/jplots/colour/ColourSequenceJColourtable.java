@@ -1,4 +1,4 @@
-package jplots.color;
+package jplots.colour;
 
 public class ColourSequenceJColourtable extends JColourtable {
 

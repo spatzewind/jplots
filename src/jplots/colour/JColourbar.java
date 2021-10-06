@@ -1,4 +1,4 @@
-package jplots.color;
+package jplots.colour;
 
 import jplots.JAxis;
 import jplots.layer.JContourLayer;

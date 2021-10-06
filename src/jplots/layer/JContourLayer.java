@@ -6,7 +6,7 @@ import java.util.List;
 
 import jplots.JAxis;
 import jplots.JPlot;
-import jplots.color.JColourtable;
+import jplots.colour.JColourtable;
 import jplots.maths.JConstrainedDelaunayTriangulator;
 import jplots.maths.JDEdge;
 import jplots.maths.JDPoint;
@@ -191,7 +191,7 @@ public class JContourLayer extends JPlotsLayer {
 		collectValidPoints(ax.getGeoProjection(), ax.getPlot().isDebug());
         
 		//step 2: do delauney-triangulation
-		triangulate(ax.getPlot().isDebug());
+		triangulate(ax.getPlot().isDebug(), ax);
 		
 		//step 3: create contours
 		if(drawLines || !pixelFilling) {
@@ -456,12 +456,40 @@ public class JContourLayer extends JPlotsLayer {
         if(debug)
             System.out.println("[DEBUG] JContourLayer: 1] has "+corners.size()+" valid sourcepoints");
 	}
-	private void triangulate(boolean debug) {
+	private void triangulate(boolean debug, JAxis ax) {
         if(debug)
             System.out.println("[DEBUG] JContourLayer: 2] triangulate ...");
-        JDelaunayTriangulator delaunay = new JDelaunayTriangulator(corners);
-        edges = delaunay.getEdges();
-        triangles = delaunay.getTriangles();
+        if(input2d || ax.isGeoAxis()) {
+	        JDelaunayTriangulator delaunay = new JDelaunayTriangulator(corners);
+	        edges = delaunay.getEdges();
+	        triangles = delaunay.getTriangles();
+        } else {
+        	JDPoint[][] points = new JDPoint[yarrayy.length][xarrayx.length];
+        	edges.clear();
+        	triangles.clear();
+        	for(int j=0; j<yarrayy.length; j++)
+        		for(int i=0; i<xarrayx.length; i++)
+        			points[j][i] = new JDPoint(xarrayx[i], yarrayy[j], zarrayz[j][i]);
+        	for(int j=1; j<yarrayy.length; j++)
+        		for(int i=1; i<xarrayx.length; i++)
+        			if((2*i>=xarrayx.length?1:0)==(2*j>=yarrayy.length?1:0)) {
+        				if(i==1) edges.add(new JDEdge(points[j-1][0], points[j][0]));
+        				if(j==1) edges.add(new JDEdge(points[0][i-1], points[0][i]));
+        				edges.add(new JDEdge(points[j-1][i], points[j][i]));
+        				edges.add(new JDEdge(points[j][i-1], points[j][i]));
+        				edges.add(new JDEdge(points[j][i-1], points[j-1][i]));
+        				triangles.add(new JDTriangle(points[j-1][i-1], points[j-1][i], points[j][i-1]));
+        				triangles.add(new JDTriangle(points[j][i-1], points[j-1][i], points[j][i]));
+        			} else {
+        				if(i==1) edges.add(new JDEdge(points[j-1][0], points[j][0]));
+        				if(j==1) edges.add(new JDEdge(points[0][i-1], points[0][i]));
+        				edges.add(new JDEdge(points[j-1][i], points[j][i]));
+        				edges.add(new JDEdge(points[j][i-1], points[j][i]));
+        				edges.add(new JDEdge(points[j-1][i-1], points[j][i]));
+        				triangles.add(new JDTriangle(points[j-1][i-1], points[j-1][i], points[j][i]));
+        				triangles.add(new JDTriangle(points[j][i-1], points[j-1][i-1], points[j][i]));
+        			}
+        }
         if(debug)
             System.out.println("[DEBUG] JContourLayer:   mesh now consists of "+corners.size()+" corners, "+edges.size()+" edges and "+triangles.size()+" triangles");
 	}

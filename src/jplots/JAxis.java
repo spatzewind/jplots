@@ -9,12 +9,13 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
-import jplots.color.ColourSequenceJColourtable;
-import jplots.color.JColourtable;
-import jplots.color.LinearSegmentedJColourtable;
+import jplots.colour.ColourSequenceJColourtable;
+import jplots.colour.JColourtable;
+import jplots.colour.LinearSegmentedJColourtable;
 import jplots.helper.FileLoader;
 import jplots.layer.JContourLayer;
 import jplots.layer.JImageLayer;
+import jplots.layer.JLegend;
 import jplots.layer.JLineLayer;
 import jplots.layer.JPlotsLayer;
 import jplots.layer.JScatterLayer;
@@ -256,6 +257,8 @@ public class JAxis {
 		pplot.colourbar(this); }
 	public void colourbar(String name) {
 		pplot.colourbar(this, name); }
+	public void legend() {
+		JPlotsLayer lgl = new JLegend(this); layers.add(lgl); }
 	
 	public void coastLines() {
 		coastLines(110); }
@@ -374,6 +377,7 @@ public class JAxis {
 	
 	public JPlot getPlot() { return pplot; }
 	public int[] getSize() { return new int[] {px,py,pw,ph}; }
+	public double getTextSize() { return txtsize; }
 	public double[] getRange() { return new double[] {minX,maxX,minY,maxY}; }
 	public boolean isGeoAxis() { return isGeoAxis; }
 	public JProjection getGeoProjection() { return projection; }
@@ -417,10 +421,21 @@ public class JAxis {
 		}
 		for(int l=0; l<layers.size(); l++) {
 			JPlotsLayer layer = layers.get(l);
+			if(layer instanceof JLegend)
+				continue;
 			layer.setRange(minX,maxX,minY,maxY);
 			if(xAxInv || yAxInv)
 				layer.invert(xAxInv ? (yAxInv ? "both" : "x") : "y", true);
 			layer.createVectorImg(this, l, graph);
+		}
+		for(int l=0; l<layers.size(); l++) {
+			JPlotsLayer layer = layers.get(l);
+			if(layer instanceof JLegend) {
+				layer.setRange(minX,maxX,minY,maxY);
+				if(xAxInv || yAxInv)
+					layer.invert(xAxInv ? (yAxInv ? "both" : "x") : "y", true);
+				layer.createVectorImg(this, l, graph);
+			}
 		}
 		if(titleP.length()>0) {
 			if(pplot.isDebug())
@@ -457,7 +472,7 @@ public class JAxis {
 					o++; isunread=false;
 				}
 				if(isunread && ("ls".equals(p) || "linestyle".equals(p)) && o+1<params.length) {
-					layer.setLineStyle((String)params[o+1]);
+					layer.setStyle((String)params[o+1]);
 					o++; isunread=false;
 				}
 				if(isunread && ("lw".equals(p) || "linewidth".equals(p)) && o+1<params.length) {
@@ -575,14 +590,13 @@ public class JAxis {
 		double vf = 1d/(oticks[0]);
 		int decimal = (int) (1000d*oticks[1]+0.5d);
 		decimal = decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
-		double tmlen = 0d, tmlc = 0d;
+		double tmlen = 0d;
 		pplot.getGraphic().textSize(200);
 		pplot.getGraphic().textAlign(PApplet.LEFT,PApplet.TOP);
 		//create tickmark strings and calc mean tickmark text width
 		for(int t=2; t<oticks.length; t++) {
 			String tm = PApplet.nf((float)(oticks[t]*vf),0,decimal).replace(",",".");
 			tmlen += pplot.getGraphic().textWidth(tm) / 200f;
-			tmlc += 1d;
 		}
 		tmlen *= this.txtsize / (oticks.length-2);
 		//with upper bound of number of ticks
