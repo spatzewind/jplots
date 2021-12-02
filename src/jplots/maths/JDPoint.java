@@ -1,11 +1,18 @@
 package jplots.maths;
 
+import org.locationtech.jts.geom.Coordinate;
+
 public class JDPoint implements Comparable<JDPoint> {
 
 	public double x,y,value;
 	public int idx, lev;
 	private Integer hash = null;
 	
+	public JDPoint(Coordinate c) {
+		x = c.x;
+		y = c.y;
+		value = c.z;
+	}
 	public JDPoint(double _x, double _y, double _v) {
 		x = _x;
 		y = _y;

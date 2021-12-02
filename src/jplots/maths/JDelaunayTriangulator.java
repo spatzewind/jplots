@@ -178,6 +178,7 @@ public class JDelaunayTriangulator {
 				System.err.println("[ERR] duplicated triangle " + t + " vs " + unq_trias.get(t));
 				t = unq_trias.get(t);
 			} else {
+				t.idx = unq_trias.size();
 				unq_trias.put(t, t);
 			}
 
@@ -239,7 +240,7 @@ public class JDelaunayTriangulator {
 		this.poinz = Arrays.asList(points);
 		this.hulls = hulledges;
 		this.voron = voronoiedges;
-		this.vhull = hulledges; // voronoihulledges; //it must be implement !!!
+		this.vhull = hulledges; // voronoihulledges; //TODO it must be implement !!!
 	}
 
 	///////////////////////////////////////////////////////////////////////////

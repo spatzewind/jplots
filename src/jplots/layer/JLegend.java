@@ -169,21 +169,20 @@ public class JLegend extends JPlotsLayer {
 			if("o".equals(linestyle) || "@".equals(linestyle)) {
 				JPlotShape.fill(col); } else { JPlotShape.noFill(); }
 			if("()".equals(linestyle) || "o".equals(linestyle)) {
-				s.addChild(new JEllipseShape((float)x1, (float)y1, (float)(6*lw), (float)(6*lw))); }
+				s.addChild(new JEllipseShape(x1, y1, 6f*lw, 6f*lw)); }
 			if("[]".equals(linestyle) || "@".equals(linestyle)) {
-				s.addChild(new JRectShape((float)(x1-2*lw), (float)(y1-2*lw), (float)(x1+2*lw), (float)(y1+2*lw))); }
+				s.addChild(new JRectShape(x1-2f*lw, y1-2f*lw, x1+2f*lw, y1+2f*lw)); }
 			if("x".equals(linestyle)) {
-				s.addChild(new JLineShape((float)(x1-2*lw), (float)(y1-2*lw), (float)(x1+2*lw), (float)(y1+2*lw)));
-				s.addChild(new JLineShape((float)(x1-2*lw), (float)(y1+2*lw), (float)(x1+2*lw), (float)(y1-2*lw))); }
+				s.addChild(new JLineShape(x1-2f*lw, y1-2f*lw, x1+2f*lw, y1+2f*lw));
+				s.addChild(new JLineShape(x1-2f*lw, y1+2f*lw, x1+2f*lw, y1-2f*lw)); }
 			if("+".equals(linestyle)) {
-				s.addChild(new JLineShape((float)(x1-3*lw), (float)y1, (float)(x1+3*lw), (float)y1));
-				s.addChild(new JLineShape((float)x1, (float)(y1-3*lw), (float)x1, (float)(y1+3*lw))); }
+				s.addChild(new JLineShape(x1-3f*lw, y1, x1+3f*lw, y1));
+				s.addChild(new JLineShape(x1, y1-3f*lw, x1, y1+3f*lw)); }
 			if("<>".equals(linestyle)) {
-				s.addChild(new JLineShape((float)x1, (float)(y1-3*lw), (float)(x1+3*lw), (float)y1));
-				s.addChild(new JLineShape((float)(x1+3*lw), (float)y1, (float)x1, (float)(y1+3*lw)));
-				s.addChild(new JLineShape((float)x1, (float)(y1+3*lw), (float)(x1-3*lw), (float)y1));
-				s.addChild(new JLineShape((float)(x1-3*lw), (float)y1, (float)x1, (float)(y1-3*lw))); }
-			
+				s.addChild(new JLineShape(x1, y1-3f*lw, x1+3f*lw, y1));
+				s.addChild(new JLineShape(x1+3f*lw, y1, x1, y1+3f*lw));
+				s.addChild(new JLineShape(x1, y1+3f*lw, x1-3f*lw, y1));
+				s.addChild(new JLineShape(x1-3f*lw, y1, x1, y1-3f*lw)); }
 		}
 		private void drawHatching(JGroupShape s, float x, float y, float t) {
 			

@@ -1,8 +1,8 @@
 import jplots.*;
-import jplots.color.*;
+import jplots.colour.*;
 import jplots.layer.*;
 
-int n = 25;
+int n = 125;
 JPlot plt;
 
 void setup() {
@@ -21,7 +21,8 @@ void draw() {
 }
 
 void keyReleased() {
-    newPlot();
+    if(key=='n') newPlot();
+    if(key=='r') plt.redraw(true);
 }
 
 void newPlot() {
@@ -37,6 +38,7 @@ void newPlot() {
             zz[j][i] = noise(1.2345*xx[i]/n+19.632, 3.6224*yy[j]/n-8635.3257);
         }
     }
+    /*
     if(noise(0.87598f,42.49374f,.98758f)>0.5f) {
         for(int k=0; k<1; k++) {
             int i = (int) (xx.length*10*noise(k*0.1653+k*k*0.038265, 89376.625354/k)) % xx.length;
@@ -53,12 +55,13 @@ void newPlot() {
             }
         }
     }
+    */
     //float[] xx = { 0f, 1f };
     //float[] yy = { 0f, 1f };
     ////float[][] zz = {{5f,3f},{2f,0f}};
     //float[][] zz = {{0f,2f},{3f,5f}};
     plt.clear();
-    plt.contourp(xx,yy,zz,15, "lines",true,"linewidth",3f,"linecolor",0xff7f0000);
-    plt.colourbar(); plt.debug(true);
+    plt.contourf(xx,yy,zz,15, "lines",true,"linewidth",3f,"linecolor",0xff7f0000);
+    plt.colourbar(); //plt.debug(true);
     //plt.contour(xx,yy,zz,8);
 }

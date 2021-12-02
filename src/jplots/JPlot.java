@@ -312,6 +312,8 @@ public class JPlot {
 	/**
 	 * removes all plotting infos
 	 * also all configurations except number and position of axes will be reseted
+	 * 
+	 * @return this JPlot object
 	 */
 	public JPlot clear() {
 		int cb_count = 0;

@@ -2,8 +2,11 @@ package jplots.maths;
 
 import java.util.Arrays;
 
+import org.locationtech.jts.geom.Coordinate;
+
 public class JDTriangle {
 
+	public int idx;
 	public int lev;
 	public JDPoint a;
 	public JDPoint b;
@@ -14,9 +17,16 @@ public class JDTriangle {
 
 	private Integer hash = null;
 
+	public JDTriangle(Coordinate[] c) {
+		this(new JDPoint(c[0]), new JDPoint(c[1]), new JDPoint(c[2]), 0);
+	}
 	public JDTriangle(JDPoint a, JDPoint b, JDPoint c) {
+		this(a,b,c, 0);
+	}
+	public JDTriangle(JDPoint a, JDPoint b, JDPoint c, int index) {
 		JDPoint[] tmp = { a, b, c };
 		Arrays.sort(tmp);
+		this.idx = index;
 		this.a = tmp[0];
 		this.b = tmp[1];
 		this.c = tmp[2];
