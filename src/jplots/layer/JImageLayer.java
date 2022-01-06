@@ -33,7 +33,9 @@ public class JImageLayer extends JPlotsLayer {
 	@Override
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 		int[] p = ax.getSize();
-		double xs = p[2]/(maxX-minX), ys = p[3]/(maxY-minY);
+		double Xin = ax.isXlogAxis()?Math.log10(minX):minX, Xax = ax.isXlogAxis()?Math.log10(maxX):maxX;
+		double Yin = ax.isYlogAxis()?Math.log10(minY):minY, Yax = ax.isYlogAxis()?Math.log10(maxY):maxY;
+		double xs = p[2]/(Xax-Xin), ys = p[3]/(Yax-Yin);
 		double us = srcImg.width/(srcExt[2]-srcExt[0]), vs = srcImg.height/(srcExt[3]-srcExt[1]);
 		if(img==null) {
 			img = ax.getPlot().getApplet().createImage(p[2], p[3], PApplet.ARGB);
@@ -45,8 +47,10 @@ public class JImageLayer extends JPlotsLayer {
 		for(int j=0; j<p[3]; j++) {
 			for(int i=0; i<p[2]; i++) {
 				int idx = j*p[2]+i;
-				double[] xy = { invertAxisX ? maxX-i/xs : minX+i/xs,
-								invertAxisY ? minY+j/ys : maxY-j/ys };
+				double[] xy = { invertAxisX ? Xax-i/xs : Xin+i/xs,
+								invertAxisY ? Yin+j/ys : Yax-j/ys };
+				if(ax.isXlogAxis()) xy[0] = Math.pow(10d, xy[0]);
+				if(ax.isYlogAxis()) xy[1] = Math.pow(10d, xy[1]);
 				xy = ax.getGeoProjection().fromPROJtoLATLON(xy[0], xy[1], false);
 				xy = srcProj.fromLATLONtoPROJ(xy[0], xy[1], false);
 				if(Double.isNaN(xy[0]) || Double.isNaN(xy[1])) {

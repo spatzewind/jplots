@@ -52,18 +52,23 @@ public class JScatterLayer extends JPlotsLayer {
 	@Override
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 		int[] p = ax.getSize();
+		double Xin = ax.isXlogAxis()?Math.log10(minX):minX, Xax = ax.isXlogAxis()?Math.log10(maxX):maxX;
+		double Yin = ax.isYlogAxis()?Math.log10(minY):minY, Yax = ax.isYlogAxis()?Math.log10(maxY):maxY;
 		if("o".equals(ls) || "@".equals(ls)) {
 			JPlotShape.fill(col); } else { JPlotShape.noFill(); }
 		JPlotShape.stroke(col); JPlotShape.strokeWeight((float)lw);
 		JGroupShape xyShape = new JGroupShape();
-		double xs = p[2]/(maxX-minX), ys = p[3]/(maxY-minY);
+		double xs = p[2]/(Xax-Xin), ys = p[3]/(Yax-Yin);
 		for(int i=0; i<xarrayx.length; i++)
 			if(Double.isFinite(xarrayx[i]) && Double.isFinite(yarrayy[i])) {
-				double[] xy = inputProj.fromPROJtoLATLON(xarrayx[i], yarrayy[i], false);
+				double[] xy = inputProj.fromPROJtoLATLON(
+						ax.isXlogAxis()?Math.log10(xarrayx[i]):xarrayx[i],
+						ax.isYlogAxis()?Math.log10(yarrayy[i]):yarrayy[i],
+						false);
 				if(ax.isGeoAxis())
 					xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[0], xy[1], false);
-				double x1 = p[0]+xs*(invertAxisX ? maxX-xy[0] : xy[0]-minX);
-				double y1 = p[1]+ys*(invertAxisY ? xy[1]-minY : maxY-xy[1]);
+				double x1 = p[0]+xs*(invertAxisX ? Xax-xy[0] : xy[0]-Xin);
+				double y1 = p[1]+ys*(invertAxisY ? xy[1]-Yin : Yax-xy[1]);
 				if(x1<p[0] || x1>p[0]+p[2]) continue;
 				if(y1<p[1] || y1>p[1]+p[3]) continue;
 				if("()".equals(ls) || "o".equals(ls)) {

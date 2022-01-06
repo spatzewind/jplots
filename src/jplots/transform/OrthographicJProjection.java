@@ -128,13 +128,13 @@ public class OrthographicJProjection implements JProjection {
 		JPlotShape.stroke(0xff000000); JPlotShape.strokeWeight(3f);
 		int[] p    = ax.getSize();
 		double[] r = ax.getRange();
-		float x1 = (float) (p[0]+p[2]*Math.max(0d, Math.min(1d, JPlotMath.dlerp(-EARTH_RADIUS_MEAN,r[0],r[1],0d,1d))));
-		float y1 = (float) (p[1]+p[3]*Math.max(0d, Math.min(1d, JPlotMath.dlerp(                0d,r[2],r[3],0d,1d))));
+		float x1 = (float) (p[0]+p[2]*Math.max(0d, Math.min(1d, JPlotMath.map(-EARTH_RADIUS_MEAN,r[0],r[1],0d,1d))));
+		float y1 = (float) (p[1]+p[3]*Math.max(0d, Math.min(1d, JPlotMath.map(                0d,r[2],r[3],0d,1d))));
 		for(int i=-35; i<=36; i++) {
 			double bx = EARTH_RADIUS_MEAN*Math.cos(5*i*JPlotMath.DEG_TO_RAD);
 			double by = EARTH_RADIUS_MEAN*Math.sin(5*i*JPlotMath.DEG_TO_RAD);
-			float x2 = (float) (p[0]+p[2]*Math.max(0d, Math.min(1d, JPlotMath.dlerp(bx,r[0],r[1],0d,1d))));
-			float y2 = (float) (p[1]+p[3]*Math.max(0d, Math.min(1d, JPlotMath.dlerp(by,r[2],r[3],1d,0d))));
+			float x2 = (float) (p[0]+p[2]*Math.max(0d, Math.min(1d, JPlotMath.map(bx,r[0],r[1],0d,1d))));
+			float y2 = (float) (p[1]+p[3]*Math.max(0d, Math.min(1d, JPlotMath.map(by,r[2],r[3],1d,0d))));
 			s.addChild(new JLineShape(x1, y1, x2, y2));
 			x1 = x2;
 			y1 = y2;

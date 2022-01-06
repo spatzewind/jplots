@@ -13,6 +13,11 @@ public class JDPoint implements Comparable<JDPoint> {
 		y = c.y;
 		value = c.z;
 	}
+	public JDPoint(double _x, double _y) {
+		x = _x;
+		y = _y;
+		value = Double.NaN;
+	}
 	public JDPoint(double _x, double _y, double _v) {
 		x = _x;
 		y = _y;
@@ -95,9 +100,24 @@ public class JDPoint implements Comparable<JDPoint> {
 		}
 		return true;
 	}
+
+	public JDPoint affine(double[][] transformationMatrix) {
+		double a = x * transformationMatrix[0][0] + y * transformationMatrix[0][1] + transformationMatrix[0][2];
+		double b = x * transformationMatrix[1][0] + y * transformationMatrix[1][1] + transformationMatrix[1][2];
+		x = a;
+		y = b;
+		return this;
+	}
 	
-	
-	
+	public JDPoint fractionTowards(double fraction, JDPoint towards) {
+		return new JDPoint(
+				this.x + fraction*(towards.x-this.x),
+				this.y + fraction*(towards.y-this.y),
+				Double.isNaN(this.value)?towards.value:Double.isNaN(towards.value)?this.value:
+				this.value + fraction*(towards.value-this.value)
+		);
+	}
+
 	
 //	double dist2(jpoint v) {
 //		return (v.x-this.x)*(v.x-this.x) + (v.y-this.y)*(v.y-this.y); 

@@ -198,13 +198,28 @@ public class JGridTriangulator {
 			for(int i=0; i<xlen-1; i++) {
 				int n = 2 * ( j * (xlen-1) +  i );
 				int p = j * xlen + i;
-				triangles[3 * n + 0] = p;
-				triangles[3 * n + 1] = p        + 1;
-				triangles[3 * n + 2] = p + xlen;
-				n += 1;
-				triangles[3 * n + 0] = p + xlen;
-				triangles[3 * n + 1] = p        + 1;
-				triangles[3 * n + 2] = p + xlen + 1;
+				boolean mirror = Double.isNaN(points[p+1].value) || Double.isNaN(points[p+xlen].value);
+				if(mirror && (Double.isNaN(points[p].value) || Double.isNaN(points[p+xlen+1].value)))
+					mirror = false;
+				if(Math.abs(points[p].value-points[p+xlen+1].value)<Math.abs(points[p+1].value-points[p+xlen].value))
+					mirror = true;
+				if(mirror) {
+					triangles[3 * n + 0] = p;
+					triangles[3 * n + 1] = p        + 1;
+					triangles[3 * n + 2] = p + xlen + 1;
+					n += 1;
+					triangles[3 * n + 0] = p;
+					triangles[3 * n + 1] = p + xlen + 1;
+					triangles[3 * n + 2] = p + xlen;
+				} else {
+					triangles[3 * n + 0] = p;
+					triangles[3 * n + 1] = p        + 1;
+					triangles[3 * n + 2] = p + xlen;
+					n += 1;
+					triangles[3 * n + 0] = p + xlen;
+					triangles[3 * n + 1] = p        + 1;
+					triangles[3 * n + 2] = p + xlen + 1;
+				}
 			}
 		
 		//create hull set

@@ -2,14 +2,13 @@ import jplots.*;
 import jplots.colour.*;
 import jplots.layer.*;
 
-int n = 125;
+int n = 21;
 JPlot plt;
 
 void setup() {
     size(600,600,P2D);
     
     plt = new JPlot(this);
-    //plt.debug(true);
     plt.figure(5d,5d);
     newPlot();
 }
@@ -18,11 +17,15 @@ void draw() {
     background(0xffffffff);
     int s = min(width,height);
     image(plt.show(),0,0,s,s);
+    plt.debug(false);
 }
 
 void keyReleased() {
     if(key=='n') newPlot();
-    if(key=='r') plt.redraw(true);
+    if(key=='r') {
+        plt.redraw(true);
+        plt.debug(true);
+    }
 }
 
 void newPlot() {
@@ -38,9 +41,10 @@ void newPlot() {
             zz[j][i] = noise(1.2345*xx[i]/n+19.632, 3.6224*yy[j]/n-8635.3257);
         }
     }
-    /*
+    
     if(noise(0.87598f,42.49374f,.98758f)>0.5f) {
-        for(int k=0; k<1; k++) {
+        int klen = (int) random(1,sqrt(n)+5);
+        for(int k=0; k<klen; k++) {
             int i = (int) (xx.length*10*noise(k*0.1653+k*k*0.038265, 89376.625354/k)) % xx.length;
             int j = (int) (yy.length*10*noise(k/(0.0235*k), k*k*0.07352+8274.375264, 842646526.077345/(k+k*k*0.376254+92.8264))) % yy.length;
             if(noise(0.453686*k+78.2376, 0.263543*k*k-76267.026365)>0.5f) {
@@ -55,13 +59,8 @@ void newPlot() {
             }
         }
     }
-    */
-    //float[] xx = { 0f, 1f };
-    //float[] yy = { 0f, 1f };
-    ////float[][] zz = {{5f,3f},{2f,0f}};
-    //float[][] zz = {{0f,2f},{3f,5f}};
     plt.clear();
-    plt.contourf(xx,yy,zz,15, "lines",true,"linewidth",3f,"linecolor",0xff7f0000);
-    plt.colourbar(); //plt.debug(true);
-    //plt.contour(xx,yy,zz,8);
+    plt.contourf(xx,yy,zz,10, "lines",true,"linewidth",3f,"linecolor",0xff7f0000);
+    plt.setAsTimeAxis('x', "dayssince1.1.2000 00:00:00", "proleptic", "dd.mm.'yy");
+    plt.colourbar();
 }

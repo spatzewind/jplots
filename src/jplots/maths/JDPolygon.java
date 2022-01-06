@@ -29,8 +29,8 @@ public class JDPolygon {
 			idx = 0;
 			return;
 		}
-		boolean clockwise = (area(abc)<0d);
 		c = new JDPoint[abc.length];
+		boolean clockwise = (area(abc)<0d);
 		for(int i=0; i<abc.length; i++)
 			c[clockwise?abc.length-1-i:i] = new JDPoint(abc[i].x, abc[i].y, abc[i].value);
 		e = new JDEdge[abc.length];
@@ -111,23 +111,23 @@ public class JDPolygon {
 	}
 	
 	public boolean union(JDTriangle tri, double tolerance) {
-		double ar = area(tri.a,tri.b,tri.c);
+		double ar = tri.area();
 		boolean triClockwise = (ar<0d);
 		//System.out.println("area of triangle to add is "+ar);
-		int ai = containsCorner(tri.a, tolerance);
-		int bi = containsCorner(triClockwise?tri.c:tri.b, tolerance);
-		int ci = containsCorner(triClockwise?tri.b:tri.c, tolerance);
+		int ai = containsCorner(tri.getA(), tolerance);
+		int bi = containsCorner(triClockwise?tri.getC():tri.getB(), tolerance);
+		int ci = containsCorner(triClockwise?tri.getB():tri.getC(), tolerance);
 		//System.out.println("Corner ids: a="+ai+" b="+bi+" c="+ci);
 		if(ai==-1) {
 			if(bi==-1 || ci==-1) return false;
-			return union(bi,ci, tri.a);
+			return union(bi,ci, tri.getA());
 		}
 		if(bi==-1) {
 			if(ci==-1) return false;
-			return union(ci,ai,triClockwise?tri.c:tri.b);
+			return union(ci,ai,triClockwise?tri.getC():tri.getB());
 		}
 		if(ci==-1) {
-			return union(ai,bi,triClockwise?tri.b:tri.c);
+			return union(ai,bi,triClockwise?tri.getB():tri.getC());
 		}
 		//System.out.println("Triangle seams to be connected via 3 of 3 corners.");
 		int ac = 2*ai<c.length?ai+c.length:ai;
@@ -233,12 +233,24 @@ public class JDPolygon {
 		}
 		return false;
 	}
+
+	public JDPolygon affine(double[][] transformationMatrix) {
+		for(int i=0; i<c.length; i++)
+			c[i].affine(transformationMatrix);
+		return this;
+	}
 	
+	public double area() {
+		double a = 0d;
+		for(int i=0,j=c.length-1; i<c.length; j=i++)
+			a += (c[i].x-c[j].x) * (c[i].y+c[j].y);
+		return 0.5d * a;
+	}
 	private double area(JDPoint... p) {
 		double a=0d;
 		for(int i=0,j=p.length-1; i<p.length; j=i++) {
-			JDPoint u = p[i];
-			JDPoint v = p[j];
+			JDPoint u = p[j];
+			JDPoint v = p[i];
 			a += (v.x-u.x) * (v.y+u.y);
 		}
 		return 0.5d * a;

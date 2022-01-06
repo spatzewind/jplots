@@ -98,7 +98,7 @@ public class JColourbar extends JAxis {
 	private JGroupShape createXAxis() {
 		JGroupShape axisgrid = new JGroupShape();
 		double[] ticks = JPlotMath.optimalLinearTicks(minC, maxC);
-		double[] tcpos = JPlotMath.dlerp(ticks,minC,maxC,px,px+pw);
+		double[] tcpos = JPlotMath.map(ticks,minC,maxC,px,px+pw);
 		String[] tickmark = new String[ticks.length];
 		double vf = 1d/(ticks[0]);
 		int decimal = (int) (1000d*ticks[1]+0.5d);
@@ -117,7 +117,7 @@ public class JColourbar extends JAxis {
 		if(pplot.isDebug())
 			System.out.println("[DEBUG] JAxis-object: tmlen="+tmlen+" -> tickcount approx. "+tickcount);
 		ticks = JPlotMath.optimalLinearTicks(minC, maxC, tickcount);
-		tcpos = JPlotMath.dlerp(ticks,minC,maxC,px,px+pw);
+		tcpos = JPlotMath.map(ticks,minC,maxC,px,px+pw);
 		tickmark = new String[ticks.length];
 		vf = 1d/(ticks[0]); decimal = (int) (1000d*ticks[1]+0.5d);
 		decimal = decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
@@ -147,7 +147,7 @@ public class JColourbar extends JAxis {
 	private JGroupShape createYAxis() {
 		JGroupShape axisgrid = new JGroupShape();
 		double[] ticks = JPlotMath.optimalLinearTicks(minC, maxC);
-		double[] tcpos = JPlotMath.dlerp(ticks,minC,maxC,py+ph,py);
+		double[] tcpos = JPlotMath.map(ticks,minC,maxC,py+ph,py);
 //		for(int t=0; t<tcpos.length; t++)
 //			tcpos[t] = 2*py+ph-tcpos[t];
 		if(pplot.isDebug()) {
@@ -191,7 +191,7 @@ public class JColourbar extends JAxis {
 		}
 		if(isHorizontal) {
 			for(int i=0; i<pw; i++) {
-				double v = JPlotMath.dlerp(i, 0, pw, minC, maxC);
+				double v = JPlotMath.map(i, 0, pw, minC, maxC);
 				if(contourLevels.length>0) {
 					int l = JContourLayer.getLevel(v, contourLevels, -1);
 					v = l<1 ? minCI : l>contourLevels.length-1 ? maxCI : 0.5d*(contourLevels[l-1]+contourLevels[l]);
@@ -202,7 +202,7 @@ public class JColourbar extends JAxis {
 			}
 		} else {
 			for(int j=0; j<ph; j++) {
-				double v = JPlotMath.dlerp(j, 0, ph, maxC, minC);
+				double v = JPlotMath.map(j, 0, ph, maxC, minC);
 				if(contourLevels.length>0) {
 					int l = JContourLayer.getLevel(v, contourLevels, -1);
 					v = l<1 ? minCI : l>contourLevels.length-1 ? maxCI : 0.5d*(contourLevels[l-1]+contourLevels[l]);

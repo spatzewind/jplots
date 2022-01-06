@@ -47,6 +47,8 @@ public class JXYLayer extends JPlotsLayer {
 	@Override
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 		int[] p = ax.getSize();
+		double Xin = ax.isXlogAxis()?Math.log10(minX):minX, Xax = ax.isXlogAxis()?Math.log10(maxX):maxX;
+		double Yin = ax.isYlogAxis()?Math.log10(minY):minY, Yax = ax.isYlogAxis()?Math.log10(maxY):maxY;
 		JGroupShape xyShape = new JGroupShape();
 		JPlotShape.strokeWeight((float)lw);
 		int[] cols = new int[xarrayx.length-1];
@@ -63,7 +65,7 @@ public class JXYLayer extends JPlotsLayer {
 		if(".".equals(ls)) { lln=0; llf=0; lpn=1*lw; lpf=3*lw; }
 		if(",".equals(ls)) { lln=8*lw; llf=7*lw; lpn=0; lpf=0; }
 		if(";".equals(ls)) { lln=8*lw; llf=3*lw; lpn=1*lw; lpf=3*lw; }
-		double xs = p[2]/(maxX-minX), ys = p[3]/(maxY-minY);
+		double xs = p[2]/(Xax-Xin), ys = p[3]/(Yax-Yin);
 		int li = 0;
 		double x1,x2,y1,y2;
 		for(int i=0; i+1<xarrayx.length; i++) {
@@ -73,16 +75,20 @@ public class JXYLayer extends JPlotsLayer {
 //				li = 0;
 				continue;
 			}
-			double[] xy0 = inputProj.fromPROJtoLATLON(xarrayx[i  ], yarrayy[i  ], false);
-			double[] xy1 = inputProj.fromPROJtoLATLON(xarrayx[i+1], yarrayy[i+1], false);
+			x1 = ax.isXlogAxis()?Math.log10(xarrayx[i  ]):xarrayx[i];
+			x2 = ax.isXlogAxis()?Math.log10(xarrayx[i+1]):xarrayx[i+1];
+			y1 = ax.isYlogAxis()?Math.log10(yarrayy[i  ]):yarrayy[i];
+			y2 = ax.isYlogAxis()?Math.log10(yarrayy[i+1]):yarrayy[i+1];
+			double[] xy0 = inputProj.fromPROJtoLATLON(x1, y1, false);
+			double[] xy1 = inputProj.fromPROJtoLATLON(x2, y2, false);
 			if(ax.isGeoAxis()) {
 				xy0 = ax.getGeoProjection().fromLATLONtoPROJ(xy0[0], xy0[1], false);
 				xy1 = ax.getGeoProjection().fromLATLONtoPROJ(xy1[0], xy1[1], false);
 			}
-			x1 = p[0]+xs*(invertAxisX ? maxX-xy0[0] : xy0[0]-minX);
-			x2 = p[0]+xs*(invertAxisX ? maxX-xy1[0] : xy1[0]-minX);
-			y1 = p[1]+ys*(invertAxisY ? xy0[1]-minY : maxY-xy0[1]);
-			y2 = p[1]+ys*(invertAxisY ? xy1[1]-minY : maxY-xy1[1]);
+			x1 = p[0]+xs*(invertAxisX ? Xax-xy0[0] : xy0[0]-Xin);
+			x2 = p[0]+xs*(invertAxisX ? Xax-xy1[0] : xy1[0]-Xin);
+			y1 = p[1]+ys*(invertAxisY ? xy0[1]-Yin : Yax-xy0[1]);
+			y2 = p[1]+ys*(invertAxisY ? xy1[1]-Yin : Yax-xy1[1]);
 			double dx = x2-x1, dy = y2-y1;
 			double l = Math.sqrt(dx*dx+dy*dy);
 			dx /= l; dy /= l;
@@ -99,15 +105,14 @@ public class JXYLayer extends JPlotsLayer {
 				}
 				float xf1 = (float)(x1+lpos*dx), yf1 = (float)(y1+lpos*dy),
 						  xf2 = (float)(x1+(lpos+ldif)*dx), yf2 = (float)(y1+(lpos+ldif)*dy);
-				if(xf1<p[0]      && xf2>=p[0])      { yf1 = JPlotMath.flerp(p[0],      xf1, xf2, yf1, yf2); }
-				if(xf1>p[0]+p[2] && xf2<=p[0]+p[2]) { yf1 = JPlotMath.flerp(p[0]+p[2], xf1, xf2, yf1, yf2); }
-				if(xf2<p[0]      && xf1>=p[0])      { yf2 = JPlotMath.flerp(p[0],      xf1, xf2, yf1, yf2); }
-				if(xf2>p[0]+p[2] && xf1<=p[0]+p[2]) { yf2 = JPlotMath.flerp(p[0]+p[2], xf1, xf2, yf1, yf2); }
-				
-				if(yf1<p[1]      && yf2>=p[1])      { xf1 = JPlotMath.flerp(p[1],      yf1, yf2, xf1, xf2); }
-				if(yf1>p[1]+p[3] && yf2<=p[1]+p[3]) { xf1 = JPlotMath.flerp(p[1]+p[3], yf1, yf2, xf1, xf2); }
-				if(yf2<p[1]      && yf1>=p[1])      { xf2 = JPlotMath.flerp(p[1],      yf1, yf2, xf1, xf2); }
-				if(yf2>p[1]+p[3] && yf1<=p[1]+p[3]) { xf2 = JPlotMath.flerp(p[1]+p[3], yf1, yf2, xf1, xf2); }
+				if(xf1<p[0]      && xf2>=p[0])      { yf1 = JPlotMath.map(p[0],      xf1, xf2, yf1, yf2); }
+				if(xf1>p[0]+p[2] && xf2<=p[0]+p[2]) { yf1 = JPlotMath.map(p[0]+p[2], xf1, xf2, yf1, yf2); }
+				if(xf2<p[0]      && xf1>=p[0])      { yf2 = JPlotMath.map(p[0],      xf1, xf2, yf1, yf2); }
+				if(xf2>p[0]+p[2] && xf1<=p[0]+p[2]) { yf2 = JPlotMath.map(p[0]+p[2], xf1, xf2, yf1, yf2); }
+				if(yf1<p[1]      && yf2>=p[1])      { xf1 = JPlotMath.map(p[1],      yf1, yf2, xf1, xf2); }
+				if(yf1>p[1]+p[3] && yf2<=p[1]+p[3]) { xf1 = JPlotMath.map(p[1]+p[3], yf1, yf2, xf1, xf2); }
+				if(yf2<p[1]      && yf1>=p[1])      { xf2 = JPlotMath.map(p[1],      yf1, yf2, xf1, xf2); }
+				if(yf2>p[1]+p[3] && yf1<=p[1]+p[3]) { xf2 = JPlotMath.map(p[1]+p[3], yf1, yf2, xf1, xf2); }
 				if(xf1>=p[0] && xf1<=p[0]+p[2] && xf2>=p[0] && xf2<=p[0]+p[2] &&
 						yf1>=p[1] && yf1<=p[1]+p[3] && yf2>=p[1] && yf2<=p[1]+p[3]) {
 					if(li%2==0 && ldif>0d)

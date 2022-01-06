@@ -3,14 +3,10 @@ package jplots.layer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.geom.util.AffineTransformation;
 import jplots.JAxis;
 import jplots.JPlot;
 import jplots.colour.JColourtable;
+import jplots.maths.AffineBuilder;
 import jplots.maths.JDEdge;
 import jplots.maths.JDPoint;
 import jplots.maths.JDPolygon;
@@ -32,7 +28,7 @@ public class JContourLayer extends JPlotsLayer {
 
 	private double EPSILON  = Math.pow(2, -52);
 	private boolean isFilled, pixelFilling, input2d;
-	private double minZ, maxZ;
+	private double minZ, maxZ, Xin,Xax,Yin,Yax;
 	private double[] xarrayx, yarrayy;
 	private double[][] xarrayx2,yarrayy2,zarrayz;
 	private double[] contourIntervals;
@@ -193,11 +189,15 @@ public class JContourLayer extends JPlotsLayer {
 	@Override
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 		int[] p = ax.getSize();
-		double xs = p[2]/(maxX-minX), ys = p[3]/(maxY-minY);
-		double tol = Math.max(Math.abs(maxX-minX), Math.abs(maxY-minY)) * 1.0e-12d;
+		Xin = ax.isXlogAxis()?Math.log10(minX):minX;
+		Xax = ax.isXlogAxis()?Math.log10(maxX):maxX;
+		Yin = ax.isYlogAxis()?Math.log10(minY):minY;
+		Yax = ax.isYlogAxis()?Math.log10(maxY):maxY;
+		double xs = p[2]/(Xax-Xin), ys = p[3]/(Yax-Yin);
+		//double tol = Math.max(Math.abs(maxX-minX), Math.abs(maxY-minY)) * 1.0e-12d;
 		
 		//step 1: collect valid corners of grid and project them
-		collectValidPoints(ax.getGeoProjection(), ax.getPlot().isDebug());
+		collectValidPoints(ax.getGeoProjection(), ax.isXlogAxis(), ax.isYlogAxis(), ax.getPlot().isDebug());
         
 		//step 2: do delauney-triangulation
 		triangulate(ax.getPlot().isDebug(), ax);
@@ -220,7 +220,7 @@ public class JContourLayer extends JPlotsLayer {
 //				fillContours(ax.getGeoProjection(), ax.getPlot().isDebug());
 //				fillByPolygons(p, ax, xs, ys, s);
 				try {
-					fillContours(ax.getGeoProjection(), p, ax, xs, ys, s, tol);
+					fillContours(ax.getGeoProjection(), p, ax, xs, ys, s);
 				} catch(Exception e) {
 					e.printStackTrace();
 					throw new RuntimeException(e);
@@ -247,7 +247,7 @@ public class JContourLayer extends JPlotsLayer {
 	public double[] getLevels() {
 		return contourIntervals; }
 	
-	private void collectValidPoints(JProjection outproj, boolean debug) {
+	private void collectValidPoints(JProjection outproj, boolean xLog, boolean yLog, boolean debug) {
 		int nx=0, ny=0;
 		if(input2d) {
 			ny = xarrayx2.length;
@@ -265,16 +265,22 @@ public class JContourLayer extends JPlotsLayer {
 		for(int j=0; j<ny; j++)
 			for(int i=0; i<nx; i++) {
 				if(input2d) {
-					xy = inputProj.fromPROJtoLATLON(xarrayx2[j][i], yarrayy2[j][i], false);
+					xy = inputProj.fromPROJtoLATLON(
+							xLog?Math.log10(xarrayx2[j][i]):xarrayx2[j][i],
+							yLog?Math.log10(yarrayy2[j][i]):yarrayy2[j][i],
+							false);
 				} else {
-					xy = inputProj.fromPROJtoLATLON(xarrayx[i], yarrayy[j], false);
+					xy = inputProj.fromPROJtoLATLON(
+							xLog?Math.log10(xarrayx[i]):xarrayx[i],
+							yLog?Math.log10(yarrayy[j]):yarrayy[j],
+							false);
 				}
 				xy = outproj.fromLATLONtoPROJ(xy[0], xy[1], false);
 				if(Double.isFinite(xy[0]) && Double.isFinite(xy[1]))
 					corners.add(new JDPoint(xy[0],xy[1],zarrayz[j][i]));
 			}
-		double xyScale = Math.max(Math.max(-minX,maxX), Math.max(-minY, maxY));
-		xyScale = Math.max(xyScale, Math.max(maxX-minX, maxY-minY));
+		double xyScale = Math.max(Math.max(-Xin,Xax), Math.max(-Yin, Yax));
+		xyScale = Math.max(xyScale, Math.max(Xax-Xin, Yax-Yin));
 		EPSILON  =     xyScale     * 1.e-12d;
 		if(debug)
             System.out.println("[DEBUG] JContourLayer: 1] has "+corners.size()+" valid sourcepoints");
@@ -287,7 +293,10 @@ public class JContourLayer extends JPlotsLayer {
 	        edges = delaunay.getEdges();
 	        triangles = delaunay.getTriangles();
         } else {
-        	JGridTriangulator triangulator = new JGridTriangulator(xarrayx, yarrayy, zarrayz);
+        	JGridTriangulator triangulator = new JGridTriangulator(
+        			ax.isXlogAxis()?JPlotMath.log10(xarrayx):xarrayx,
+        			ax.isYlogAxis()?JPlotMath.log10(yarrayy):yarrayy,
+        			zarrayz);
         	edges = triangulator.getEdges();
         	triangles = triangulator.getTriangles();
         }
@@ -305,9 +314,9 @@ public class JContourLayer extends JPlotsLayer {
             if(debug)
                 System.out.println("[DEBUG] JContourLayer:   create contours for level "+(level<0 ? Double.NaN : contourIntervals[level]));
 			for(JDTriangle ct: triangles) {
-				JDPoint va = ct.a;
-				JDPoint vb = ct.b;
-				JDPoint vc = ct.c;
+				JDPoint va = ct.getA();
+				JDPoint vb = ct.getB();
+				JDPoint vc = ct.getC();
 				if(level==nanid) {
 					int nancode = 0;
 					if(Double.isNaN(va.value)) nancode |= 1;
@@ -542,25 +551,24 @@ public class JContourLayer extends JPlotsLayer {
         points.add(np);
         return points.size()-1;
 	}
-	private void fillContours(JProjection outproj, int[] p, JAxis ax, double xs, double ys, JGroupShape s, double eps) {
+	private void fillContours(JProjection outproj, int[] p, JAxis ax, double xs, double ys, JGroupShape s) {
         if(ax.getPlot().isDebug())
             System.out.println("[DEBUG] JContourLayer: 4] fill contours ...");
-        double eps2 = eps*eps;
-        GeometryFactory gf = new GeometryFactory();
-        Geometry rahmen = gf.createPolygon(new Coordinate[] {
-        		new Coordinate(p[0],p[1]),
-        		new Coordinate(p[0]+p[2],p[1]),
-        		new Coordinate(p[0]+p[2],p[1]+p[3]),
-        		new Coordinate(p[0],p[1]+p[3]),
-        		new Coordinate(p[0],p[1])
-        });
-        AffineTransformation affine = new AffineTransformation()
-        		.setToIdentity()
+        double eps  = Math.min(p[2], p[3]) * 1.0e-9d;
+        double eps2 = eps*0.0001d;
+        AffineBuilder affine = new AffineBuilder()
         		.scale(invertAxisX?-1d:1d, invertAxisY?1d:-1d)
         		.translate(invertAxisX?maxX:-minX, invertAxisY?-minY:maxY)
         		.scale(xs, ys)
         		.translate(p[0], p[1])
         		;
+        List<JDTriangle> visibleTriangles = new ArrayList<JDTriangle>();
+    	for(JDTriangle t: triangles) {
+    		JDPolygon poly = t.copy().affine(affine.getMatrix()).intersectsAABB(p[0],p[1],  p[0]+p[2],p[1]+p[2]);
+    		if(poly==null)
+    			continue;
+    		visibleTriangles.addAll(poly.toTriangles());
+    	}
         fillings = null;
         fillings = new JDGeometry[contourIntervals.length+1];
         for(int lev=-1; lev<contourIntervals.length; lev++) {
@@ -571,132 +579,21 @@ public class JContourLayer extends JPlotsLayer {
         	if(lev+1<contourIntervals.length) levmax = contourIntervals[lev+1];
             if(ax.getPlot().isDebug())
                 System.out.println("[DEBUG]                   ... collect geometry for range ["+levmin+" ... "+levmax+"]");
-        	for(JDTriangle t: triangles) {
-        		double vmin = Double.POSITIVE_INFINITY;
-        		double vmax = Double.NEGATIVE_INFINITY;
-        		double a = t.a.value();
-        		if(Double.isFinite(a) && a<vmin) vmin = a; if(Double.isFinite(a) && a>vmax) vmax = a;
-        		double b = t.b.value();
-        		if(Double.isFinite(b) && b<vmin) vmin = b; if(Double.isFinite(b) && b>vmax) vmax = b;
-        		double c = t.c.value();
-        		if(Double.isFinite(c) && c<vmin) vmin = c; if(Double.isFinite(c) && c>vmax) vmax = c;
-        		if(vmax<vmin) continue;
-        		if(vmin>levmax || vmax<levmin) continue;
-        		int id = ((Double.isNaN(a) ? 0 : a<levmin ? 1 : a>levmax ? 2 : 3)<<8) |
-        				 ((Double.isNaN(b) ? 0 : b<levmin ? 1 : b>levmax ? 2 : 3)<<4) |
-        				  (Double.isNaN(c) ? 0 : c<levmin ? 1 : c>levmax ? 2 : 3);
-        		if(id==0x000 || id==0x111 || id==0x222)
+        	for(JDTriangle t: visibleTriangles) {
+        		Object res = cutoutLevelrange(t, levmin, levmax);
+        		if(res==null)
         			continue;
-        		if(id==0x001 || id==0x010 || id==0x100 || id==0x002 || id==0x020 || id==0x200)
-        			continue;
-        		if(id==0x011 || id==0x101 || id==0x110 || id==0x022 || id==0x202 || id==0x220)
-        			continue;
-        		Coordinate aaa = new Coordinate(t.a.x, t.a.y);
-        		Coordinate bbb = new Coordinate(t.b.x, t.b.y);
-        		Coordinate ccc = new Coordinate(t.c.x, t.c.y);
-        		if(id==0x333) {
-        			if(ax.getPlot().isDebug())
-        				System.out.println("[DEBUG] triangle "+t+" seems to be fully one color (lev=["+levmin+"..."+levmax+"])");
-        			Geometry res = gf.createPolygon(new Coordinate[] {aaa,bbb,ccc,aaa});
-            		res = affine.transform(res).intersection(rahmen);
-            		switch(res.getCoordinates().length) {
-            			case 4:  addTriangle2polygonList(pl, new JDTriangle(res.getCoordinates())); break;
-            			default: addPolygon2polygonList(pl, new JDPolygon(res.getCoordinates())); break;
-            		}
-        			continue;
+        		if(res instanceof JDTriangle) {
+        			JDTriangle rt = (JDTriangle) res;
+        			//System.out.println(" ... add "+rt+" with area "+rt.area()+"<>"+eps2);
+        			if(Math.abs(rt.area())>eps2)
+        				addTriangle2polygonList(pl, rt, eps);
         		}
-//        		System.out.println("a="+a+"    b="+b+"    c="+c+
-//						"    min="+levmin+"    max="+levmax);
-        		int nan = ((Double.isNaN(a) ? 0 : 1)<<8) |
-      				  ((Double.isNaN(b) ? 0 : 1)<<4) |
-      				   (Double.isNaN(c) ? 0 : 1);
-        		Coordinate abh = new Coordinate( t.a.x+0.5d*(t.b.x-t.a.x), t.a.y+0.5d*(t.b.y-t.a.y) );
-        		Coordinate bch = new Coordinate( t.b.x+0.5d*(t.c.x-t.b.x), t.b.y+0.5d*(t.c.y-t.b.y) );
-        		Coordinate cah = new Coordinate( t.c.x+0.5d*(t.a.x-t.c.x), t.c.y+0.5d*(t.a.y-t.c.y) );
-        		Polygon nanGeom = null;
-        		switch(nan) {
-        			case 0x001: nanGeom = gf.createPolygon(new Coordinate[] {ccc, cah, bch, ccc}); break;
-        			case 0x010: nanGeom = gf.createPolygon(new Coordinate[] {bbb, bch, abh, bbb}); break;
-        			case 0x011: nanGeom = gf.createPolygon(new Coordinate[] {ccc, cah, abh, bbb, ccc}); break;
-        			case 0x100: nanGeom = gf.createPolygon(new Coordinate[] {aaa, abh, cah, aaa}); break;
-        			case 0x101: nanGeom = gf.createPolygon(new Coordinate[] {aaa, abh, bch, ccc, aaa}); break;
-        			case 0x110: nanGeom = gf.createPolygon(new Coordinate[] {bbb, bch, cah, aaa, bbb}); break;
-        			case 0x111: nanGeom = gf.createPolygon(new Coordinate[] {aaa, bbb, ccc, aaa}); break;
-        			default: break;
-        		}
-        		if(nanGeom==null) {
-        			System.err.println("[ERROR] FilledContours(Vec): In triangle "+t+" no lowGeometry could be created! (id="+
-        					Integer.toHexString(id)+",nan="+Integer.toHexString(nan)+")");
-        			continue;
-        		}
-        		if(nanGeom.getArea()<eps2) continue;
-        		if((id&0xf00)==0) a = levmin;
-        		if((id&0x0f0)==0) b = levmin;
-        		if((id&0x00f)==0) c = levmin;
-        		int imin = ((a<levmin ? 0 : 1)<<8) | ((b<levmin ? 0 : 1)<<4) | (c<levmin ? 0 : 1);
-        		double  abfi = (levmin-a) / (b-a),
-        				bcfi = (levmin-b) / (c-b),
-        				cafi = (levmin-c) / (a-c);
-        		Coordinate abi = new Coordinate( t.a.x+abfi*(t.b.x-t.a.x), t.a.y+abfi*(t.b.y-t.a.y) );
-        		Coordinate bci = new Coordinate( t.b.x+bcfi*(t.c.x-t.b.x), t.b.y+bcfi*(t.c.y-t.b.y) );
-        		Coordinate cai = new Coordinate( t.c.x+cafi*(t.a.x-t.c.x), t.c.y+cafi*(t.a.y-t.c.y) );
-        		Polygon lowGeom = null;
-        		switch(imin) {
-	    			case 0x001: lowGeom = gf.createPolygon(new Coordinate[] {ccc, cai, bci, ccc}); break;
-	    			case 0x010: lowGeom = gf.createPolygon(new Coordinate[] {bbb, bci, abi, bbb}); break;
-	    			case 0x011: lowGeom = gf.createPolygon(new Coordinate[] {ccc, cai, abi, bbb, ccc}); break;
-	    			case 0x100: lowGeom = gf.createPolygon(new Coordinate[] {aaa, abi, cai, aaa}); break;
-	    			case 0x101: lowGeom = gf.createPolygon(new Coordinate[] {aaa, abi, bci, ccc, aaa}); break;
-	    			case 0x110: lowGeom = gf.createPolygon(new Coordinate[] {bbb, bci, cai, aaa, bbb}); break;
-        			case 0x111: lowGeom = gf.createPolygon(new Coordinate[] {aaa, bbb, ccc, aaa}); break;
-	    			default: break;
-        		}
-        		if(lowGeom==null) {
-        			System.err.println("[ERROR] FilledContours(Vec): In triangle "+t+" no lowGeometry could be created! (id="+
-        					Integer.toHexString(id)+",nan="+Integer.toHexString(nan)+",min="+Integer.toHexString(imin)+")");
-        			continue;
-        		}
-        		if(lowGeom.getArea()<eps2) continue;
-        		if((id&0xf00)==0) a = levmax;
-        		if((id&0x0f0)==0) b = levmax;
-        		if((id&0x00f)==0) c = levmax;
-        		int imax = ((a>levmax ? 0 : 1)<<8) | ((b>levmax ? 0 : 1)<<4) | (c>levmax ? 0 : 1);
-        		double  abfa = (levmax-a) / (b-a),
-        				bcfa = (levmax-b) / (c-b),
-        				cafa = (levmax-c) / (a-c);
-        		Coordinate aba = new Coordinate( t.a.x+abfa*(t.b.x-t.a.x), t.a.y+abfa*(t.b.y-t.a.y) );
-        		Coordinate bca = new Coordinate( t.b.x+bcfa*(t.c.x-t.b.x), t.b.y+bcfa*(t.c.y-t.b.y) );
-        		Coordinate caa = new Coordinate( t.c.x+cafa*(t.a.x-t.c.x), t.c.y+cafa*(t.a.y-t.c.y) );
-        		Polygon higGeom = null;
-        		switch(imax) {
-	    			case 0x001: higGeom = gf.createPolygon(new Coordinate[] {ccc, caa, bca, ccc}); break;
-	    			case 0x010: higGeom = gf.createPolygon(new Coordinate[] {bbb, bca, aba, bbb}); break;
-	    			case 0x011: higGeom = gf.createPolygon(new Coordinate[] {ccc, caa, aba, bbb, ccc}); break;
-	    			case 0x100: higGeom = gf.createPolygon(new Coordinate[] {aaa, aba, caa, aaa}); break;
-	    			case 0x101: higGeom = gf.createPolygon(new Coordinate[] {aaa, aba, bca, ccc, aaa}); break;
-	    			case 0x110: higGeom = gf.createPolygon(new Coordinate[] {bbb, bca, caa, aaa, bbb}); break;
-        			case 0x111: higGeom = gf.createPolygon(new Coordinate[] {aaa, bbb, ccc, aaa}); break;
-	    			default: break;
-        		}
-        		if(higGeom==null) {
-        			System.err.println("[ERROR] FilledContours(Vec): In triangle "+t+" no highGeometry could be created! (id="+
-        					Integer.toHexString(id)+",nan="+Integer.toHexString(nan)+",min="+Integer.toHexString(imin)+",max="+
-        					Integer.toHexString(imax)+")");
-        			continue;
-        		}
-        		if(higGeom.getArea()<eps2) continue;
-//        		System.out.println("minfraction{ab="+abfi+",bc="+bcfi+",ca="+cafi+"}  maxfraction{ab="+abfa+",bc="+bcfa+",ca="+cafa+"}");
-        		Geometry res = nanGeom.intersection(lowGeom.intersection(higGeom));
-        		res = affine.transform(res).intersection(rahmen);
-        		if(res.getArea()<eps2)
-        			continue;
-//        		System.out.println("found "+printGeom(res)+" from\n"+
-//									"        "+printGeom(nanGeom)+"  (nan="+Integer.toHexString(nan)+")"+
-//									"\n      /\\"+printGeom(lowGeom)+"  (low="+Integer.toHexString(imin)+")"+
-//									"\n      /\\"+printGeom(higGeom)+"  (hig="+Integer.toHexString(imax)+")");
-        		switch(res.getCoordinates().length) {
-        			case 4: addTriangle2polygonList(pl, new JDTriangle(res.getCoordinates())); break;
-        			default: addPolygon2polygonList(pl, new JDPolygon(res.getCoordinates())); break;
+        		if(res instanceof JDPolygon) {
+        			JDPolygon rp = (JDPolygon) res;
+        			//System.out.println(" ... add "+rp+" with area "+rp.area()+"<>"+eps2);
+        			if(rp.area()>eps2)
+        				addPolygon2polygonList(pl, rp, eps);
         		}
         	}
         	fillings[lev+1] = new JDGeometry();
@@ -705,143 +602,10 @@ public class JContourLayer extends JPlotsLayer {
         			System.out.println("[DEBUG]                       ... use polygon "+jdp);
         		fillings[lev+1].add(jdp);
         	}
-    		if(ax.getPlot().isDebug() && pl.isEmpty())
-    			System.out.println("[DEBUG]                       ... no polygon created");
+        	if(ax.getPlot().isDebug() && pl.isEmpty())
+        		System.out.println("[DEBUG]                       ... no polygon created");
         }
         
-		//add corner points to fill last bits in normal plot // ussually not necessary for complex geographical projections
-//		int nx=xarrayx.length, ny=yarrayy.length;
-//		double[] xy00 = inputProj.fromPROJtoLATLON(xarrayx[0], yarrayy[0], false);
-//		xy00 = outproj.fromLATLONtoPROJ(xy00[0], xy00[1], false);
-//		if(Double.isFinite(xy00[0]) && Double.isFinite(xy00[1]))
-//			addCorner(xy00[0], xy00[1], zarrayz[0][0], cntCorner);
-//		double[] xy01 = inputProj.fromPROJtoLATLON(xarrayx[nx-1], yarrayy[0], false);
-//		xy01 = outproj.fromLATLONtoPROJ(xy01[0], xy01[1], false);
-//		if(Double.isFinite(xy01[0]) && Double.isFinite(xy01[1]))
-//			addCorner(xy01[0], xy01[1], zarrayz[0][nx-1], cntCorner);
-//		double[] xy10 = inputProj.fromPROJtoLATLON(xarrayx[0], yarrayy[ny-1], false);
-//		xy10 = outproj.fromLATLONtoPROJ(xy10[0], xy10[1], false);
-//		if(Double.isFinite(xy10[0]) && Double.isFinite(xy10[1]))
-//			addCorner(xy10[0], xy10[1], zarrayz[ny-1][0], cntCorner);
-//		double[] xy11 = inputProj.fromPROJtoLATLON(xarrayx[nx-1], yarrayy[ny-1], false);
-//		xy11 = outproj.fromLATLONtoPROJ(xy11[0], xy11[1], false);
-//		if(Double.isFinite(xy11[0]) && Double.isFinite(xy11[1]))
-//			addCorner(xy11[0], xy11[1], zarrayz[ny-1][nx-1], cntCorner);
-//		if(debug)
-//			System.out.println("[DEBUG] JContourLayer:    added corner points.");
-//		
-//		//create delaunay triangulation
-//		JConstrainedDelaunayTriangulator delaunayFill = new JConstrainedDelaunayTriangulator(contours, cntCorner);
-//		//constrain edges afterwards to respect contours
-//		//delaunayFill.constrain(contours);
-//		if(debug)
-//			System.out.println("[DEBUG] JContourLayer:    CDT successful.");
-//		
-//		//order triangles with respect to contour level (or by x-axis amount when level is equal)
-//		cntTriangles = delaunayFill.getTriangles();
-//		List<JDTriangle> equalLevelTriangle = new ArrayList<JDTriangle>();
-//		double[] ci = new double[contourIntervals.length];
-//		ci[0] = contourIntervals[0]*(contourIntervals[0]<0d ? 1.00000001d : 0.99999999d);
-//		for(int c=1; c<ci.length; c++)
-//				ci[c] = 0.00000001d*contourIntervals[c-1]+0.99999999d*contourIntervals[c];
-//		for(JDTriangle cntTri: cntTriangles) {
-//			int[] l =  {getLevel(cntTri.a.value, contourIntervals, -9999),
-//						getLevel(cntTri.b.value, contourIntervals, -9999),
-//						getLevel(cntTri.c.value, contourIntervals, -9999)};
-//			if(l[0]<0 || l[1]<0 || l[2]<0) {
-//				cntTri.lev = -1;
-//				equalLevelTriangle.add(cntTri);
-//			} else
-//			if(l[0]==l[1] && l[1]==l[2]) {
-//				cntTri.lev = l[0];
-//				equalLevelTriangle.add(cntTri);
-//			} else {
-//				cntTri.lev = (l[0]+l[1]+l[2])/3;
-//			}
-//		}
-//		if(debug)
-//			System.out.println("[DEBUG] JContourLayer:    Simple colouring done.");
-//		int iter=0;
-//		while(equalLevelTriangle.size()>0 && iter<1000) {
-//			iter++;
-//			for(int t=equalLevelTriangle.size()-1; t>=0; t--) {
-//				JDTriangle cntTri = equalLevelTriangle.get(t);
-//				for(JDEdge e: new JDEdge[] {cntTri.ab, cntTri.bc, cntTri.ca}) {
-//					if(e.has2triangles()) {
-//						JDTriangle[] w = e.getWing();
-//						JDTriangle next = w[0].equals(cntTri) ? w[1] : w[0];
-//						if(next==null)
-//							continue;
-//						if(equalLevelTriangle.contains(next))
-//							continue;
-//						if(contours.contains(e)) {
-//							double ev = 0.5d*(e.a.value+e.b.value);
-//							if(Double.isNaN(e.a.value)) ev = e.b.value;
-//							if(Double.isNaN(e.b.value)) ev = e.a.value;
-//							int elev = getLevel(ev, contourIntervals, -1);
-//							if(elev<0)
-//								continue;
-//							if(next.lev>=0) {
-//								cntTri.lev = 2*elev - 1 - next.lev;
-//							} else {
-//								cntTri.lev = -1;
-//							}
-//						} else {
-//							cntTri.lev = next.lev;
-//						}
-//						equalLevelTriangle.remove(t);
-//						break;
-//					}
-//				}
-//			}
-//		}
-//		if(debug)
-//			System.out.println("[DEBUG] JContourLayer:    colors to triangle assigned.");
-//		cntTriangles.sort(new Comparator<JDTriangle>() {
-//			@Override
-//			public int compare(JDTriangle o1, JDTriangle o2) {
-//				if(o1==null)
-//					return -1;
-//				if(o2==null)
-//					return  1;
-//				if(o1.lev!=o2.lev)
-//					return o1.lev - o2.lev;
-//				return Double.compare(o1.a.x+o1.b.x+o1.c.x, o2.a.x+o2.b.x+o2.c.x);
-//			}
-//		});
-//		startTriangle = new int[contourIntervals.length+1];
-//		int lastLev = -1;
-//		for(int c=1; c<cntTriangles.size(); c++) {
-//			if(cntTriangles.get(c-1).lev<cntTriangles.get(c).lev) {
-//				lastLev = Math.max(lastLev, cntTriangles.get(c).lev);
-//				startTriangle[cntTriangles.get(c).lev] = c;
-//			}
-//		}
-//		for(int c=1; c<startTriangle.length; c++)
-//			if(startTriangle[c]<startTriangle[c-1]) {
-//				int bigger = c+1;
-//				for(bigger=c+1; bigger<startTriangle.length; bigger++)
-//					if(startTriangle[bigger]>startTriangle[c-1])
-//						break;
-//				int bc = cntTriangles.size();
-//				if(bigger<startTriangle.length) {
-//					bc = startTriangle[bigger];
-//				} else {
-//					bigger = startTriangle.length-1;
-//				}
-//				for(bigger=bigger+0; bigger>=c; bigger--)
-//					startTriangle[bigger] = bc;
-//			}
-////		for(int c=lastLev+1; c<startTriangle.length; c++)
-////			startTriangle[c] = cntTriangles.size();
-//		if(debug) {
-//			System.out.println("[DEBUG] JContourLayer:    estimated "+cntTriangles.size()+" triangles between contourlines");
-//			String sts = "";
-//			for(int i=0; i<startTriangle.length; i++)
-//				sts += ", "+startTriangle[i];
-//			System.out.println("[DEBUG] JContourLayer:    start indices are: "+sts.substring(2));
-//		}
-
 		JGroupShape trianglesh = new JGroupShape();
         for(int lev=-1; lev<contourIntervals.length; lev++) {
         	double levmin = Double.NEGATIVE_INFINITY;
@@ -863,28 +627,7 @@ public class JContourLayer extends JPlotsLayer {
 //			if(ax.getPlot().isDebug()) {
 //				JPlotShape.stroke(0xff999999); JPlotShape.strokeWeight(2f); }
 			for(JDPolygon ppp: fillings[lev+1].getPolygons()) {
-				trianglesh.addChild(new JPolygonShape(ppp, cct, 0xff999999, 2f, true, ax.getPlot().isDebug()));
-//				Geometry triGeom = polygons.getGeometryN(gi);
-//				if(triGeom.getCoordinates().length<3)
-//					continue;
-//				
-//				Coordinate tv1 = triGeom.getCoordinates()[0];
-//				Coordinate tv2 = triGeom.getCoordinates()[1];
-//				Coordinate tv3 = triGeom.getCoordinates()[2];
-//				System.out.println(tv1);
-//				System.out.println(tv2);
-//				System.out.println(tv3);
-//				double x1 = p[0]+xs*(invertAxisX ? maxX-tv1.x : tv1.x-minX);
-//				double x2 = p[0]+xs*(invertAxisX ? maxX-tv2.x : tv2.x-minX);
-//				double x3 = p[0]+xs*(invertAxisX ? maxX-tv3.x : tv3.x-minX);
-//				double y1 = p[1]+ys*(invertAxisY ? tv1.y-minY : maxY-tv1.y);
-//				double y2 = p[1]+ys*(invertAxisY ? tv2.y-minY : maxY-tv2.y);
-//				double y3 = p[1]+ys*(invertAxisY ? tv3.y-minY : maxY-tv3.y);
-//				for(JDTriangle ttt: cutoff(x1,y1,x2,y2,x3,y3, p[0],p[1],p[0]+p[2],p[1]+p[3])) {
-//					trianglesh.addChild(
-//							new JTriangleShape((float)ttt.a.x, (float)ttt.a.y, (float)ttt.b.x, (float)ttt.b.y, (float)ttt.c.x, (float)ttt.c.y)
-//					);
-//				}
+				trianglesh.addChild(new JPolygonShape(ppp, cct, 0xff999999, 2f, true, false));
 			}
         }
 		s.addChild(trianglesh);
@@ -898,15 +641,15 @@ public class JContourLayer extends JPlotsLayer {
 		}
 		img.loadPixels();
 		for(JDTriangle tri: triangles) {
-			JDPoint va = tri.a;
-			JDPoint vb = tri.b;
-			JDPoint vc = tri.c;
-			double x1 = xs*(invertAxisX ? maxX-va.x : va.x-minX);
-			double x2 = xs*(invertAxisX ? maxX-vb.x : vb.x-minX);
-			double x3 = xs*(invertAxisX ? maxX-vc.x : vc.x-minX);
-			double y1 = ys*(invertAxisY ? va.y-minY : maxY-va.y);
-			double y2 = ys*(invertAxisY ? vb.y-minY : maxY-vb.y);
-			double y3 = ys*(invertAxisY ? vc.y-minY : maxY-vc.y);
+			JDPoint va = tri.getA();
+			JDPoint vb = tri.getB();
+			JDPoint vc = tri.getC();
+			double x1 = xs*(invertAxisX ? Xax-va.x : va.x-Xin);
+			double x2 = xs*(invertAxisX ? Xax-vb.x : vb.x-Xin);
+			double x3 = xs*(invertAxisX ? Xax-vc.x : vc.x-Xin);
+			double y1 = ys*(invertAxisY ? va.y-Yin : Yax-va.y);
+			double y2 = ys*(invertAxisY ? vb.y-Yin : Yax-vb.y);
+			double y3 = ys*(invertAxisY ? vc.y-Yin : Yax-vc.y);
 			double txi = Math.min(x1,Math.min(x2,x3)), txa = Math.max(x1,Math.max(x2,x3));
 			double tyi = Math.min(y1,Math.min(y2,y3)), tya = Math.max(y1,Math.max(y2,y3));
 			int ixs = Math.max((int) txi - (txi<0 ? 1 : 0), 0),
@@ -986,10 +729,10 @@ public class JContourLayer extends JPlotsLayer {
 			for(int cl=cs; cl<ce; cl++) {
 				JDPoint lvs = contours.get(cl).a;
 				JDPoint lve = contours.get(cl).b;
-				double x1 = p[0]+xs*(invertAxisX ? maxX-lvs.x : lvs.x-minX);
-				double x2 = p[0]+xs*(invertAxisX ? maxX-lve.x : lve.x-minX);
-				double y1 = p[1]+ys*(invertAxisY ? lvs.y-minY : maxY-lvs.y);
-				double y2 = p[1]+ys*(invertAxisY ? lve.y-minY : maxY-lve.y);
+				double x1 = p[0]+xs*(invertAxisX ? Xax-lvs.x : lvs.x-Xin);
+				double x2 = p[0]+xs*(invertAxisX ? Xax-lve.x : lve.x-Xin);
+				double y1 = p[1]+ys*(invertAxisY ? lvs.y-Yin : Yax-lvs.y);
+				double y2 = p[1]+ys*(invertAxisY ? lve.y-Yin : Yax-lve.y);
 				double dx = x2-x1, dy = y2-y1;
 				double l = Math.sqrt(dx*dx+dy*dy);
 				dx /= l; dy /= l;
@@ -1004,15 +747,14 @@ public class JContourLayer extends JPlotsLayer {
 					}
 					float xf1 = (float)(x1+lpos*dx), yf1 = (float)(y1+lpos*dy),
 							  xf2 = (float)(x1+(lpos+ldif)*dx), yf2 = (float)(y1+(lpos+ldif)*dy);
-					if(xf1<p[0]      && xf2>=p[0])      { yf1 = JPlotMath.flerp(p[0],      xf1, xf2, yf1, yf2); }
-					if(xf1>p[0]+p[2] && xf2<=p[0]+p[2]) { yf1 = JPlotMath.flerp(p[0]+p[2], xf1, xf2, yf1, yf2); }
-					if(xf2<p[0]      && xf1>=p[0])      { yf2 = JPlotMath.flerp(p[0],      xf1, xf2, yf1, yf2); }
-					if(xf2>p[0]+p[2] && xf1<=p[0]+p[2]) { yf2 = JPlotMath.flerp(p[0]+p[2], xf1, xf2, yf1, yf2); }
-					
-					if(yf1<p[1]      && yf2>=p[1])      { xf1 = JPlotMath.flerp(p[1],      yf1, yf2, xf1, xf2); }
-					if(yf1>p[1]+p[3] && yf2<=p[1]+p[3]) { xf1 = JPlotMath.flerp(p[1]+p[3], yf1, yf2, xf1, xf2); }
-					if(yf2<p[1]      && yf1>=p[1])      { xf2 = JPlotMath.flerp(p[1],      yf1, yf2, xf1, xf2); }
-					if(yf2>p[1]+p[3] && yf1<=p[1]+p[3]) { xf2 = JPlotMath.flerp(p[1]+p[3], yf1, yf2, xf1, xf2); }
+					if(xf1<p[0]      && xf2>=p[0])      { yf1 = JPlotMath.map(p[0],      xf1, xf2, yf1, yf2); }
+					if(xf1>p[0]+p[2] && xf2<=p[0]+p[2]) { yf1 = JPlotMath.map(p[0]+p[2], xf1, xf2, yf1, yf2); }
+					if(xf2<p[0]      && xf1>=p[0])      { yf2 = JPlotMath.map(p[0],      xf1, xf2, yf1, yf2); }
+					if(xf2>p[0]+p[2] && xf1<=p[0]+p[2]) { yf2 = JPlotMath.map(p[0]+p[2], xf1, xf2, yf1, yf2); }
+					if(yf1<p[1]      && yf2>=p[1])      { xf1 = JPlotMath.map(p[1],      yf1, yf2, xf1, xf2); }
+					if(yf1>p[1]+p[3] && yf2<=p[1]+p[3]) { xf1 = JPlotMath.map(p[1]+p[3], yf1, yf2, xf1, xf2); }
+					if(yf2<p[1]      && yf1>=p[1])      { xf2 = JPlotMath.map(p[1],      yf1, yf2, xf1, xf2); }
+					if(yf2>p[1]+p[3] && yf1<=p[1]+p[3]) { xf2 = JPlotMath.map(p[1]+p[3], yf1, yf2, xf1, xf2); }
 					if(xf1>=p[0] && xf1<=p[0]+p[2] && xf2>=p[0] && xf2<=p[0]+p[2] &&
 							yf1>=p[1] && yf1<=p[1]+p[3] && yf2>=p[1] && yf2<=p[1]+p[3]) {
 						if(li%2==0 && ldif>0d)
@@ -1041,24 +783,204 @@ public class JContourLayer extends JPlotsLayer {
 				l = cl+1;
 		return l;
 	}
-	private void addTriangle2polygonList(List<JDPolygon> list, JDTriangle tri) {
+	
+	public Object cutoutLevelrange(JDTriangle tri, double lower, double upper) {
+		double x1 = tri.x[0], x2 = tri.x[1], x3 = tri.x[2];
+		double y1 = tri.y[0], y2 = tri.y[1], y3 = tri.y[2];
+		double v1 = tri.value[0], v2 = tri.value[1], v3 = tri.value[2];
+		double vmin = Double.POSITIVE_INFINITY;
+		double vmax = Double.NEGATIVE_INFINITY;
+		if(Double.isFinite(v1)) { if(v1<vmin) vmin = v1; if(v1>vmax) vmax = v1; }
+		if(Double.isFinite(v2)) { if(v2<vmin) vmin = v2; if(v2>vmax) vmax = v2; }
+		if(Double.isFinite(v3)) { if(v3<vmin) vmin = v3; if(v3>vmax) vmax = v3; }
+		if(vmax<vmin)
+			return null;
+		if(vmax<lower || vmin>upper)
+			return null;
+		int id = ((Double.isNaN(v1) ? 0 : v1<lower ? 1 : v1>upper ? 2 : 3)<<8) |
+				 ((Double.isNaN(v2) ? 0 : v2<lower ? 1 : v2>upper ? 2 : 3)<<4) |
+				  (Double.isNaN(v3) ? 0 : v3<lower ? 1 : v3>upper ? 2 : 3);
+//		String s_id = Integer.toHexString(id);
+//		while(s_id.length()<3) s_id = "0"+s_id;
+//		System.out.println("Triangel "+tri+" -> id="+s_id);
+		if(id==0x000 || id==0x111 || id==0x222)
+			return null;
+		if(id==0x001 || id==0x010 || id==0x100 || id==0x002 || id==0x020 || id==0x200)
+			return null;
+		if(id==0x011 || id==0x101 || id==0x110 || id==0x022 || id==0x202 || id==0x220)
+			return null;
+//		JDPoint aaa = tri.getA();
+//		JDPoint bbb = tri.getB();
+//		JDPoint ccc = tri.getC();
+		if(id==0x333) {
+			//System.out.println("[INFO] return full triangle, because it is only 1 colour!");
+			return new JDTriangle(
+				new JDPoint(x1,y1,v1),
+				new JDPoint(x2,y2,v2),
+				new JDPoint(x3,y3,v3)
+			);
+		}
+		
+//		System.out.println("a="+a+"    b="+b+"    c="+c+
+//				"    min="+levmin+"    max="+levmax);
+		int nan = ((Double.isNaN(v1) ? 0 : 1)<<8) |
+				  ((Double.isNaN(v2) ? 0 : 1)<<4) |
+				   (Double.isNaN(v3) ? 0 : 1);
+		JDPoint abh = tri.getA().fractionTowards(0.5d, tri.getB());
+		JDPoint bch = tri.getB().fractionTowards(0.5d, tri.getC());
+		JDPoint cah = tri.getC().fractionTowards(0.5d, tri.getA());
+//		if(nan==0x001 || nan==0x010 || nan==0x100) {
+//			System.out.println("[INFO] return triangle from NAN-code: "+(nan==0x001?"001":nan==0x010?"010":"100"));
+//		}
+		if(nan==0x001) return new JDTriangle(tri.getC(),cah,bch);
+		if(nan==0x010) return new JDTriangle(tri.getB(),bch,abh);
+		if(nan==0x100) return new JDTriangle(tri.getA(),abh,cah);
+
+		//rotate for usage of symmetry
+		if(nan==0x101) {
+			double
+			tmp = x1; x1 = x2; x2 = x3; x3 = tmp;
+			tmp = y1; y1 = y2; y2 = y3; y3 = tmp;
+			tmp = v1; v1 = v2; v2 = v3; v3 = tmp;
+			nan=0x011;
+		}
+		if(nan==0x110) {
+			double
+			tmp = x1; x1 = x3; x3 = x2; x2 = tmp;
+			tmp = y1; y1 = y3; y3 = y2; y2 = tmp;
+			tmp = v1; v1 = v3; v3 = v2; v2 = tmp;
+			nan=0x011;
+		}
+		
+		
+		//TODO
+		int count = 3;
+		double x4=Double.NaN, y4=Double.NaN, v4=Double.NaN;
+		double x5=Double.NaN, y5=Double.NaN, v5=Double.NaN;
+		if(nan==0x011) {
+			x4=JPlotMath.lerp(x1, x3, 0.5d); y4=JPlotMath.lerp(y1, y3, 0.5d); v4=v3;
+			x1=JPlotMath.lerp(x1, x2, 0.5d); y1=JPlotMath.lerp(y1, y2, 0.5d); v1=v2;
+			count=4;
+			double fl = (lower-v1) / (v3-v1);
+			if(0.0d<fl && fl<1.0d) {
+				if(v1<lower) {
+					x1 = x1+fl*(x4-x1); y1 = y1+fl*(y4-y1); v1 = lower;
+					x2 = x2+fl*(x3-x2); y2 = y2+fl*(y3-y2); v2 = lower;
+				} else {
+					x4 = x1+fl*(x4-x1); y4 = y1+fl*(y4-y1); v4 = lower;
+					x3 = x2+fl*(x3-x2); y3 = y2+fl*(y3-y2); v3 = lower;
+				}
+			}
+			double fu = (upper-v1) / (v3-v1);
+			if(0.0d<fu && fu<1.0d) {
+				if(v1>upper) {
+					x1 = x1+fu*(x4-x1); y1 = y1+fu*(y4-y1); v1 = upper;
+					x2 = x2+fu*(x3-x2); y2 = y2+fu*(y3-y2); v2 = upper;
+				} else {
+					x4 = x1+fu*(x4-x1); y4 = y1+fu*(y4-y1); v4 = upper;
+					x3 = x2+fu*(x3-x2); y3 = y2+fu*(y3-y2); v3 = upper;
+				}
+			}
+		}
+		else {
+			int low = (v1<lower?1:0) | (v2<lower?2:0) | (v3<lower?4:0);
+			switch(low) {
+				case 1: count=4; double xf12=(lower-v1)/(v2-v1), xf13=(lower-v1)/(v3-v1);
+					x4=x1+xf13*(x3-x1); y4=y1+xf13*(y3-y1); x1=x1+xf12*(x2-x1); y1=y1+xf12*(y2-y1);
+					v4=v1+xf13*(v3-v1); v1=v1+xf12*(v2-v1); break;
+				case 2: count=4; double xf21=(lower-v2)/(v1-v2), xf23=(lower-v2)/(v3-v2);
+					x4=x1; y4=y1; x1=x2+xf21*(x1-x2); y1=y2+xf21*(y1-y2); x2=x2+xf23*(x3-x2); y2=y2+xf23*(y3-y2);
+					v4=v1; v1=v2+xf21*(v1-v2); v2=v2+xf23*(v3-v2); break;
+				case 4: count=4; double xf31=(lower-v3)/(v1-v3), xf32=(lower-v3)/(v2-v3);
+					x4=x3+xf31*(x1-x3); y4=y3+xf31*(y1-y3); x3=x3+xf32*(x2-x3); y3=y3+xf32*(y2-y3);
+					v4=v3+xf31*(v1-v3); v3=v3+xf32*(v2-v3); break;
+				case 3: count=3; double fx32=(lower-v3)/(v2-v3), fx31=(lower-v3)/(v1-v3);
+					x1=x3+fx31*(x1-x3); y1=y3+fx31*(y1-y3); x2=x3+fx32*(x2-x3); y2=y3+fx32*(y2-y3);
+					v1=v3+fx31*(v1-v3); v2=v3+fx32*(v2-v3); break;
+				case 5: count=3; double fx21=(lower-v2)/(v1-v2), fx23=(lower-v2)/(v3-v2);
+					x1=x2+fx21*(x1-x2); y1=y2+fx21*(y1-y2); x3=x2+fx23*(x3-x2); y3=y2+fx23*(y3-y2);
+					v1=v2+fx21*(v1-v2); v3=v2+fx23*(v3-v2); break;
+				case 6: count=3; double fx12=(lower-v1)/(v2-v1), fx13=(lower-v1)/(v3-v1);
+					x2=x1+fx12*(x2-x1); y2=y1+fx12*(y2-y1); x3=x1+fx13*(x3-x1); y3=y1+fx13*(y3-y1);
+					v2=v1+fx12*(v2-v1); v3=v1+fx13*(v3-v1); break;
+				default: count = 3; break;
+			}
+			int high = (v1>upper?1:0) | (v2>upper?2:0) | (v3>upper?4:0);
+			if(count>3) high |= (v4>upper?8:0);
+			if(count==3) { switch(high) {
+				case 1: count=4; double xf12=(upper-v1)/(v2-v1), xf13=(upper-v1)/(v3-v1);
+					x4=x1+xf13*(x3-x1); y4=y1+xf13*(y3-y1); x1=x1+xf12*(x2-x1); y1=y1+xf12*(y2-y1);
+					v4=v1+xf13*(v3-v1); v1=v1+xf12*(v2-v1); break;
+				case 2: count=4; double xf21=(upper-v2)/(v1-v2), xf23=(upper-v2)/(v3-v2);
+					x4=x1; y4=y1; x1=x2+xf21*(x1-x2); y1=y2+xf21*(y1-y2); x2=x2+xf23*(x3-x2); y2=y2+xf23*(y3-y2);
+					v4=v1; v1=v2+xf21*(v1-v2); v2=v2+xf23*(v3-v2); break;
+				case 4: count=4; double xf31=(upper-v3)/(v1-v3), xf32=(upper-v3)/(v2-v3);
+					x4=x3+xf31*(x1-x3); y4=y3+xf31*(y1-y3); x3=x3+xf32*(x2-x3); y3=y3+xf32*(y2-y3);
+					v4=v3+xf31*(v1-v3); v3=v3+xf32*(v2-v3); break;
+				case 3: count=3; double fx32=(upper-v3)/(v2-v3), fx31=(upper-v3)/(v1-v3);
+					x1=x3+fx31*(x1-x3); y1=y3+fx31*(y1-y3); x2=x3+fx32*(x2-x3); y2=y3+fx32*(y2-y3);
+					v1=v3+fx31*(v1-v3); v2=v3+fx32*(v2-v3); break;
+				case 5: count=3; double fx21=(upper-v2)/(v1-v2), fx23=(upper-v2)/(v3-v2);
+					x1=x2+fx21*(x1-x2); y1=y2+fx21*(y1-y2); x3=x2+fx23*(x3-x2); y3=y2+fx23*(y3-y2);
+					v1=v2+fx21*(v1-v2); v3=v2+fx23*(v3-v2); break;
+				case 6: count=3; double fx12=(upper-v1)/(v2-v1), fx13=(upper-v1)/(v3-v1);
+					x2=x1+fx12*(x2-x1); y2=y1+fx12*(y2-y1); x3=x1+fx13*(x3-x1); y3=y1+fx13*(y3-y1);
+					v2=v1+fx12*(v2-v1); v3=v1+fx13*(v3-v1); break;
+				default: count = 3; break;
+			} } else
+			if(count==4) { switch(high) {
+				case 1: count=5; double xf12=(upper-v1)/(v2-v1), xf14=(upper-v1)/(v4-v1);
+					x5=x1+xf14*(x4-x1); y5=y1+xf14*(y4-y1); x1=x1+xf12*(x2-x1); y1=y1+xf12*(y2-y1);
+					v5=v1+xf14*(v4-v1); v1=v1+xf12*(v2-v1); break;
+				case 2: count=5; double xf21=(upper-v2)/(v1-v2), xf23=(upper-v2)/(v3-v2);
+					x5=x1; y5=y1; x1=x2+xf21*(x1-x2); y1=y2+xf21*(y1-y2); x2=x2+xf23*(x3-x2); y2=y2+xf23*(y3-y2);
+					v5=v1; v1=x2+xf21*(v1-v2); v2=v2+xf23*(v3-v2); break;
+				case 4: count=5; double xf32=(upper-v3)/(v2-v3), xf34=(upper-v3)/(v4-v3);
+					x5=x4; y5=y4; x4=x3+xf34*(x4-x3); y4=y3+xf34*(y4-y3); x3=x3+xf32*(x2-x3); y3=y3+xf32*(y2-y3);
+					v5=v4; v4=v3+xf34*(v4-v3); v3=v3+xf32*(v2-v3); break;
+				case 8: count=5; double xf41=(upper-v4)/(v1-v4), xf43=(upper-v4)/(v3-v4);
+					x5=x4+xf41*(x1-x4); y5=y4+xf41*(y1-y4); x4=x4+xf43*(x3-x4); y4=y4+xf43*(y3-y4);
+					v5=v4+xf41*(v1-v4); v4=v4+xf43*(v3-v4); break;
+				case 3: count=4; double fx14=(upper-v1)/(v4-v1), fx23=(upper-v2)/(v3-v2);
+					x1=x1+fx14*(x4-x1); y1=y1+fx14*(y4-y1); x2=x2+fx23*(x3-x2); y2=y2+fx23*(y3-y2);
+					v1=v1+fx14*(v4-v1); v2=v2+fx23*(v3-v2); break;
+				case 6: count=4; double fx21=(upper-v2)/(v1-v2), fx34=(upper-v3)/(v4-v3);
+					x2=x2+fx21*(x1-x2); y2=y2+fx21*(y1-y2); x3=x3+fx34*(x4-x3); y3=y3+fx34*(y4-y3);
+					v2=v2+fx21*(v1-v2); v3=v3+fx34*(v4-v3); break;
+				case 9: count=4; double fx12=(upper-v1)/(v2-v1), fx43=(upper-v4)/(v3-v4);
+					x1=x1+fx12*(x2-x1); y1=y1+fx12*(y2-y1); x4=x4+fx43*(x3-x4); y4=y4+fx43*(y3-y4);
+					v1=v1+fx12*(v2-v1); v4=v4+fx43*(v3-v4); break;
+				case 12: count=4; double fx41=(upper-v4)/(v1-v4), fx32=(upper-v3)/(v2-v3);
+					x3=x3+fx32*(x2-x3); y3=y3+fx32*(y2-y3); x4=x4+fx41*(x1-x4); y4=y4+fx41*(y1-y4);
+					v3=v3+fx32*(v2-v3); v4=v4+fx41*(v1-v4); break;
+				default: count = 4; break;
+			} }
+		}
+		switch(count) {
+			case 3: return new JDPolygon(new JDPoint(x1,y1,v1), new JDPoint(x2,y2,v2), new JDPoint(x3,y3,v3));
+			case 4: return new JDPolygon(new JDPoint(x1,y1,v1), new JDPoint(x2,y2,v2), new JDPoint(x3,y3,v3), new JDPoint(x4,y4,v4));
+			case 5: return new JDPolygon(new JDPoint(x1,y1,v1), new JDPoint(x2,y2,v2), new JDPoint(x3,y3,v3), new JDPoint(x4,y4,v4), new JDPoint(x5,y5,v5));
+			default: return null;
+		}
+	}
+	private void addTriangle2polygonList(List<JDPolygon> list, JDTriangle tri, double tol) {
 		if(list.isEmpty()) {
-			list.add(new JDPolygon(tri.a, tri.b, tri.c));
+			list.add(tri.toPolygon());
 		} else {
 			boolean failed = true;
 			for(int l=0; l<list.size() && failed; l++)
-				failed = !list.get(l).union(tri, 1.0e-9d);
+				failed = !list.get(l).union(tri, tol);
 			if(failed)
-				list.add(new JDPolygon(tri.a, tri.b, tri.c));
+				list.add(tri.toPolygon());
 		}
 	}
-	private void addPolygon2polygonList(List<JDPolygon> list, JDPolygon poly) {
+	private void addPolygon2polygonList(List<JDPolygon> list, JDPolygon poly, double tol) {
 		if(list.isEmpty()) {
 			list.add(poly.copy());
 		} else {
 			boolean failed = true;
 			for(int l=0; l<list.size() && failed; l++)
-				failed = !list.get(l).union(poly, 1.0e-9d);
+				failed = !list.get(l).union(poly, tol);
 			if(failed)
 				list.add(poly.copy());
 		}

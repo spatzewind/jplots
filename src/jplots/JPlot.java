@@ -502,6 +502,10 @@ public class JPlot {
 		colourbar(gca(), name); }
 	public void colourbar(JAxis axis, String name) {
 		addSubplot(new JColourbar(axis, name)); }
+	/**
+	 * adds a legend to the current JAxis object
+	 * @example SimpleLegend
+	 */
 	public void legend() {
 		gca().legend(); }
 
@@ -534,5 +538,13 @@ public class JPlot {
 		gca().setYTitle(ytitle); }
 	public void setTitle(String _title) {
 		gca().setTitle(_title); }
+	public void setLogarithmicAxis(char axis) {
+		gca().setLogarithmicAxis(axis); }
+	public void setAsTimeAxis(char axis, String unit) {
+		gca().setAsTimeAxis(axis, unit); }
+	public void setAsTimeAxis(char axis, String unit, String calendar) {
+		gca().setAsTimeAxis(axis, unit, calendar); }
+	public void setAsTimeAxis(char axis, String unit, String calendar, String format) {
+		gca().setAsTimeAxis(axis, unit, calendar, format); }
 }
 

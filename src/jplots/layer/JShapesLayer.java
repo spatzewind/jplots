@@ -93,15 +93,15 @@ public class JShapesLayer extends JPlotsLayer {
 						double x2 = p[0]+xs*(invertAxisX ? maxX-coords[ c ][0] : coords[ c ][0]-minX);
 						double y1 = p[1]+ys*(invertAxisY ? coords[c-1][1]-minY : maxY-coords[c-1][1]);
 						double y2 = p[1]+ys*(invertAxisY ? coords[ c ][1]-minY : maxY-coords[ c ][1]);
-						if(x1<p[0]      && x2>=p[0])      { y1 = JPlotMath.dlerp(p[0],      x1, x2, y1, y2); }
-						if(x1>p[0]+p[2] && x2<=p[0]+p[2]) { y1 = JPlotMath.dlerp(p[0]+p[2], x1, x2, y1, y2); }
-						if(x2<p[0]      && x1>=p[0])      { y2 = JPlotMath.dlerp(p[0],      x1, x2, y1, y2); }
-						if(x2>p[0]+p[2] && x1<=p[0]+p[2]) { y2 = JPlotMath.dlerp(p[0]+p[2], x1, x2, y1, y2); }
+						if(x1<p[0]      && x2>=p[0])      { y1 = JPlotMath.map(p[0],      x1, x2, y1, y2); }
+						if(x1>p[0]+p[2] && x2<=p[0]+p[2]) { y1 = JPlotMath.map(p[0]+p[2], x1, x2, y1, y2); }
+						if(x2<p[0]      && x1>=p[0])      { y2 = JPlotMath.map(p[0],      x1, x2, y1, y2); }
+						if(x2>p[0]+p[2] && x1<=p[0]+p[2]) { y2 = JPlotMath.map(p[0]+p[2], x1, x2, y1, y2); }
 						
-						if(y1<p[1]      && y2>=p[1])      { x1 = JPlotMath.dlerp(p[1],      y1, y2, x1, x2); }
-						if(y1>p[1]+p[3] && y2<=p[1]+p[3]) { x1 = JPlotMath.dlerp(p[1]+p[3], y1, y2, x1, x2); }
-						if(y2<p[1]      && y1>=p[1])      { x2 = JPlotMath.dlerp(p[1],      y1, y2, x1, x2); }
-						if(y2>p[1]+p[3] && y1<=p[1]+p[3]) { x2 = JPlotMath.dlerp(p[1]+p[3], y1, y2, x1, x2); }
+						if(y1<p[1]      && y2>=p[1])      { x1 = JPlotMath.map(p[1],      y1, y2, x1, x2); }
+						if(y1>p[1]+p[3] && y2<=p[1]+p[3]) { x1 = JPlotMath.map(p[1]+p[3], y1, y2, x1, x2); }
+						if(y2<p[1]      && y1>=p[1])      { x2 = JPlotMath.map(p[1],      y1, y2, x1, x2); }
+						if(y2>p[1]+p[3] && y1<=p[1]+p[3]) { x2 = JPlotMath.map(p[1]+p[3], y1, y2, x1, x2); }
 						if(x1>=p[0] && x1<=p[0]+p[2] && x2>=p[0] && x2<=p[0]+p[2] && y1>=p[1] && y1<=p[1]+p[3] && y2>=p[1] && y2<=p[1]+p[3])
 							s.addChild(new JLineShape((float)x1, (float)y1, (float)x2, (float)y2));
 					}

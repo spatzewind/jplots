@@ -22,6 +22,7 @@ import jplots.layer.JScatterLayer;
 import jplots.layer.JXYLayer;
 import jplots.layer.JShapesLayer;
 import jplots.maths.JPlotMath;
+import jplots.maths.JPlotMath.DateTime;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
 import jplots.shapes.JPlotShape;
@@ -39,6 +40,8 @@ public class JAxis {
 	protected JPlot pplot;
 	private boolean xRangeFix,yRangeFix, isGeoAxis;
 	private boolean xAxOn, yAxOn, xGrdOn, yGrdOn, xTkOn, yTkOn, xAxInv, yAxInv;
+	private boolean xTim, yTim, xLog, yLog;
+	private String xTimUnit, yTimUnit, xTimCal, yTimCal, xTimFormat, yTimFormat;
 	protected int px, py, pw, ph;
 	private double minX,maxX,minY,maxY;
 	protected double txtsize;
@@ -69,6 +72,16 @@ public class JAxis {
 		yTkOn = true;
 		xAxInv = false;
 		yAxInv = false;
+		xLog = false;
+		yLog = false;
+		xTim = false;
+		yTim = false;
+		xTimUnit = null;
+		yTimUnit = null;
+		xTimCal = null;
+		yTimCal = null;
+		xTimFormat = "dd.mm.yyyy";
+		yTimFormat = "dd.mm.yyyy";
 		minX = -1d;
 		maxX =  1d;
 		minY = -1d;
@@ -369,6 +382,44 @@ public class JAxis {
 		titleY = ytitle; }
 	public void setTitle(String _title) {
 		titleP = _title; }
+	public void setLogarithmicAxis(char axis) {
+		switch(axis) {
+			case 'b':
+				setLogarithmicAxis('x'); setLogarithmicAxis('y');
+				break;
+			case 'x':
+				xLog = true; xTim = false;
+				break;
+			case 'y':
+				yLog = true; yTim = false;
+				break;
+			default: System.err.println("Unknown parameter '"+axis+"' for axis in <setLogarithmicAxis(axis)>.");
+				break;
+		}
+	}
+	public void setAsTimeAxis(char axis, String unit) {
+		setAsTimeAxis(axis, unit, "gregorian", null); }
+	public void setAsTimeAxis(char axis, String unit, String calendar) {
+		setAsTimeAxis(axis, unit, calendar, null); }
+	public void setAsTimeAxis(char axis, String unit, String calendar, String format) {
+		switch(axis) {
+			case 'b':
+				setAsTimeAxis('x', unit, calendar, format); setAsTimeAxis('y', unit, calendar, format);
+				break;
+			case 'x':
+				xLog = false; xTim = true;
+				xTimUnit = unit; xTimCal = calendar;
+				if(format!=null) xTimFormat = format;
+				break;
+			case 'y':
+				yLog = false; yTim = true;
+				yTimUnit = unit; yTimCal = calendar;
+				if(format!=null) yTimFormat = format;
+				break;
+			default: System.err.println("Unknown parameter '"+axis+"' for axis in <setLogarithmicAxis(axis)>.");
+				break;
+		}
+	}
 
 
 	//************************************
@@ -379,6 +430,8 @@ public class JAxis {
 	public int[] getSize() { return new int[] {px,py,pw,ph}; }
 	public double getTextSize() { return txtsize; }
 	public double[] getRange() { return new double[] {minX,maxX,minY,maxY}; }
+	public boolean isXlogAxis() { return xLog; }
+	public boolean isYlogAxis() { return yLog; }
 	public boolean isGeoAxis() { return isGeoAxis; }
 	public JProjection getGeoProjection() { return projection; }
 	public JPlotsLayer getLayer(int layernum) { return layers.get(layernum); }
@@ -398,6 +451,11 @@ public class JAxis {
 			double ym = 0.5d*(minY+maxY);
 			minX = xm - r*pw; maxX = xm + r*pw;
 			minY = ym - r*ph; maxY = ym + r*ph;
+			xLog = false; yLog = false; xTim = false; yTim = false;
+		} else
+		if(xLog || yLog) {
+			if(xLog && (minX<0d || maxX<0d)) { xLog = false; System.err.println("found negative values in X-range [x="+minX+" ... "+maxX+"]"); }
+			if(yLog && (minY<0d || maxY<0d)) { yLog = false; System.err.println("found negative values in Y-range [y="+minY+" ... "+maxY+"]"); }
 		}
 		if(pplot.isDebug())
 			System.out.println("[DEBUG] JAxis-object: min/max={x:"+minX+"/"+maxX+", y:"+minY+"/"+maxY+
@@ -584,19 +642,42 @@ public class JAxis {
 		}
 	}
 	private JGroupShape createXAxis() {
+		double Xin = xLog ? Math.log10(minX) : minX;
+		double Xax = xLog ? Math.log10(maxX) : maxX;
 		JGroupShape axisgrid = new JGroupShape();
 		//first estimate of ticks
-		double[] oticks = JPlotMath.optimalLinearTicks(minX, maxX);
-		double vf = 1d/(oticks[0]);
-		int decimal = (int) (1000d*oticks[1]+0.5d);
-		decimal = decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
+		double[] oticks = null;
+		String[] otickmark = null;
+		if(xLog) {
+			oticks = JPlotMath.optimalLogarithmicTicks(minX, maxX);
+			otickmark = new String[oticks.length];
+			for(int t=2; t<otickmark.length; t++) {
+				otickmark[t] = oticks[t]+"";
+				oticks[t] = Math.log10(oticks[t]);
+			}
+		} else
+		if(xTim) {
+			oticks = JPlotMath.optimalTimeTicks(minX, maxX, xTimUnit, xTimCal);
+			otickmark = new String[oticks.length];
+			for(int t=2; t<otickmark.length; t++)
+				otickmark[t] = DateTime.fromDouble(oticks[t], xTimUnit, xTimCal).format(xTimFormat, xTimCal);
+		}
+		else {
+			oticks = JPlotMath.optimalLinearTicks(minX, maxX);
+			double vf = 1d/(oticks[0]);
+			int decimal = (int) (1000d*oticks[1]+0.5d);
+			decimal = decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
+			otickmark = new String[oticks.length];
+			for(int t=2; t<otickmark.length; t++)
+				otickmark[t] = PApplet.nf((float)(oticks[t]*vf),0,decimal).replace(",",".");
+		}
+		otickmark[0] = ""; otickmark[1] = "";
 		double tmlen = 0d;
 		pplot.getGraphic().textSize(200);
 		pplot.getGraphic().textAlign(PApplet.LEFT,PApplet.TOP);
 		//create tickmark strings and calc mean tickmark text width
 		for(int t=2; t<oticks.length; t++) {
-			String tm = PApplet.nf((float)(oticks[t]*vf),0,decimal).replace(",",".");
-			tmlen += pplot.getGraphic().textWidth(tm) / 200f;
+			tmlen += pplot.getGraphic().textWidth(otickmark[t]) / 200f;
 		}
 		tmlen *= this.txtsize / (oticks.length-2);
 		//with upper bound of number of ticks
@@ -604,16 +685,36 @@ public class JAxis {
 		if(pplot.isDebug())
 			System.out.println("[DEBUG] JAxis-object: tmlen="+tmlen+" -> tickcount approx. "+tickcount);
 		//create new ticks
-		double[] ticks = JPlotMath.optimalLinearTicks(minX, maxX, tickcount);
-		double[] tcpos = JPlotMath.dlerp(ticks,minX,maxX,px,px+pw);
-		String[] tickmark = new String[ticks.length];
+		double[] ticks = null;
+		String[] tickmark = null;
+		if(xLog) {
+			ticks = JPlotMath.optimalLogarithmicTicks(minX, maxX, tickcount);
+			tickmark = new String[ticks.length];
+			for(int t=2; t<tickmark.length; t++) {
+				tickmark[t] = ticks[t]+"";
+				ticks[t] = Math.log10(ticks[t]);
+			}
+		} else
+		if(xTim) {
+			ticks = JPlotMath.optimalTimeTicks(minX, maxX, xTimUnit, xTimCal, tickcount);
+			tickmark = new String[ticks.length];
+			for(int t=2; t<tickmark.length; t++)
+				tickmark[t] = DateTime.fromDouble(ticks[t], xTimUnit, xTimCal).format(xTimFormat, xTimCal);
+		}
+		else {
+			ticks = JPlotMath.optimalLinearTicks(minX, maxX, tickcount);
+			double vf = 1d/(ticks[0]);
+			int decimal = (int) (1000d*ticks[1]+0.5d);
+			decimal = decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
+			tickmark = new String[ticks.length];
+			for(int t=2; t<tickmark.length; t++)
+				tickmark[t] = PApplet.nf((float)(ticks[t]*vf),0,decimal).replace(",",".");
+		}
+		tickmark[0] = ""; tickmark[1] = "";
+		double[] tcpos = JPlotMath.map(ticks,Xin,Xax,px,px+pw);
 		if(xAxInv)
 			for(int t=0; t<tcpos.length; t++)
 				tcpos[t] = 2*px+pw-tcpos[t];
-		vf = 1d/(ticks[0]); decimal = (int) (1000d*ticks[1]+0.5d);
-		decimal = decimal%1000==0 ? 0 : decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
-		for(int t=0; t<ticks.length; t++)
-			tickmark[t] = PApplet.nf((float)(ticks[t]*vf),0,decimal).replace(",",".");
 		if(pplot.isDebug()) {
 			String tickStr = "", posStr = "";
 			for(int t=2; t<ticks.length; t++) {
@@ -627,14 +728,14 @@ public class JAxis {
 		if(xGrdOn) {
 			JPlotShape.stroke(0xff999999); JPlotShape.strokeWeight(2f);
 			for(int t=2; t<ticks.length; t++)
-				if(ticks[t]>=Math.min(minX, maxX) && ticks[t]<=Math.max(minX, maxX))
+				if(ticks[t]>=Math.min(Xin, Xax) && ticks[t]<=Math.max(Xin, Xax))
 					axisgrid.addChild(new JLineShape((float)tcpos[t],py,(float)tcpos[t],py+ph));
 		}
 		if(xAxOn) {
 			if(xTkOn) {
 				JPlotShape.stroke(0xff000000); JPlotShape.strokeWeight(2f);
 				for(int t=2; t<ticks.length; t++)
-					if(ticks[t]>=Math.min(minX, maxX) && ticks[t]<=Math.max(minX, maxX)) {
+					if(ticks[t]>=Math.min(Xin, Xax) && ticks[t]<=Math.max(Xin, Xax)) {
 						axisgrid.addChild(new JLineShape((float)tcpos[t],py+ph,(float)tcpos[t],py+1.02f*ph));
 						//axisgrid.addChild(ap.createShape(PShape.TEXT, "H", (float)tcpos[t],py-0.1f*ph,(float)tcpos[t],py));
 						axisgrid.addChild(new JTextShape(tickmark[t], (float)tcpos[t], py+1.03f*ph, (float)txtsize, PApplet.CENTER, PApplet.TOP, 0xff000000, 0));
@@ -642,24 +743,50 @@ public class JAxis {
 			}
 			if(titleX.length()>0) {
 				if(pplot.isDebug())
-					System.out.println("[DEBUG] JAxi-object: add x-axis title \""+titleX+"\"");
+					System.out.println("[DEBUG] JAxi-object: add x-axis title \""+titleX+"\" with text size "+txtsize);
 				axisgrid.addChild(new JTextShape(titleX, px+0.5f*pw, py+1.04f*ph+(float)txtsize, (float)(1.1d*txtsize), PApplet.CENTER, PApplet.TOP, 0xff000000, 0));
 			}
 		}
 		return axisgrid;
 	}
 	private JGroupShape createYAxis() {
+		double Yin = yLog ? Math.log10(minY) : minY;
+		double Yax = yLog ? Math.log10(maxY) : maxY;
 		JGroupShape axisgrid = new JGroupShape();
-		double[] ticks = JPlotMath.optimalLinearTicks(minY, maxY);
-		double[] tcpos = JPlotMath.dlerp(ticks,minY,maxY,py+ph,py);
+		double[] ticks = null;
+		String[] tickmark = null;
+		if(yLog) {
+			ticks = JPlotMath.optimalLogarithmicTicks(minY, maxY);
+			tickmark = new String[ticks.length];
+			for(int t=2; t<ticks.length; t++) {
+				tickmark[t] = ""+ticks[t]+"";
+				ticks[t] = Math.log10(ticks[t]);
+			}
+		} else
+		if(yTim) {
+			ticks = JPlotMath.optimalTimeTicks(minY, maxY, yTimUnit, yTimCal);
+			tickmark = new String[ticks.length];
+			for(int t=2; t<ticks.length; t++)
+				tickmark[t] = DateTime.fromDouble(ticks[t], yTimUnit, yTimCal).format(yTimFormat, yTimCal);
+		}
+		else {
+			ticks = JPlotMath.optimalLinearTicks(minY, maxY);
+			double vf = 1d/(ticks[0]);
+			int decimal = (int) (1000d*ticks[1]+0.5d);
+			decimal = decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
+			tickmark = new String[ticks.length];
+			for(int t=2; t<ticks.length; t++)
+				tickmark[t] = PApplet.nf((float)(ticks[t]*vf),0,decimal).replace(",",".");
+		}
+		double[] tcpos = JPlotMath.map(ticks,Yin,Yax,py+ph,py);
 		if(yAxInv)
 			for(int t=0; t<tcpos.length; t++)
 				tcpos[t] = 2*py+ph-tcpos[t];
 		if(pplot.isDebug()) {
 			String tickStr = "", posStr = "";
 			for(int t=2; t<ticks.length; t++) {
-				tickStr += ", "+PApplet.nf((float)ticks[t],0,2);
-				posStr  += ", "+PApplet.nf((float)tcpos[t],0,2);
+				tickStr += ", "+tickmark[t];
+				posStr  += ", "+PApplet.nf((float)tcpos[t],0,2).replace(",", ".");
 			}
 			System.out.println("[DEBUG] JAxis-object: Ytickfactors={p10: "+ticks[0]+", f: "+ticks[1]+"}");
 			System.out.println("[DEBUG] JAxis-object: Ytickval={"+tickStr.substring(2)+"}");
@@ -668,27 +795,26 @@ public class JAxis {
 		if(yGrdOn) {
 			JPlotShape.stroke(0xff999999); JPlotShape.strokeWeight(2f);
 			for(int t=2; t<ticks.length; t++)
-				if(ticks[t]>=Math.min(minY, maxY) && ticks[t]<=Math.max(minY, maxY))
+				if(ticks[t]>=Math.min(Yin, Yax) && ticks[t]<=Math.max(Yin, Yax))
 					axisgrid.addChild(new JLineShape(px,(float)tcpos[t],px+pw,(float)tcpos[t]));
 		}
 		if(yAxOn) {
 			JPlotShape.stroke(0xff000000); JPlotShape.strokeWeight(2f);
 			float tw = 0f;
 			if(yTkOn) {
-				double vf = 1d/(ticks[0]);
-				int decimal = (int) (1000d*ticks[1]+0.5d);
-				decimal = decimal%1000==0 ? 0 : decimal%100==0 ? 1 : decimal%10==0 ? 2 : 3;
 				for(int t=2; t<ticks.length; t++)
-					if(ticks[t]>=Math.min(minY, maxY) && ticks[t]<=Math.max(minY, maxY)) {
+					if(ticks[t]>=Math.min(Yin, Yax) && ticks[t]<=Math.max(Yin, Yax)) {
 						axisgrid.addChild(new JLineShape(px-0.02f*pw,(float)tcpos[t],px,(float)tcpos[t]));
-						String tmstr = PApplet.nf((float)(ticks[t]*vf),0,decimal).replace(",",".");
-						tw = Math.max(tw, (float)txtsize * pplot.getGraphic().textWidth(tmstr)/pplot.getGraphic().textSize);
-						axisgrid.addChild(new JTextShape(tmstr, px-0.03f*pw, (float)tcpos[t], (float)txtsize,
+						tw = Math.max(tw, (float)txtsize * pplot.getGraphic().textWidth(tickmark[t])/pplot.getGraphic().textSize);
+						axisgrid.addChild(new JTextShape(tickmark[t], px-0.03f*pw, (float)tcpos[t], (float)txtsize,
 								PApplet.RIGHT, PApplet.CENTER, 0xff000000, 0));
 					}
 			}
-			if(titleY.length()>0)
+			if(titleY.length()>0) {
+				if(pplot.isDebug())
+					System.out.println("[DEBUG] JAxi-object: add y-axis title \""+titleY+"\" with text size "+txtsize);
 				axisgrid.addChild(new JTextShape(titleY, px-0.03f*pw-tw, py+0.5f*ph, (float)(1.1d*txtsize), PApplet.CENTER, PApplet.BOTTOM, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE));
+			}
 		}
 		return axisgrid;
 	}

@@ -36,6 +36,8 @@ public class JLineLayer extends JPlotsLayer {
 	@Override
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 		int[] p = ax.getSize();
+		double Xin = ax.isXlogAxis()?Math.log10(minX):minX, Xax = ax.isXlogAxis()?Math.log10(maxX):maxX;
+		double Yin = ax.isYlogAxis()?Math.log10(minY):minY, Yax = ax.isYlogAxis()?Math.log10(maxY):maxY;
 		JGroupShape xyShape = new JGroupShape();
 		JPlotShape.stroke(col); JPlotShape.strokeWeight((float)lw);
 		double lln=1d, llf=0d, lpn=0d, lpf=0d, loff = 0d;
@@ -43,15 +45,17 @@ public class JLineLayer extends JPlotsLayer {
 		if(".".equals(ls)) { lln=0; llf=0; lpn=1*lw; lpf=3*lw; }
 		if(",".equals(ls)) { lln=8*lw; llf=7*lw; lpn=0; lpf=0; }
 		if(";".equals(ls)) { lln=8*lw; llf=3*lw; lpn=1*lw; lpf=3*lw; }
-		double xs = p[2]/(maxX-minX), ys = p[3]/(maxY-minY);
+		double xs = p[2]/(Xax-Xin), ys = p[3]/(Yax-Yin);
 		int li = 0;
-		double x1,x2,y1,y2;
+		double vv,x1,x2,y1,y2;
 		if(isHorizontal) {
+			vv = ax.isYlogAxis() ? Math.log10(value) : value;
 			x1 = p[0]; x2 = p[0]+p[2];
-			y1 = p[1]+ys*(invertAxisY ? value-minY : maxY-value);
+			y1 = p[1]+ys*(invertAxisY ? vv-Yin : Yax-vv);
 			y2 = y1;
 		} else {
-			x1 = p[0]+xs*(invertAxisX ? maxX-value : value-minX);
+			vv = ax.isXlogAxis() ? Math.log10(value) : value;
+			x1 = p[0]+xs*(invertAxisX ? Xax-vv : vv-Xin);
 			x2 = x1;
 			y1 = p[1]; y2 = p[1]+p[3];
 		}
@@ -69,15 +73,14 @@ public class JLineLayer extends JPlotsLayer {
 			}
 			float xf1 = (float)(x1+lpos*dx), yf1 = (float)(y1+lpos*dy),
 					  xf2 = (float)(x1+(lpos+ldif)*dx), yf2 = (float)(y1+(lpos+ldif)*dy);
-			if(xf1<p[0]      && xf2>=p[0])      { yf1 = JPlotMath.flerp(p[0],      xf1, xf2, yf1, yf2); }
-			if(xf1>p[0]+p[2] && xf2<=p[0]+p[2]) { yf1 = JPlotMath.flerp(p[0]+p[2], xf1, xf2, yf1, yf2); }
-			if(xf2<p[0]      && xf1>=p[0])      { yf2 = JPlotMath.flerp(p[0],      xf1, xf2, yf1, yf2); }
-			if(xf2>p[0]+p[2] && xf1<=p[0]+p[2]) { yf2 = JPlotMath.flerp(p[0]+p[2], xf1, xf2, yf1, yf2); }
-			
-			if(yf1<p[1]      && yf2>=p[1])      { xf1 = JPlotMath.flerp(p[1],      yf1, yf2, xf1, xf2); }
-			if(yf1>p[1]+p[3] && yf2<=p[1]+p[3]) { xf1 = JPlotMath.flerp(p[1]+p[3], yf1, yf2, xf1, xf2); }
-			if(yf2<p[1]      && yf1>=p[1])      { xf2 = JPlotMath.flerp(p[1],      yf1, yf2, xf1, xf2); }
-			if(yf2>p[1]+p[3] && yf1<=p[1]+p[3]) { xf2 = JPlotMath.flerp(p[1]+p[3], yf1, yf2, xf1, xf2); }
+			if(xf1<p[0]      && xf2>=p[0])      { yf1 = JPlotMath.map(p[0],      xf1, xf2, yf1, yf2); }
+			if(xf1>p[0]+p[2] && xf2<=p[0]+p[2]) { yf1 = JPlotMath.map(p[0]+p[2], xf1, xf2, yf1, yf2); }
+			if(xf2<p[0]      && xf1>=p[0])      { yf2 = JPlotMath.map(p[0],      xf1, xf2, yf1, yf2); }
+			if(xf2>p[0]+p[2] && xf1<=p[0]+p[2]) { yf2 = JPlotMath.map(p[0]+p[2], xf1, xf2, yf1, yf2); }
+			if(yf1<p[1]      && yf2>=p[1])      { xf1 = JPlotMath.map(p[1],      yf1, yf2, xf1, xf2); }
+			if(yf1>p[1]+p[3] && yf2<=p[1]+p[3]) { xf1 = JPlotMath.map(p[1]+p[3], yf1, yf2, xf1, xf2); }
+			if(yf2<p[1]      && yf1>=p[1])      { xf2 = JPlotMath.map(p[1],      yf1, yf2, xf1, xf2); }
+			if(yf2>p[1]+p[3] && yf1<=p[1]+p[3]) { xf2 = JPlotMath.map(p[1]+p[3], yf1, yf2, xf1, xf2); }
 			if(xf1>=p[0] && xf1<=p[0]+p[2] && xf2>=p[0] && xf2<=p[0]+p[2] &&
 					yf1>=p[1] && yf1<=p[1]+p[3] && yf2>=p[1] && yf2<=p[1]+p[3]) {
 				if(li%2==0 && ldif>0d)

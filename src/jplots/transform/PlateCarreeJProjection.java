@@ -66,10 +66,10 @@ public class PlateCarreeJProjection implements JProjection {
 		int[] p = ax.getSize();
 		double[] r = ax.getRange();
 		float[] e = {
-			(float)(p[0]+p[2]*Math.max(0d, Math.min(1d, JPlotMath.dlerp(-180d,r[0],r[1],0d,1d)))),
-			(float)(p[0]+p[2]*Math.max(0d, Math.min(1d, JPlotMath.dlerp( 180d,r[0],r[1],0d,1d)))),
-			(float)(p[1]+p[3]*Math.max(0d, Math.min(1d, JPlotMath.dlerp( -90d,r[2],r[3],0d,1d)))),
-			(float)(p[1]+p[3]*Math.max(0d, Math.min(1d, JPlotMath.dlerp(  90d,r[2],r[3],0d,1d))))
+			(float)(p[0]+p[2]*Math.max(0d, Math.min(1d, JPlotMath.map(-180d,r[0],r[1],0d,1d)))),
+			(float)(p[0]+p[2]*Math.max(0d, Math.min(1d, JPlotMath.map( 180d,r[0],r[1],0d,1d)))),
+			(float)(p[1]+p[3]*Math.max(0d, Math.min(1d, JPlotMath.map( -90d,r[2],r[3],0d,1d)))),
+			(float)(p[1]+p[3]*Math.max(0d, Math.min(1d, JPlotMath.map(  90d,r[2],r[3],0d,1d))))
 		};
 		s.addChild(new JLineShape(e[0],e[3],e[1],e[3]));
 		s.addChild(new JLineShape(e[0],e[2],e[1],e[2]));
