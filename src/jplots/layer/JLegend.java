@@ -15,7 +15,6 @@ import jplots.shapes.JRectShape;
 import jplots.shapes.JTextShape;
 import processing.core.PApplet;
 import processing.core.PGraphics;
-import processing.core.PImage;
 
 public class JLegend extends JPlotsLayer {
 

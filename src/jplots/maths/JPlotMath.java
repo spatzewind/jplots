@@ -365,7 +365,7 @@ public class JPlotMath {
 			for(int u=0; u<uuu.length; u++)
 				uuu[u] = uuu[u].trim();
 			if(uuu.length==1)
-				uuu = new String[] {_unit.trim(), "1.1.2000 00:00:00"};
+				uuu = new String[] {_unit.trim(), "2000-01-01 00:00:00"};
 			String cal = _cal==null ? "proleptic" : _cal;
 			DateTime refDate = null;
 			if(refDate==null && cal.equalsIgnoreCase("gregorian")) refDate = parseGregorian(uuu[1].trim());
@@ -390,9 +390,9 @@ public class JPlotMath {
 					stage /= 10;
 				}
 				switch(calID) {
-					case 1: testDate = parseGregorian("1.1."+year+" 00:00:00"); break;
-					case 2: testDate = parseJulian("1.1."+year+" 00:00:00"); break;
-					case 3: testDate = parseProleptic("1.1."+year+" 00:00:00"); break;
+					case 1: testDate = parseGregorian(year+"-01-01 00:00:00"); break;
+					case 2: testDate = parseJulian(year+"-01-01 00:00:00"); break;
+					case 3: testDate = parseProleptic(year+"-01-01 00:00:00"); break;
 					default: break;
 				}
 				dayDiff = testDate.getDays() - this.days;
@@ -402,9 +402,9 @@ public class JPlotMath {
 			if(dayDiff>0)
 				year -= stage;
 			switch(calID) {
-				case 1: testDate = parseGregorian("1.1."+year+" 00:00:00"); break;
-				case 2: testDate = parseJulian("1.1."+year+" 00:00:00"); break;
-				case 3: testDate = parseProleptic("1.1."+year+" 00:00:00"); break;
+				case 1: testDate = parseGregorian(year+"-01-01 00:00:00"); break;
+				case 2: testDate = parseJulian(year+"-01-01 00:00:00"); break;
+				case 3: testDate = parseProleptic(year+"-01-01 00:00:00"); break;
 				default: break;
 			}
 			dayDiff = this.days - testDate.getDays();
@@ -430,6 +430,7 @@ public class JPlotMath {
 		public String format(String _format, String _cal) {
 			int[] dd = toDate(_cal);
 			String res = ""+_format+"";
+			//System.out.println("res=<"+res+">  and dd={"+dd[0]+","+dd[1]+","+dd[2]+","+dd[3]+","+dd[4]+","+dd[5]+"}");
 			if(res.contains("y")) {
 				int a = res.indexOf("y");
 				int b = res.lastIndexOf("y");
@@ -535,8 +536,8 @@ public class JPlotMath {
 
 		private static DateTime parseGregorian(String date) {
 			String[] ss = date.split(" ");
-			String[] dd = ss[0].split("-");
-			int[] ddi = { _int(dd[2]), _int(dd[1]), _int(dd[0]) };
+			String[] dd = ss[0].substring(1).split("-");
+			int[] ddi = { _int(dd[2]), _int(dd[1]), _int(ss[0].charAt(0)+dd[0]) };
 			boolean isJul = ddi[2]<1582;
 			if(ddi[2]==1582) {
 				isJul = ddi[1]<10;
@@ -547,10 +548,10 @@ public class JPlotMath {
 		}
 		private static DateTime parseJulian(String date) { // also proleptic julian
 			String[] ss = date.split(" ");
-			String[] dd = ss[0].split("-"), tt = null;
+			String[] dd = ss[0].substring(1).split("-"), tt = null;
 			if(ss.length>1) tt = ss[1].split(":");
 			else tt = new String[] {"00","00","00"};
-			int[] ddi = { _int(dd[2]), _int(dd[1]), _int(dd[0]) };
+			int[] ddi = { _int(dd[2]), _int(dd[1]), _int(ss[0].charAt(0)+dd[0]) };
 			int[] tti = { 0, 0, 0 };
 			for(int i=0; i<tt.length; i++) tti[i] = _int(tt[i]);
 			double df = tti[2] / 86400d + tti[1] / 1440d + tti[0] / 24d;
@@ -562,10 +563,10 @@ public class JPlotMath {
 		}
 		private static DateTime parseProleptic(String date) { //proleptic gregorian
 			String[] ss = date.split(" ");
-			String[] dd = ss[0].split("-"), tt = null;
+			String[] dd = ss[0].substring(1).split("-"), tt = null;
 			if(ss.length>1) tt = ss[1].split(":");
 			else tt = new String[] {"00","00","00"};
-			int[] ddi = { _int(dd[2]), _int(dd[1]), _int(dd[0]) };
+			int[] ddi = { _int(dd[2]), _int(dd[1]), _int(ss[0].charAt(0)+dd[0]) };
 			int[] tti = { 0, 0, 0 };
 			for(int i=0; i<tt.length; i++) tti[i] = _int(tt[i]);
 			double df = tti[2] / 86400d + tti[1] / 1440d + tti[0] / 24d;
