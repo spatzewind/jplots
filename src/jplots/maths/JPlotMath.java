@@ -258,21 +258,26 @@ public class JPlotMath {
 		DateTime dax = DateTime.fromDouble(vax, unit, calendar);
 		int[] tin = din.toDate(calendar);
 		int[] tax = dax.toDate(calendar);
+		if(tin[2]>0) tin[2]--; if(tax[2]>0) tax[2]--;
 		long diffA = (long)tax[2]-(long)tin[2];
 		if(diffA>5) {
 			if(diffA<maxTickCount) {
 				double[] ticks = new double[(int)diffA+3];
-				for(int j=0; j<diffA+0.1d; j++)
-					ticks[j+2] = new DateTime("1.1."+(j+tin[2])+" 00:00:00", calendar).toDouble(unit, calendar);
+				for(int j=0; j<=diffA; j++) {
+					int y = j+tin[2];
+					if(y>=0) y++;
+					ticks[j+2] = new DateTime(y+"-01-01 00:00:00", calendar).toDouble(unit, calendar);
+				}
 				ticks[0] = 0d; ticks[1] = 0d;
 				return ticks;
 			} else {
-				double[] temp = optimalLinearTicks(tin[2], tax[2], maxTickCount);
+				double[] temp = optimalLinearTicks(tin[2]+1, tax[2]+1, maxTickCount);
 				double[] ticks = new double[temp.length];
 				for(int j=2; j<ticks.length; j++) {
 					int y = (int)temp[j];
 					int m = 1 + (int)(12d*(temp[j]-y));
-					ticks[j+2] = new DateTime("1."+m+"."+y+" 00:00:00", calendar).toDouble(unit, calendar);
+					if(y<=0) y--;
+					ticks[j] = new DateTime(y+"-"+m+"-01 00:00:00", calendar).toDouble(unit, calendar);
 				}
 				ticks[0] = 0d; ticks[1] = 0d;
 				return ticks;
@@ -283,9 +288,10 @@ public class JPlotMath {
 			if(diffM<maxTickCount) {
 				double[] ticks = new double[diffM+3];
 				for(int j=0; j<=diffM; j++) {
-					int m = tin[1]+j;
-					int y = tin[2]+(m-1)/12;
-					ticks[j+2] = new DateTime("1."+(((m-1)%12)+1)+"."+y+" 00:00:00", calendar).toDouble(unit, calendar);
+					int m = tin[1]+j-1;
+					int y = tin[2]+m/12;
+					m = (m%12)+1;
+					ticks[j+2] = new DateTime(y+"-"+m+"-01 00:00:00", calendar).toDouble(unit, calendar);
 				}
 				ticks[0] = 0d; ticks[1] = 0d;
 				return ticks;
@@ -297,7 +303,7 @@ public class JPlotMath {
 					int m = 1 + (tm%12);
 					int y = tin[2] + (tm/12);
 					int d = 1+(int) ((m==2?27d:29d)*(temp[j]-tm));
-					ticks[j] = new DateTime(d+"."+m+"."+y+" 00:00:00", calendar).toDouble(unit, calendar);
+					ticks[j] = new DateTime(y+"-"+m+"-"+d+" 00:00:00", calendar).toDouble(unit, calendar);
 				}
 				ticks[0] = 0d; ticks[1] = 0d;
 				return ticks;
@@ -308,7 +314,7 @@ public class JPlotMath {
 			double[] temp = optimalLinearTicks(din.getDays()+din.getDayFraction(), dax.getDays()+dax.getDayFraction(), maxTickCount);
 			double[] ticks = new double[temp.length];
 			for(int j=2; j<ticks.length; j++) {
-				long l = (int) temp[j];
+				long l = (long) temp[j];
 				double d = temp[j]-l;
 				ticks[j] = new DateTime(l, d).toDouble(unit, calendar);
 			}
@@ -323,7 +329,7 @@ public class JPlotMath {
 		int[] ref = din.toDate(calendar);
 		int h = u.equals("hours") ? 0 : ref[3];
 		int m = u.equals("seconds") ? ref[4] : 0;
-		DateTime refDate = new DateTime(ref[0]+"."+ref[1]+"."+ref[2]+" "+PApplet.nf(h,2)+":"+PApplet.nf(m,2)+":00", calendar);
+		DateTime refDate = new DateTime(ref[2]+"-"+ref[1]+"-"+ref[0]+" "+PApplet.nf(h,2)+":"+PApplet.nf(m,2)+":00", calendar);
 		double vin2 = refDate.diff(din, u);
 		double vax2 = refDate.diff(dax, u);
 		double[] temp = optimalLinearTicks(vin2, vax2, maxTickCount);
@@ -380,6 +386,8 @@ public class JPlotMath {
 			if(_cal.equalsIgnoreCase("gregorian")) calID =  1;
 			if(_cal.equalsIgnoreCase("julian"))    calID =  2;
 			if(_cal.equalsIgnoreCase("proleptic")) calID =  3;
+			if(calID<0)
+				throw new IllegalArgumentException("Unknown calendar: "+_cal);
 			int stage = 1000000000;
 			int year = Integer.MIN_VALUE;
 			long dayDiff = Long.MIN_VALUE;
@@ -536,8 +544,8 @@ public class JPlotMath {
 
 		private static DateTime parseGregorian(String date) {
 			String[] ss = date.split(" ");
-			String[] dd = ss[0].substring(1).split("-");
-			int[] ddi = { _int(dd[2]), _int(dd[1]), _int(ss[0].charAt(0)+dd[0]) };
+			String[] dd = ss[0].substring(ss[0].charAt(0)=='-'?1:0).split("-");
+			int[] ddi = { _int(dd[2]), _int(dd[1]), _int((ss[0].charAt(0)=='-'?"-":"")+dd[0]) };
 			boolean isJul = ddi[2]<1582;
 			if(ddi[2]==1582) {
 				isJul = ddi[1]<10;
@@ -548,10 +556,10 @@ public class JPlotMath {
 		}
 		private static DateTime parseJulian(String date) { // also proleptic julian
 			String[] ss = date.split(" ");
-			String[] dd = ss[0].substring(1).split("-"), tt = null;
+			String[] dd = ss[0].substring(ss[0].charAt(0)=='-'?1:0).split("-"), tt = null;
 			if(ss.length>1) tt = ss[1].split(":");
 			else tt = new String[] {"00","00","00"};
-			int[] ddi = { _int(dd[2]), _int(dd[1]), _int(ss[0].charAt(0)+dd[0]) };
+			int[] ddi = { _int(dd[2]), _int(dd[1]), _int((ss[0].charAt(0)=='-'?"-":"")+dd[0]) };
 			int[] tti = { 0, 0, 0 };
 			for(int i=0; i<tt.length; i++) tti[i] = _int(tt[i]);
 			double df = tti[2] / 86400d + tti[1] / 1440d + tti[0] / 24d;
@@ -563,10 +571,10 @@ public class JPlotMath {
 		}
 		private static DateTime parseProleptic(String date) { //proleptic gregorian
 			String[] ss = date.split(" ");
-			String[] dd = ss[0].substring(1).split("-"), tt = null;
+			String[] dd = ss[0].substring(ss[0].charAt(0)=='-'?1:0).split("-"), tt = null;
 			if(ss.length>1) tt = ss[1].split(":");
 			else tt = new String[] {"00","00","00"};
-			int[] ddi = { _int(dd[2]), _int(dd[1]), _int(ss[0].charAt(0)+dd[0]) };
+			int[] ddi = { _int(dd[2]), _int(dd[1]), _int((ss[0].charAt(0)=='-'?"-":"")+dd[0]) };
 			int[] tti = { 0, 0, 0 };
 			for(int i=0; i<tt.length; i++) tti[i] = _int(tt[i]);
 			double df = tti[2] / 86400d + tti[1] / 1440d + tti[0] / 24d;
