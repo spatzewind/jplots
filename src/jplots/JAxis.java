@@ -49,6 +49,7 @@ public class JAxis {
 	private List<JPlotsLayer> layers;
 	protected PFont pfont;
 	private JProjection projection;
+	private JAxis[] shareXaxis, shareYaxis;
 	
 	public JAxis(JPlot plot, int pos_x, int pos_y, int width, int height) {
 		pplot = plot;
@@ -58,8 +59,14 @@ public class JAxis {
 		ph = height;
 		layers = new ArrayList<JPlotsLayer>();
 		if(plot.isDebug())
-			System.out.println("[DEBUG] created PAxis-object: x/y="+pos_x+"/"+pos_y+" w/h="+width+"/"+height);
+			System.out.println("[DEBUG] created PAxis-object: x/y="+px+"/"+py+" w/h="+pw+"/"+ph);
 		defaults();
+		
+	}
+	public JAxis(JAxis src_axis) {
+		this(src_axis.getPlot(),
+				src_axis.getSize()[0], src_axis.getSize()[1],
+				src_axis.getSize()[2], src_axis.getSize()[3]);
 	}
 	
 	private void defaults() {
@@ -320,17 +327,17 @@ public class JAxis {
 		pw = width;
 		ph = height;
 		if(pplot.isDebug())
-			System.out.println("[DEBUG] resize PAxis-object: x/y="+pos_x+"/"+pos_y+" w/h="+width+"/"+height);
+			System.out.println("[DEBUG] resize PAxis-object: x/y="+px+"/"+py+" w/h="+pw+"/"+ph);
 		return this;
 	}
-	public JAxis setXRange(float xmin, float xmax) { minX = xmin; maxX = xmax; xRangeFix = true; return this; }
-	public JAxis setXRange(double xmin, double xmax) { minX = xmin; maxX = xmax; xRangeFix = true; return this; }
-	public JAxis setYRange(float ymin, float ymax) { minY = ymin; maxY = ymax; yRangeFix = true; return this; }
-	public JAxis setYRange(double ymin, double ymax) { minY = ymin; maxY = ymax; yRangeFix = true; return this; }
-	public JAxis setRange(float xmin, float xmax, float ymin, float ymax) {
-		minX = xmin; maxX = xmax; minY = ymin; maxY = ymax; xRangeFix = true; yRangeFix = true; return this; }
+	public JAxis setXRange(double xmin, double xmax) { setXRange(xmin, xmax, true); return this; }
+	private void setXRange(double xmin, double xmax, boolean notify) { minX = xmin; maxX = xmax; xRangeFix = true;
+		if(notify) for(JAxis a: shareXaxis) if(!a.equals(this)) a.setXRange(xmin, xmax, false); }
+	public JAxis setYRange(double ymin, double ymax) { setYRange(ymin, ymax, true); return this; }
+	private void setYRange(double ymin, double ymax, boolean notify) {minY = ymin; maxY = ymax; yRangeFix = true;
+		if(notify) for(JAxis a: shareYaxis) if(!a.equals(this)) a.setYRange(ymin, ymax, false); }
 	public JAxis setRange(double xmin, double xmax, double ymin, double ymax) {
-		minX = xmin; maxX = xmax; minY = ymin; maxY = ymax; xRangeFix = true; yRangeFix = true; return this; }
+		setXRange(xmin, xmax); setYRange(ymin, ymax); return this; }
 	public void setAxis(String axis, String which, boolean onoff) {
 		boolean setX=false, setY=false;
 		boolean setAx=false, setGrd=false, setTck=false;
@@ -420,12 +427,21 @@ public class JAxis {
 				break;
 		}
 	}
-
+	public JAxis addSharedAxis(char which, JAxis new_axis) {
+		addSharedAxis(which, new_axis, false); return this; }
+	
 
 	//************************************
 	//**** GETTER ************************
 	//************************************
-	
+
+	/**
+	 * gives a new JAxis instance with same position and dimensions
+	 * @return new JAxis object
+	 */
+	public JAxis copy() {
+		return new JAxis(pplot, px, py, pw, ph);
+	}
 	public JPlot getPlot() { return pplot; }
 	public int[] getSize() { return new int[] {px,py,pw,ph}; }
 	public double getTextSize() { return txtsize; }
@@ -504,7 +520,29 @@ public class JAxis {
 	}
 	public JProjection getProjection() {
 		return projection; }
-
+	private void addSharedAxis(char which, JAxis new_axis, boolean notify) {
+		if(new_axis.equals(this))
+			return;
+		switch(which) {
+			case 'x': JAxis[] tempx = new JAxis[shareXaxis.length];
+				for(int a=0; a<tempx.length; a++) tempx[a] = shareXaxis[a];
+				shareXaxis = new JAxis[tempx.length+1];
+				for(int a=0; a<tempx.length; a++) shareXaxis[a] = tempx[a];
+				shareXaxis[tempx.length] = new_axis;
+				if(notify) for(int a=0; a<tempx.length; a++) shareXaxis[a].addSharedAxis('x', new_axis, false);
+				break;
+			case 'y': JAxis[] tempy = new JAxis[shareYaxis.length];
+				for(int a=0; a<tempy.length; a++) tempy[a] = shareYaxis[a];
+				shareYaxis = new JAxis[tempy.length+1];
+				for(int a=0; a<tempy.length; a++) shareYaxis[a] = tempy[a];
+				shareYaxis[tempy.length] = new_axis;
+				if(notify) for(int a=0; a<tempy.length; a++) shareYaxis[a].addSharedAxis('y', new_axis, false);
+				break;
+			default:
+				break;
+		}
+	}
+	
 	//************************************
 	//**** PRIVATE ***********************
 	//************************************

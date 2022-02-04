@@ -25,20 +25,18 @@ import processing.core.PGraphics;
 
 public class JShapesLayer extends JPlotsLayer {
 	
-	private File shapeFile;
 	private Map<String, String> connect;
 	private String shapeType;
 	
 	public JShapesLayer(String filepath, String type) {
-		shapeFile = new File(filepath);
+		File f = new File(filepath);
 		connect = new HashMap<String, String>();
-		connect.put("url", filepath);
+		connect.put("url", f.getAbsolutePath());
 		shapeType = type;
 	}
 	public JShapesLayer(File filepath, String type) {
-		shapeFile = filepath;
 		connect = new HashMap<String, String>();
-		connect.put("url", shapeFile.getAbsolutePath());
+		connect.put("url", filepath.getAbsolutePath());
 		shapeType = type;
 	}
 
@@ -57,12 +55,24 @@ public class JShapesLayer extends JPlotsLayer {
 			System.out.println("[DEBUG] JShapeLayer: begin reading shape file \""+connect.get("url")+"\"");
 		try {
 			//DataStore dataStore = DataStoreFinder.getDataStore(connect);
-			FileDataStore dataStore = FileDataStoreFinder.getDataStore(shapeFile);
-			System.out.println(dataStore);
+			FileDataStore dataStore = FileDataStoreFinder.getDataStore(new File(connect.get("url")));
+			if(debug)
+				System.out.println("[DEBUG] JShapeLayer: dataStore is <"+dataStore+">");
+			if(dataStore==null)
+				return;
 			String[] typeNames = dataStore.getTypeNames();
-			System.out.println(typeNames);
+			if(typeNames==null)
+				return;
+			if(debug) {
+				String names = "";
+				for(String n: typeNames) names += (names.length()==0?"":", ")+n;
+				System.out.println("[DEBUG] JShapeLayer: found typeName = <"+names+">");
+			}
+			if(typeNames.length==0)
+				return;
 			String typeName = typeNames[0];
-			System.out.println("Reading content " + typeName);
+			if(debug)
+				System.out.println("[DEBUG] JShapeLayer: reading content <"+typeName+">");
 
 			FeatureSource<SimpleFeatureType, SimpleFeature> featureSource = dataStore.getFeatureSource(typeName);
 			FeatureCollection<SimpleFeatureType, SimpleFeature> collection = featureSource.getFeatures();

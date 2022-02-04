@@ -98,6 +98,19 @@ public class JPlot {
 	 * @return the JPlot object
 	 */
 	public JPlot subplots(double width, double height, int nrows, int ncols) {
+		return subplots(width, height, nrows, ncols, (Object)null);
+	}
+	/**
+	 * starts the new figure/plot with specified width and height in inch
+	 * 
+	 * @param width  width of figure in inch
+	 * @param height height of figure in inch
+	 * @param nrows  number of rows for array of diagrams
+	 * @param ncols  number of columns for array of diagrams
+	 * @param kwargs additional keyword arguments
+	 * @return the JPlot object
+	 */
+	public JPlot subplots(double width, double height, int nrows, int ncols, Object... kwargs) {
 		this.width  = (int) (dpi * width);
 		this.height = (int) (dpi * height);
 		this.axes   = new JAxis[nrows*ncols];
@@ -119,6 +132,22 @@ public class JPlot {
 			}
 		}
 		this.img_is_created = false;
+		if(kwargs!=null)
+			for(int n=0; n<kwargs.length; n++) {
+				if(kwargs[n] instanceof String) {
+					String kwarg = (String) kwargs[n];
+					if(kwarg.equalsIgnoreCase("sharex")) {
+						for(int col=0; col<n_cols; col++)
+							for(int row=1; row<n_rows; row++)
+								this.axes[col].addSharedAxis('x', this.axes[row*n_cols+col]);
+					}
+					if(kwarg.equalsIgnoreCase("sharey")) {
+						for(int row=0; row<n_rows; row++)
+							for(int col=1; col<n_cols; col++)
+								this.axes[row*n_cols].addSharedAxis('y', this.axes[row*n_cols+col]);
+					}
+				}
+			}
 		return this;
 	}
 	/**
