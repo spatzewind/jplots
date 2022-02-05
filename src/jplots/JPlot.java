@@ -537,6 +537,14 @@ public class JPlot {
 	 */
 	public void legend() {
 		gca().legend(); }
+	public void addText(double x, double y, String text) {
+		gca().addText(x, y, text, 1.0d, 0xff000000, PApplet.LEFT, PApplet.BOTTOM, 0d); }
+	public void addText(double x, double y, String text, double textsize, int colour) {
+		gca().addText(x, y, text, textsize, colour, PApplet.LEFT, PApplet.BOTTOM, 0d); }
+	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny) {
+		gca().addText(x, y, text, textsize, colour, alignx, aligny, 0d); }
+	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny, double rotation) {
+		gca().addText(x, y, text, textsize, colour, alignx, aligny, rotation); }
 
 	public void predefImgShow(String predefined_images) {
 		gca().predefImgShow(predefined_images);

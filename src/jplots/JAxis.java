@@ -21,6 +21,7 @@ import jplots.layer.JPlotsLayer;
 import jplots.layer.JScatterLayer;
 import jplots.layer.JXYLayer;
 import jplots.layer.JShapesLayer;
+import jplots.layer.JTextLayer;
 import jplots.maths.JPlotMath;
 import jplots.maths.JPlotMath.DateTime;
 import jplots.shapes.JGroupShape;
@@ -252,26 +253,24 @@ public class JAxis {
 		JPlotsLayer scl = new JScatterLayer(x, y, colour, iconsize, symbol); layers.add(scl);
 		readParams(scl, params); updateRange(scl); }
 
-	public void axhline(float y) {
-		axhline(y, 0xff000000, 3f, "-"); }
-	public void axhline(float y, int colour, float linewidth, String linestyle) {
-		JPlotsLayer xyl = new JLineLayer(y, 'h', colour, linewidth, linestyle); layers.add(xyl);
-		updateRange(xyl, "y"); }
 	public void axhline(double y) {
 		axhline(y, 0xff000000, 3f, "-"); }
 	public void axhline(double y, int colour, double linewidth, String linestyle) {
 		JPlotsLayer xyl = new JLineLayer(y, 'h', colour, linewidth, linestyle); layers.add(xyl);
 		updateRange(xyl, "y"); }
-	public void axvline(float x) {
-		axvline(x, 0xff000000, 3f, "-"); }
-	public void axvline(float x, int colour, float linewidth, String linestyle) {
-		JPlotsLayer xyl = new JLineLayer(x, 'v', colour, linewidth, linestyle); layers.add(xyl);
-		updateRange(xyl, "x"); }
 	public void axvline(double x) {
 		axvline(x, 0xff000000, 3f, "-"); }
 	public void axvline(double x, int colour, double linewidth, String linestyle) {
 		JPlotsLayer xyl = new JLineLayer(x, 'v', colour, linewidth, linestyle); layers.add(xyl);
 		updateRange(xyl, "x"); }
+	public void addText(double x, double y, String text) {
+		JTextLayer tl = new JTextLayer(text, x, y, 1.0d, 0xff000000, PApplet.LEFT, PApplet.BOTTOM, 0d); layers.add(tl); }
+	public void addText(double x, double y, String text, double textsize, int colour) {
+		JTextLayer tl = new JTextLayer(text, x, y, textsize, colour, PApplet.LEFT, PApplet.BOTTOM, 0d); layers.add(tl); }
+	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny) {
+		JTextLayer tl = new JTextLayer(text, x, y, textsize, colour, alignx, aligny, 0d); layers.add(tl); }
+	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny, double rotation) {
+		JTextLayer tl = new JTextLayer(text, x, y, textsize, colour, alignx, aligny, rotation); layers.add(tl); }
 	
 	public void colourbar() {
 		pplot.colourbar(this); }
