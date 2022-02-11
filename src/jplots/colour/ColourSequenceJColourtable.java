@@ -5,22 +5,39 @@ public class ColourSequenceJColourtable extends JColourtable {
 	private int overflowColour, underflowColour, invalidColour;
 	private int[] linearColours;
 	
+	/**
+	 * JColourtable from a list of colours as read like a NCL colourtable
+	 * <p>
+	 *     first colour is for values below lower bound<br>
+	 *     second colour is for values above upper bound<br>
+	 *     all other colours are evenly spaced from low to high
+	 * </p> 
+	 * @param cols array of colours
+	 */
 	public ColourSequenceJColourtable(int[] cols) {
-		if(cols.length>3) {
+		if(cols.length<4) {
 			System.err.println("There have to be at least 4 colours: underflow-colour, overflow-colour, at least 2 colours for colourgradient(s)");
 			underflowColour = 0xff000000;
 			overflowColour  = 0xffffffff;
-			invalidColour   = 0x01ffffff;
+			invalidColour   = 0x01999999;
 			linearColours   = new int[] {0xff000000, 0xffffffff};
-			return;
+		} else {
+			underflowColour = cols[0];
+			overflowColour  = cols[1];
+			invalidColour   = 0x01ffffff;
+			linearColours = new int[cols.length-2];
+			for(int c=2; c<cols.length; c++)
+				linearColours[c-2] = cols[c];
 		}
-		underflowColour = cols[0];
-		overflowColour  = cols[1];
-		invalidColour   = 0x01ffffff;
-		linearColours = new int[cols.length-2];
-		for(int c=2; c<cols.length; c++)
-			linearColours[c-2] = cols[c];
 	}
+	/**
+	 * JColourtable from a list of colours
+	 * 
+	 * @param under colour for values below lower bound
+	 * @param over  colour for values above upper bound
+	 * @param nan   colour for invalid values
+	 * @param cols  array of colours
+	 */
 	public ColourSequenceJColourtable(int under, int over, int nan, int[] cols) {
 		underflowColour = under;
 		overflowColour  = over;
@@ -29,6 +46,8 @@ public class ColourSequenceJColourtable extends JColourtable {
 		for(int c=0; c<cols.length; c++)
 			linearColours[c]  = cols[c];
 	}
+	
+	
 	public int getColour(double percentage) {
 		if(Double.isNaN(percentage))
 			return invalidColour;

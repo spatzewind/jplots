@@ -42,7 +42,7 @@ public class JPlot {
 	 * a Constructor, usually called in the setup() method in your sketch to
 	 * initialize and start the Library.
 	 * 
-	 * @example Hello
+	 * @example SimpleXY
 	 * @param applet the parent PApplet
 	 */
 	public JPlot(PApplet applet) {
@@ -239,19 +239,34 @@ public class JPlot {
 	 * @return this JPlot object
 	 */
 	public JPlot setSpacing(double wspacing, double hspacing) {
+		return setSpacing(wspacing, 0.25d, hspacing, 0.25d); }
+	/**
+	 * set spacing between different subplots in the plot
+	 * 
+	 * @param wspacing horizontal spacing as fraction of width of subplots
+	 * @param wbounds  width of space to canvas boundary as fraction of subplot width
+	 * @param hspacing vertical spacing as fraction of height of subplots
+	 * @param hbounds  height of space to canvas boundary as fraction of subplot height
+	 * @return this JPlot object
+	 */
+	public JPlot setSpacing(double wspacing, double wbounds, double hspacing, double hbounds) {
 		if(axes.length!=n_rows*n_cols) {
 			System.err.println("JAxis-configuration altered, cannot reorder images!");
 			return this;
 		}
-		double ws = 1d / (0.5d*wspacing+(n_cols-1)*(1.0d+wspacing)+1.0d+0.5d*wspacing);
-		double hs = 1d / (0.5d*hspacing+(n_rows-1)*(1.0d+hspacing)+1.0d+0.5d*hspacing);
-		int pawid = (int) (width * ws+0.1d);
-		int pahei = (int) (height * hs+0.1d);
+		double ww = wspacing * (n_cols-1) + wbounds * 2 + n_cols;
+		int awid = (int) ( 1d * width / ww + 0.5d),
+			ws = (int) ( (1d+wspacing) * width / ww + 0.2d),
+			wo = ( width - ws*(n_cols-1) - awid ) / 2;
+		double hh = hspacing * (n_rows-1) + hbounds * 2 + n_rows;
+		int ahei = (int) ( 1d * height / hh + 0.5d),
+			hs = (int) ( (1d+hspacing) * height / hh + 0.2d),
+			ho = ( height - hs*(n_rows-1) - ahei ) / 2;
 		for(int r=0; r<n_rows; r++) {
-			int py = (int) (height * (0.5d*hspacing+(1.0d+hspacing)*r) * hs + 0.1d);
+			int py = ho + r*hs;
 			for(int c=0; c<n_cols; c++) {
-				int px = (int) (width * (0.5d*wspacing+(1.0d+wspacing)*c) * ws + 0.1d);
-				this.axes[r*n_cols+c].setPositionAndSize(px,py,pawid,pahei);
+				int px = wo + c*ws;
+				this.axes[r*n_cols+c].setPositionAndSize(px,py,awid,ahei);
 			}
 		}
 		return this;
@@ -537,6 +552,8 @@ public class JPlot {
 	 */
 	public void legend() {
 		gca().legend(); }
+	public void legend(double rts) {
+		gca().legend(rts); }
 	public void addText(double x, double y, String text) {
 		gca().addText(x, y, text, 1.0d, 0xff000000, PApplet.LEFT, PApplet.BOTTOM, 0d); }
 	public void addText(double x, double y, String text, double textsize, int colour) {

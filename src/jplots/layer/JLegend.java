@@ -21,18 +21,29 @@ public class JLegend extends JPlotsLayer {
 	
 	private JAxis srcAxis;
 	private boolean isHorizontal, borders;
+	private double rts;
 	private List<LegendEntry> entries;
 
 	public JLegend(JAxis parent) {
 		this(parent,
 				(int)(parent.getSize()[0]+1.04d*parent.getSize()[2]+0.5d),parent.getSize()[1],
 				(int)(0.08d*parent.getSize()[2]+0.5d),parent.getSize()[3],
-				false);
+				false, 1d);
+	}
+	public JLegend(JAxis parent, double relTextSize) {
+		this(parent,
+				(int)(parent.getSize()[0]+1.04d*parent.getSize()[2]+0.5d),parent.getSize()[1],
+				(int)(0.08d*parent.getSize()[2]+0.5d),parent.getSize()[3],
+				false, relTextSize);
 	}
 	public JLegend(JAxis parent, int pos_x, int pos_y, int width, int height, boolean horizontal) {
+		this(parent, pos_x, pos_y, width, height, horizontal, 1d);
+	}
+	public JLegend(JAxis parent, int pos_x, int pos_y, int width, int height, boolean horizontal, double relTextSize) {
 		srcAxis = parent;
 		isHorizontal = horizontal;
 		borders = true;
+		rts = relTextSize;
 		
 		entries = new ArrayList<JLegend.LegendEntry>();
 	}
@@ -71,17 +82,18 @@ public class JLegend extends JPlotsLayer {
 		for(LegendEntry le: entries) {
 			labelWidth = Math.max(labelWidth, plot.getGraphic().textWidth(le.getName())/200d);
 		}
+		double ts = ax.getTextSize() * rts;
 		labelWidth += 3d;
-		labelWidth *= ax.getTextSize();
-		double toplefX = (p[0]+p[2]-labelWidth-0.5d*ax.getTextSize()), toplefY=p[1]+0.5d*ax.getTextSize();
+		labelWidth *= ts;
+		double toplefX = (p[0]+p[2]-labelWidth-0.5d*ts), toplefY=p[1]+0.5d*ts;
 		
 		JGroupShape lggs = new JGroupShape();
 		lggs.addChild(new JRectShape(
-				(float)(toplefX-0.5d*ax.getTextSize()), (float)(toplefY-0.5d*ax.getTextSize()),
-				(float)(toplefX+labelWidth+0.5d*ax.getTextSize()), (float)(toplefY+(0.5d+1.5d*entries.size())*ax.getTextSize()),
+				(float)(toplefX-0.5d*ts), (float)(toplefY-0.5d*ts),
+				(float)(toplefX+labelWidth+0.5d*ts), (float)(toplefY+(0.5d+1.5d*entries.size())*ts),
 				(float)Math.min(labelWidth, 1.5d*entries.size())*0.1f, 0x3fffffff, 0x3f999999, 2f, true));
 		for(int le=0; le<entries.size(); le++)
-			entries.get(le).toShape(lggs, (float)toplefX, (float)(toplefY+le*ax.getTextSize()*1.5d), (float)ax.getTextSize());
+			entries.get(le).toShape(lggs, (float)toplefX, (float)(toplefY+le*ts*1.5d), (float)ts);
 		s.addChild(lggs);
 	}
 

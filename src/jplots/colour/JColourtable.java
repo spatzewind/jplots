@@ -18,6 +18,8 @@ public abstract class JColourtable {
 		pctables.put("default", new LinearSegmentedJColourtable(0xff00007f, 0xff7f0000, 0x007f7f7f,
 				new double[] {0d, 0.4d,0.6d,1d},
 				new int[][] {{0xff0000ff,0xff00ffff},{0xff00ffff,0xffffff00},{0xffffff00,0xffaa0000}}));
+		pctables.put("bw", new ColourSequenceJColourtable(0xff000000, 0xffffffff, 0x01999999,
+				new int[] {0xff000000,0xffffffff}));
 		pctables.put("viridis", new PolynomialJColourtable(0x007f7f7f,
 				new double[] {0.201570821189837d, 0.294167300047315d, -0.0743508175540542d,
 						-25.607056228173d, 145.511124038256d, -372.632167385426d,

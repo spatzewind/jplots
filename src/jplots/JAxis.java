@@ -62,7 +62,8 @@ public class JAxis {
 		if(plot.isDebug())
 			System.out.println("[DEBUG] created PAxis-object: x/y="+px+"/"+py+" w/h="+pw+"/"+ph);
 		defaults();
-		
+		shareXaxis = new JAxis[] {};
+		shareYaxis = new JAxis[] {};
 	}
 	public JAxis(JAxis src_axis) {
 		this(src_axis.getPlot(),
@@ -278,6 +279,8 @@ public class JAxis {
 		pplot.colourbar(this, name); }
 	public void legend() {
 		JPlotsLayer lgl = new JLegend(this); layers.add(lgl); }
+	public void legend(double rts) {
+		JPlotsLayer lgl = new JLegend(this, rts); layers.add(lgl); }
 	
 	public void coastLines() {
 		coastLines(110); }
