@@ -24,13 +24,13 @@ public class JDPolygon {
 	public JDPolygon(JDPoint[] abc, int index) {
 		if(abc==null || abc.length<3) {
 			System.err.println("Cannot create polygon of less than 3 points!");
-			c = null;
-			e = null;
+			c = new JDPoint[0];
+			e = new JDEdge[0];
 			idx = 0;
 			return;
 		}
 		c = new JDPoint[abc.length];
-		boolean clockwise = (area(abc)<0d);
+		boolean clockwise = false; //(area(abc)<0d);
 		for(int i=0; i<abc.length; i++)
 			c[clockwise?abc.length-1-i:i] = new JDPoint(abc[i].x, abc[i].y, abc[i].value);
 		e = new JDEdge[abc.length];
@@ -45,24 +45,46 @@ public class JDPolygon {
 	public JDPolygon(Coordinate[] coords, int index) {
 		if(coords==null || coords.length<4) {
 			System.err.println("Cannot create polygon of less than 3 points!");
-			c = null;
-			e = null;
+			c = new JDPoint[0];
+			e = new JDEdge[0];
 			idx = 0;
 			return;
 		}
 		c = new JDPoint[coords.length-1];
 		for(int i=0; i<c.length; i++)
 			c[i] = new JDPoint(coords[i]);
-		double a = area(c);
-		if(a<0d)
-			for(int i=0; i<c.length; i++)
-				c[i] = new JDPoint(coords[c.length-1-i]);
+//		double a = area(c);
+//		if(a<0d)
+//			for(int i=0; i<c.length; i++)
+//				c[i] = new JDPoint(coords[c.length-1-i]);
 		e = new JDEdge[c.length];
 		for(int i=0,j=c.length-1; i<c.length; j=i++)
 			e[i] = new JDEdge(c[j],c[i]);
 		idx = index;
 	}
 
+	public JDPolygon(double[]... coords) {
+		this(coords, 0); }
+	public JDPolygon(double[][] coords, int index) {
+		if(coords==null || coords.length<3) {
+			System.err.println("Cannot create polygon of less than 3 points!");
+			c = new JDPoint[0];
+			e = new JDEdge[0];
+			idx = 0;
+			return;
+		}
+		c = new JDPoint[coords.length];
+		for(int i=0; i<c.length; i++)
+			c[i] = new JDPoint(coords[i][0], coords[i][1], 0d);
+//		boolean clockwise = (area(c)<0d);
+//		if(clockwise)
+//			for(int i=0; i<c.length; i++)
+//				c[c.length-1-i] = new JDPoint(coords[i][0], coords[i][1], 0d);
+		e = new JDEdge[c.length];
+		for(int i=0,j=e.length-1; i<e.length; j=i++)
+			e[i] = new JDEdge(c[j],c[i]);
+		idx = index;
+	}
 //	public void edges(JDEdge ab, JDEdge bc, JDEdge ca) {
 //		this.ab = ab.equals(a, b) ? ab : bc.equals(a, b) ? bc : ca;
 //		this.bc = ab.equals(b, c) ? ab : bc.equals(b, c) ? bc : ca;
@@ -234,19 +256,219 @@ public class JDPolygon {
 		return false;
 	}
 
-	public JDPolygon affine(double[][] transformationMatrix) {
+	public float[][] getCoords() {
+		float[][] coords = new float[c.length][2];
+		for(int i=0; i<c.length; i++) {
+			coords[i][0] = (float) c[i].x;
+			coords[i][1] = (float) c[i].y;
+		}
+		return coords;
+	}
+	
+	/**
+	 * apply affine transformation to polygon
+	 * </b>
+	 * (the orientation stays the same, even if the determinant of the transformation is negative)
+	 * @param tm transformation matrix (2x3)
+	 * @return itself after transformation
+	 */
+	public JDPolygon affine(double[][] tm) {
 		for(int i=0; i<c.length; i++)
-			c[i].affine(transformationMatrix);
+			c[i].affine(tm);
+		if(tm[0][0] * tm[1][1] - tm[0][1] * tm[1][0] < 0d)
+			reverse_orientation();
 		return this;
+	}
+	public JDPolygon reverse_orientation() {
+		double[] xx = new double[c.length];
+		double[] yy = new double[c.length];
+		double[] vv = new double[c.length];
+		for(int i=0; i<c.length; i++) {
+			xx[i] = c[i].x;
+			yy[i] = c[i].y;
+			vv[i] = c[i].value;
+		}
+		for(int i=0; i<c.length; i++) {
+			c[c.length-1-i] = new JDPoint(xx[i], yy[i], vv[i]);
+		}
+		for(int i=0,j=e.length-1; i<e.length; j=i++)
+			e[i] = new JDEdge(c[j],c[i]);
+		return this;
+	}
+	public List<JDPolygon> intersectsAABB(double le, double to,  double ri, double bt) {
+		if(ri<le) return intersectsAABB(ri, to, le, bt);
+		if(bt<to) return intersectsAABB(le, bt, ri, to);
+		JDPoint center = new JDPoint(0.5d*(le+ri), 0.5d*(to+bt));
+		double ve = Math.min(ri-le, bt-to) * 1.0e-10d;
+		List<JDPolygon> res = new ArrayList<>();
+		boolean foundPointOutside = false;
+		for(int i=0; i<c.length && !foundPointOutside; i++) {
+			if(c[i].x < le) foundPointOutside = true;
+			if(c[i].x > ri) foundPointOutside = true;
+			if(c[i].y < to) foundPointOutside = true;
+			if(c[i].y > bt) foundPointOutside = true;
+		}
+		if(area()<0d && !foundPointOutside) {
+			int nearest_to_edge = -1, nearest_side = -1;
+			double nearest_x = Double.NaN, nearest_y = Double.NaN;
+			double nearest_dist = Double.POSITIVE_INFINITY, off = 100d;
+			for(int i=0; i<c.length; i++) {
+				if(c[i].x >= le && c[i].x <= ri &&
+					c[i].y >= to && c[i].y <= bt) {
+					if(c[i].x-le < nearest_dist) { nearest_to_edge = i;
+						nearest_dist = c[i].x-le; nearest_side = 1; nearest_x = c[i].x; nearest_y = c[i].y; }
+					if(ri-c[i].x < nearest_dist) { nearest_to_edge = i;
+						nearest_dist = ri-c[i].x; nearest_side = 2; nearest_x = c[i].x; nearest_y = c[i].y; }
+					if(c[i].y-to < nearest_dist) { nearest_to_edge = i;
+						nearest_dist = c[i].y-to; nearest_side = 3; nearest_x = c[i].x; nearest_y = c[i].y; }
+					if(bt-c[i].y < nearest_dist) { nearest_to_edge = i;
+						nearest_dist = bt-c[i].y; nearest_side = 4; nearest_x = c[i].x; nearest_y = c[i].y; }
+				}
+				double d = 10d+Math.max(Math.max(le-c[i].x, c[i].x-ri), Math.max(to-c[i].y, c[i].y-bt));
+				if(off<d) off = d;
+			}
+			List<JDPoint> temp = new ArrayList<>();
+			switch(nearest_side) {
+				case 1: temp.add(new JDPoint(le-off,nearest_y)); temp.add(new JDPoint(le-off,bt+off));
+						temp.add(new JDPoint(ri+off,bt+off));    temp.add(new JDPoint(ri+off,to-off));
+						temp.add(new JDPoint(le-off,to-off));    temp.add(new JDPoint(le-off,nearest_y));
+						break;
+				case 2: temp.add(new JDPoint(ri+off,nearest_y)); temp.add(new JDPoint(ri+off,to-off));
+						temp.add(new JDPoint(le-off,to-off));    temp.add(new JDPoint(le-off,bt+off));
+						temp.add(new JDPoint(ri+off,bt+off));    temp.add(new JDPoint(ri+off,nearest_y));
+						break;
+				case 3: temp.add(new JDPoint(nearest_x,to-off)); temp.add(new JDPoint(le-off,to-off));
+						temp.add(new JDPoint(le-off,bt+off));    temp.add(new JDPoint(ri+off,bt+off));
+						temp.add(new JDPoint(ri+off,to-off));    temp.add(new JDPoint(nearest_x,to-off));
+						break;
+				case 4: temp.add(new JDPoint(nearest_x,bt+off)); temp.add(new JDPoint(ri+off,bt+off));
+						temp.add(new JDPoint(ri+off,to-off));    temp.add(new JDPoint(le-off,to-off));
+						temp.add(new JDPoint(le-off,bt+off));    temp.add(new JDPoint(nearest_x,bt+off));
+						break;
+				default: return res;
+			}
+			for(int i=0; i<c.length; i++)
+				temp.add(c[(i+nearest_to_edge)%c.length]);
+			res.add(new JDPolygon(temp.toArray(new JDPoint[0]), this.idx));
+		} else {
+			res.add(this);
+			if(!foundPointOutside)
+				return res;
+		}
+		List<JDPoint> points = new ArrayList<>();
+		List<Double> cutids = new ArrayList<>();
+		for(int[] side: new int[][] {{0,-1},{0,1},{1,-1},{1,1}}) {
+			int polycount = res.size();
+			double vc = side[0]==0?(side[1]<0?-le:ri):(side[1]<0?-to:bt);
+			for(int p_i=0; p_i<polycount; p_i++) {
+				points.clear();
+				cutids.clear();
+				if(res.get(p_i)==null) continue;
+				JDPoint[] pnts = res.get(p_i).c;
+				if(pnts==null) continue;
+				for(int i=pnts.length-1,j=0; j<pnts.length; i=j++) {
+					double v1 = (side[0]==0?pnts[i].x:pnts[i].y)*side[1];
+					double v2 = (side[0]==0?pnts[j].x:pnts[j].y)*side[1];
+					if(v1<=vc) {
+						if(v2<=vc) {
+							points.add(pnts[j]);
+						} else {
+							double vf = (vc-v1) / (v2-v1);
+							points.add(pnts[i].fractionTowards(vf, pnts[j]));
+							checkCut(points, cutids, side, vc, ve, center);
+						}
+					} else {
+						if(v2<=vc) {
+							double vf = (vc-v1) / (v2-v1);
+							points.add(pnts[i].fractionTowards(vf, pnts[j]));
+							checkCut(points, cutids, side, vc, ve, center);
+							points.add(pnts[j]);
+						} else {
+							//nothing to add
+						}
+					}
+					if(points.size()>1) {
+						int k = points.size()-2;
+						int l = points.size()-1;
+						double uk = (side[0]==0 ? points.get(k).x : points.get(k).y) * side[1];
+						double ul = (side[0]==0 ? points.get(l).x : points.get(l).y) * side[1];
+						if( Math.abs(uk-vc)<ve && Math.abs(ul-vc)<ve ) {
+							boolean isNegative = area(center,points.get(k),points.get(l))<0d;
+							if(isNegative) cutids.add( -1d-points.size() );
+							else {
+								boolean isLastPositive = false;
+								if(!cutids.isEmpty()) isLastPositive = cutids.get(cutids.size()-1)>0d;
+								if(!isLastPositive) cutids.add(1d+cutids.size());
+							}
+						}
+					}
+				}
+				if(points.size()>0) {
+					points.add(points.get(0));
+					checkCut(points, cutids, side, vc, ve, center);
+					points.remove(points.size()-1);
+				}
+				if(cutids.size()>0) {
+					boolean isLastPositive = false;
+					if(!cutids.isEmpty()) isLastPositive = cutids.get(cutids.size()-1)>0d;
+					if(isLastPositive) {
+						if(cutids.get(0)>0d) cutids.remove(0);
+					}
+				}
+				if(cutids.size()>0) {
+					cutids.add(cutids.get(0));
+					int pl = points.size();
+					for(int n=1; n<cutids.size(); n++) {
+						int ci1 = (int) (Math.abs(cutids.get(n-1))-0.5d);
+						int ci2 = (int) (Math.abs(cutids.get( n ))-0.5d);
+						if(ci2<ci1) ci2 += pl;
+						JDPoint[] temp = new JDPoint[ci2-ci1];
+						for(int t=0; t<temp.length; t++)
+							temp[t] = points.get((ci1+t)%pl);
+						res.add(new JDPolygon(temp));
+					}
+				} else {
+					res.add(new JDPolygon(points.toArray(new JDPoint[0])));
+				}
+			}
+			for(int p_i=polycount-1; p_i>=0; p_i--)
+				res.remove(p_i);
+		}
+		//TODO create AABB intersection
+		return res;
+	}
+	private void checkCut(List<JDPoint> p, List<Double> c, int[] s, double crit, double eps, JDPoint cen) {
+		if(p.size()<2) return;
+		int k = p.size()-2;
+		int l = p.size()-1;
+		double uk = (s[0]==0 ? p.get(k).x : p.get(k).y) * s[1];
+		double ul = (s[0]==0 ? p.get(l).x : p.get(l).y) * s[1];
+		if( Math.abs(uk-crit)<eps && Math.abs(ul-crit)<eps ) {
+			boolean isNegative = area(cen,p.get(k),p.get(l))<0d;
+			if(isNegative) c.add( -1d-l );
+			else {
+				boolean isLastPositive = false;
+				if(!c.isEmpty()) isLastPositive = c.get(c.size()-1)>0d;
+				if(!isLastPositive) c.add(1d+l);
+			}
+		}
 	}
 	
 	public double area() {
+		if(c.length<2)
+			return Double.NaN;
+		if(c.length==2)
+			return 0d;
 		double a = 0d;
 		for(int i=0,j=c.length-1; i<c.length; j=i++)
 			a += (c[i].x-c[j].x) * (c[i].y+c[j].y);
 		return 0.5d * a;
 	}
 	private double area(JDPoint... p) {
+		if(p.length<2)
+			return Double.NaN;
+		if(p.length==2)
+			return 0d;
 		double a=0d;
 		for(int i=0,j=p.length-1; i<p.length; j=i++) {
 			JDPoint u = p[j];

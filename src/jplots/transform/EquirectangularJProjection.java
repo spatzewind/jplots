@@ -12,7 +12,7 @@ public class EquirectangularJProjection implements JProjection {
 	private double cenlat_r,cenlon_r;
 	private double radaequ,radpol;
 	
-	public EquirectangularJProjection(double center_latitude, double center_longitude, boolean in_degree) {
+	public EquirectangularJProjection(double center_longitude, double center_latitude, boolean in_degree) {
 		double fac = in_degree ? JPlotMath.DEG_TO_RAD : 1d;
 		cenlat_r = center_latitude * fac;
 		cenlon_r = center_longitude * fac;

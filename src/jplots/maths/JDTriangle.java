@@ -688,7 +688,7 @@ public class JDTriangle {
 										 new JDPoint(x5,y5,v5), new JDPoint(x6,y6,v6), new JDPoint(x7,y7,v7));
 			default: return null;
 		}
-	}	
+	}
 
 	
 	public double area() {

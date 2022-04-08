@@ -151,6 +151,8 @@ public class JPlotMath {
 	public static double[] optimalLinearTicks(double vmin, double vmax) {
 		return optimalLinearTicks(vmin, vmax, 10); }
 	public static double[] optimalLinearTicks(double vmin, double vmax, int maxTickCount) {
+		if(vmin==vmax)
+			return new double[] {0d,0d};
 		double vin = Math.min(vmin,vmax), vax = Math.max(vmin,vmax);
 		double p10 = Math.log10(Math.max(vax, -vin))/3d;
 		int p10i = (int) (p10) - (p10<0d ? 1 : 0);
@@ -188,6 +190,8 @@ public class JPlotMath {
 	public static double[] optimalLogarithmicTicks(double vmin, double vmax) {
 		return optimalLogarithmicTicks(vmin, vmax, 10); }
 	public static double[] optimalLogarithmicTicks(double vmin, double vmax, int maxTickCount) {
+		if(vmin==vmax)
+			return new double[] {0d,0d};
 		double vin = Math.log10(Math.min(vmin,vmax)), vax = Math.log10(Math.max(vmin,vmax));
 		if(Double.isNaN(vin) || Double.isNaN(vax))
 			return new double[] {0d,0d};
@@ -253,6 +257,8 @@ public class JPlotMath {
 	public static double[] optimalTimeTicks(double vmin, double vmax, String unit, String calendar) {
 		return optimalTimeTicks(vmin, vmax, unit, calendar, 10); }
 	public static double[] optimalTimeTicks(double vmin, double vmax, String unit, String calendar, int maxTickCount) {
+		if(vmin==vmax)
+			return new double[] {0d,0d};
 		double vin = Math.min(vmin,vmax), vax = Math.max(vmin,vmax);
 		DateTime din = DateTime.fromDouble(vin, unit, calendar);
 		DateTime dax = DateTime.fromDouble(vax, unit, calendar);

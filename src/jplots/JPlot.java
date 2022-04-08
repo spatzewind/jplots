@@ -1,5 +1,7 @@
 package jplots;
 
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+
 import jplots.colour.JColourbar;
 import jplots.shapes.JPlotShape;
 import jplots.transform.JProjection;
@@ -18,26 +20,26 @@ import processing.data.IntList;
  */
 
 public class JPlot {
-
+	
 	/** the version of the Library. */
 	public final static String VERSION = "##library.prettyVersion##";
-
+	
 	private static boolean hasWelcomed = false;
 	public static double dpi = 300d;
-
+	
 	private PApplet myParent;
 	private PGraphics plotImg;
-
+	
 	private boolean img_is_created, useDebug;
 	private int width, height, lastAxisNum;
 	private int n_cols, n_rows;
 	private JAxis[] axes;
-
-
+	
+	
 	//************************************
 	//**** CONSTRUCTOR *******************
 	//************************************
-
+	
 	/**
 	 * a Constructor, usually called in the setup() method in your sketch to
 	 * initialize and start the Library.
@@ -55,13 +57,13 @@ public class JPlot {
 		if(!hasWelcomed)
 			this.welcome();
 	}
-
-
+	
+	
 	//************************************
 	//**** STATIC ************************
 	//************************************
-
-
+	
+	
 	//************************************
 	//**** PURE PPLOT ********************
 	//************************************
@@ -352,6 +354,9 @@ public class JPlot {
 		img_is_created = redraw?false:img_is_created;
 		return this;
 	}
+	public boolean hasBeenDrawn() {
+		return img_is_created;
+	}
 
 	/**
 	 * removes all plotting infos
@@ -537,6 +542,16 @@ public class JPlot {
 		gca().coastLines(); }
 	public void coastLines(int resolution) {
 		gca().coastLines(resolution); }
+	public void land() {
+		gca().land(0xff676767, 0xff000000); }
+	public void land(int land_colour, int coast_colour) {
+		gca().land(land_colour, coast_colour); }
+	public void showShapefile(String path_to_shapefile, String shapeType) {
+		gca().showShapefile(path_to_shapefile, shapeType); }
+	public void showShapefile(String path_to_shapefile, String shapeType, CoordinateReferenceSystem user_crs, Object... params) {
+		gca().showShapefile(path_to_shapefile, shapeType, user_crs, params); }
+	public void showShapefile(String path_to_shapefile, String shapeType, int user_epsg_code, Object... params) {
+		gca().showShapefile(path_to_shapefile, shapeType, user_epsg_code, params); }
 
 	public void colourbar() {
 		colourbar(gca(), ""); }

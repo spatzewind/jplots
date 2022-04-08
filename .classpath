@@ -6,13 +6,9 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/gt-main-25.2.jar"/>
-	<classpathentry kind="lib" path="lib/gt-opengis-25.2.jar"/>
-	<classpathentry kind="lib" path="lib/gt-shapefile-25.2.jar"/>
-	<classpathentry kind="lib" path="lib/gt-metadata-25.2.jar"/>
-	<classpathentry kind="lib" path="lib/jts-core-1.18.1.jar"/>
 	<classpathentry kind="lib" path="dependend_libs/core.jar"/>
 	<classpathentry kind="lib" path="dependend_libs/itext.jar"/>
 	<classpathentry kind="lib" path="dependend_libs/pdf.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/GeoTools-26.3"/>
 	<classpathentry kind="output" path="resources/code"/>
 </classpath>

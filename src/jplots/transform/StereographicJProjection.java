@@ -82,13 +82,13 @@ public class StereographicJProjection implements JProjection {
 	}
 
 	@Override
-	public double[] fromLATLONtoPROJ(double u, double v, boolean input_in_degree) {
-		if(!(Double.isFinite(u) && Double.isFinite(v)))
+	public double[] fromLATLONtoPROJ(double longitude, double latitude, boolean input_in_degree) {
+		if(!(Double.isFinite(longitude) && Double.isFinite(latitude)))
 			return new double[] {Double.NaN, Double.NaN};
 		double fac = input_in_degree ? JPlotMath.DEG_TO_RAD : 1d;
-		double i = Math.cos(fac*v) * Math.cos(fac*u);
-		double j = Math.cos(fac*v) * Math.sin(fac*u);
-		double k = Math.sin(fac*v);
+		double i = Math.cos(fac*latitude) * Math.cos(fac*longitude);
+		double j = Math.cos(fac*latitude) * Math.sin(fac*longitude);
+		double k = Math.sin(fac*latitude);
 		double w = 1d + rotmat_p2x[0][0]*i+rotmat_p2x[0][1]*j+rotmat_p2x[0][2]*k;
 		if(w<0.01d)
 			return new double[] {Double.NaN, Double.NaN};

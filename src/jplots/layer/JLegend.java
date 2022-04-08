@@ -62,14 +62,14 @@ public class JLegend extends JPlotsLayer {
 			//no JImageLayer
 			//no other JLegend
 			if(layer instanceof JLineLayer)
-				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getColour(), layer.getStyle()));
+				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getLineColour(), layer.getStyle()));
 			//ignore JPlotsLayer, because it is abstract
 			if(layer instanceof JScatterLayer)
-				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.SCATTERPLOT_LABEL, layer.getColour(), layer.getStyle()));
+				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.SCATTERPLOT_LABEL, layer.getLineColour(), layer.getStyle()));
 			if(layer instanceof JShapesLayer)
-				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getColour(), layer.getStyle()));
+				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getLineColour(), layer.getStyle()));
 			if(layer instanceof JXYLayer)
-				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getColour(), layer.getStyle()));
+				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getLineColour(), layer.getStyle()));
 		}
 		for(int le=entries.size()-1; le>=0; le--)
 			if(entries.get(le).getName().length()==0)

@@ -9,6 +9,10 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import org.geotools.referencing.CRS;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+
 import jplots.colour.ColourSequenceJColourtable;
 import jplots.colour.JColourtable;
 import jplots.colour.LinearSegmentedJColourtable;
@@ -36,7 +40,23 @@ import processing.core.PImage;
 
 public class JAxis {
 	
+	private static CoordinateReferenceSystem coast_crs = null;
 	private static Map<String, PImage> loadedPreDefImgs = new HashMap<>();
+	static {
+		try {
+			coast_crs = CRS.parseWKT("GEOGCS[\"WGS 84\","
+					+ "  DATUM[\"World Geodetic System 1984\","
+					+ "    SPHEROID[\"WGS 84\", 6378137.0, 298.257223563, AUTHORITY[\"EPSG\",\"7030\"]],"
+					+ "    AUTHORITY[\"EPSG\",\"6326\"]],"
+					+ "  PRIMEM[\"Greenwich\", 0.0, AUTHORITY[\"EPSG\",\"8901\"]],"
+					+ "  UNIT[\"degree\", 0.017453292519943295],"
+					+ "  AXIS[\"Geodetic longitude\", EAST],"
+					+ "  AXIS[\"Geodetic latitude\", NORTH],"
+					+ "  AUTHORITY[\"EPSG\",\"4326\"]]");
+		} catch(FactoryException fe) {
+			fe.printStackTrace();
+		}
+	}
 
 	protected JPlot pplot;
 	private boolean xRangeFix,yRangeFix, isGeoAxis;
@@ -285,8 +305,29 @@ public class JAxis {
 	public void coastLines() {
 		coastLines(110); }
 	public void coastLines(int resolution) {
-		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile("/data/ne_"+resolution+"m_coastline"), "line");
-		layers.add(shl); }
+		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile("/data/ne_"+resolution+"m_coastline"), "line", coast_crs);
+		layers.add(shl); shl.setLineColour(0xff000000); }
+	public void land() {
+		land(0xff676767, 0xff000000); }
+	public void land(int land_colour, int coast_colour) {
+		//JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile("/data/simplified_land_polygons"), "polygon", 3857);
+		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile("/data/ne_110m_land"), "polygon", 4326);
+		layers.add(shl); shl.setFillColour(land_colour); shl.setLineColour(coast_colour); }
+	public void showShapefile(String path_to_shapefile, String shapeType) {
+		showShapefile(path_to_shapefile, shapeType, null);
+	}
+	public void showShapefile(String path_to_shapefile, String shapeType, CoordinateReferenceSystem user_crs, Object... params) {
+//		int i = path_to_shapefile.lastIndexOf(".");
+//		if(i<0) i = path_to_shapefile.length();
+//		String path = path_to_shapefile.substring(0, i);
+		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile(path_to_shapefile), shapeType, user_crs);
+		layers.add(shl); readParams(shl, params); }	
+	public void showShapefile(String path_to_shapefile, String shapeType, int user_epsg_code, Object... params) {
+//		int i = path_to_shapefile.lastIndexOf(".");
+//		if(i<0) i = path_to_shapefile.length();
+//		String path = path_to_shapefile.substring(0, i);
+		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile(path_to_shapefile), shapeType, user_epsg_code);
+		layers.add(shl); readParams(shl, params); }
 	
 	/**
 	 * predefined images are used as background images in plot, especially with geographical projections
@@ -582,7 +623,16 @@ public class JAxis {
 						layer.setLineColour((int)params[o+1]);
 						o++; isunread=false;
 					} else if(params[o+1] instanceof int[]) {
-						layer.setLineColour((int[])params[o+1]);
+						layer.setLineColours((int[])params[o+1]);
+						o++; isunread=false;
+					}
+				}
+				if(isunread && ("fc".equals(p) || "fillcolor".equals(p) || "fillcolour".equals(p)) && o+1<params.length) {
+					if(params[o+1] instanceof Integer) {
+						layer.setFillColour((int)params[o+1]);
+						o++; isunread=false;
+					} else if(params[o+1] instanceof int[]) {
+						layer.setFillColours((int[])params[o+1]);
 						o++; isunread=false;
 					}
 				}

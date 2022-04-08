@@ -14,9 +14,9 @@ public abstract class JPlotsLayer {
 
 	//package private variables
 	boolean invertAxisX, invertAxisY, logAxisX, logAxisY;
-	boolean drawLines, singleLineColour;
-	int lc;
-	int[] lcs;
+	boolean drawLines, singleLineColour, singleFillColour;
+	int lc, pc;
+	int[] lcs, pcs;
 	double lw;
 	double minX,maxX,minY,maxY;
 	double angleMode;
@@ -30,9 +30,11 @@ public abstract class JPlotsLayer {
 	public JPlotsLayer() {
 		lw = 2d;
 		lc = 0xff000000;
+		pc = 0xff7f7f7f;
 		ls = "";
 		singleLineColour = true;
 		lcs = new int[] { 0xff000000 };
+		pcs = new int[] { 0xff7f7f7f };
 		minX = -1d;
 		maxX =  1d;
 		minY = -1d;
@@ -78,14 +80,20 @@ public abstract class JPlotsLayer {
 	}
 	public void setLineColour(int _lc) {
 		lc = _lc; singleLineColour=true; }
-	public void setLineColour(int[] _lcs) {
+	public void setLineColours( int[] _lcs) {
 		lcs = _lcs; singleLineColour=false; }
-	public int getColour() {
+	public int getLineColour() {
 		return singleLineColour ? lc : 0; }
 	public void setLineWidth(double lwd) {
 		lw = lwd; }
 	public double getLineWidth() {
 		return lw; }
+	public void setFillColour(int _pc) {
+		pc = _pc; singleFillColour=true; }
+	public void setFillColours( int[] _pcs) {
+		pcs = _pcs; singleFillColour=false; }
+	public int getFillColour() {
+		return singleFillColour ? pc : 0; }
 	public void setStyle(String lst) {
 		ls = lst; }
 	public String getStyle() {

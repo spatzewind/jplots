@@ -27,10 +27,12 @@ void setup() {
   JAxis[] ax = plt.ga();        //access JAxis objects
   //set first subplot to ortographic projection with center at 0°N, 0°E
   ax[0].setGeoProjection(new OrthographicJProjection(0,0,0,true));
-  ax[1].setGrid();
+  ax[0].setGrid();
+  ax[0].coastLines();
   //set stereographic projection with center at 0°N, 0°E and true scale at 45°N
   ax[1].setGeoProjection(new StereographicJProjection(0,0,0,true));
   ax[1].setGrid();
+  ax[1].coastLines();
   //create parameters:
   Object[] params = {"transform", new PlateCarreeJProjection(true)};
   //plot curves on both subplots:

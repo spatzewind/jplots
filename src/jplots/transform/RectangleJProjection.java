@@ -9,7 +9,11 @@ public class RectangleJProjection implements JProjection {
 	
 	private double xs,xe,ys,ye;
 	
-	public RectangleJProjection(double xstart, double xend, double ystart, double end) {
+	public RectangleJProjection(double xstart, double xend, double ystart, double yend) {
+		xs = xstart;
+		xe = xend;
+		ys = ystart;
+		ye = yend;
 	}
 
 	@Override

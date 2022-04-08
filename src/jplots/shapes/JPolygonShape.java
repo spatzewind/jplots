@@ -15,7 +15,7 @@ public class JPolygonShape extends JPlotShape {
 	private int inCol, outCol;
 	private float sw;
 	private float[] xx, yy;
-
+	
 	public JPolygonShape(float[]... coords) {
 		this(coords, JPlotShape.fillColour, JPlotShape.strokeColour, JPlotShape.strokeWeight, JPlotShape.useFill, JPlotShape.useStroke); }
 	public JPolygonShape(float[][] coords, boolean filled, boolean withOutline) {
@@ -29,6 +29,12 @@ public class JPolygonShape extends JPlotShape {
 	public JPolygonShape(float[][] coords, int colour, boolean filled, boolean withOutline) {
 		this(coords, colour, colour, JPlotShape.strokeWeight, filled, withOutline); }
 	public JPolygonShape(float[][] coords, int inner_colour, int outer_colour, float stroke_weight, boolean filled, boolean withOutline) {
+		if(coords==null) {
+			System.err.println("[JDPolygonShape] invalid geometry!");
+			xx = null;
+			yy = null;
+			return;
+		}
 		int cc = coords.length;
 		xx = new float[cc];
 		yy = new float[cc];
@@ -43,6 +49,12 @@ public class JPolygonShape extends JPlotShape {
 		isStroked = withOutline;
 	}
 	public JPolygonShape(Geometry geom, int inner_colour, int outer_colour, float stroke_weight, boolean filled, boolean withOutline) {
+		if(geom==null) {
+			System.err.println("[JDPolygonShape] invalid geometry!");
+			xx = null;
+			yy = null;
+			return;
+		}
 		int cc = geom.getCoordinates().length;
 		xx = new float[cc];
 		yy = new float[cc];
@@ -58,6 +70,12 @@ public class JPolygonShape extends JPlotShape {
 		isStroked = withOutline;
 	}
 	public JPolygonShape(JDPolygon geom, int inner_colour, int outer_colour, float stroke_weight, boolean filled, boolean withOutline) {
+		if(geom==null) {
+			System.err.println("[JDPolygonShape] invalid geometry!");
+			xx = null;
+			yy = null;
+			return;
+		}
 		int cc = geom.c.length;
 		xx = new float[cc];
 		yy = new float[cc];
@@ -75,6 +93,19 @@ public class JPolygonShape extends JPlotShape {
 	
 	@Override
 	public void draw(JPlot plot, PGraphics g) {
+		if(xx==null || yy==null)
+			return;
+		float a = calcArea();
+		if(Float.isNaN(a) || a<0d)
+			return;
+		System.out.println("[JPolyg.Shape] draw polygon shape ("+
+				(isFilled?"fill":"nofill")+","+
+				(isStroked?"stroke":"nostroke")+","+
+				+a+")");
+//		for(int c=0; c<Math.min(10, xx.length); c++)
+//			System.out.println("[JPolyg.Shape]     ["+xx[c]+", "+yy[c]+"]");
+//		if(xx.length>10)
+//			System.out.println("[JPolyg.Shape]     ... (and "+(xx.length-10)+" more)");
 		if(isFilled) {
 			g.fill(inCol);
 		} else {
@@ -90,5 +121,12 @@ public class JPolygonShape extends JPlotShape {
 		for(int c=0; c<xx.length; c++)
 			g.vertex(xx[c], yy[c]);
 		g.endShape(PApplet.CLOSE);
+	}
+	private float calcArea() {
+		float a = 0f;
+		for(int i=0,j=xx.length-1; i<xx.length; j=i++) {
+			a += (xx[i]-xx[j]) * (yy[i]+yy[j]);
+		}
+		return 0.5f * a;
 	}
 }
