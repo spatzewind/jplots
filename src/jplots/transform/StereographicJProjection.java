@@ -1,6 +1,10 @@
 package jplots.transform;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jplots.JAxis;
+import jplots.maths.JDPolygon;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
@@ -113,6 +117,13 @@ public class StereographicJProjection implements JProjection {
 		// dr/dphi = 2*R*(1+tan²(pi/4-phi/2))*(-1/2)
 		double f = 0.5d*(1d + i*i + j*j);
 		return new double[] {f,0d, 0d,f};
+	}
+	
+	@Override
+	public List<JDPolygon> splitByMapBorder(JDPolygon poly) {
+		List<JDPolygon> res = new ArrayList<>();
+		res.add(poly);
+		return res;
 	}
 	
 	@Override

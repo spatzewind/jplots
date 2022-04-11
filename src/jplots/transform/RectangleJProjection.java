@@ -1,6 +1,10 @@
 package jplots.transform;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jplots.JAxis;
+import jplots.maths.JDPolygon;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
 import jplots.shapes.JPlotShape;
@@ -40,6 +44,13 @@ public class RectangleJProjection implements JProjection {
 	@Override
 	public double[] tissotFromProj(double x, double y) {
 		return new double[] {(xe-xs)/(ye-ys),0d, 0d,(ye-ys)/(xe-xs)};
+	}
+	
+	@Override
+	public List<JDPolygon> splitByMapBorder(JDPolygon poly) {
+		List<JDPolygon> res = new ArrayList<>();
+		res.add(poly);
+		return res;
 	}
 	
 	@Override

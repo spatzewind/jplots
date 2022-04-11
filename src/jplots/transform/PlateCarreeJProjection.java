@@ -1,6 +1,10 @@
 package jplots.transform;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jplots.JAxis;
+import jplots.maths.JDPolygon;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
@@ -53,6 +57,13 @@ public class PlateCarreeJProjection implements JProjection {
 	public double[] tissotFromProj(double x, double y) {
 		double[]xy = fromPROJtoLATLON(x, y, false);
 		return tissotFromLatLon(xy[0], xy[1], false);
+	}
+	
+	@Override
+	public List<JDPolygon> splitByMapBorder(JDPolygon poly) {
+		List<JDPolygon> res = new ArrayList<>();
+		res.add(poly);
+		return res;
 	}
 	
 	@Override

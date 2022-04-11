@@ -72,9 +72,9 @@ public class FileLoader {
 		String resourceN = resource.substring(0, id);
 		File file = null;
 		URL res = JPlot.class.getResource(resourceN+".shp");
-		System.out.println("[FILELOADER] URL res = "+res);
+		//System.out.println("[FILELOADER] URL res = "+res);
 		if (res!=null && res.getProtocol().equals("jar")) {
-			System.out.println("[FILELOADER] with JAR-protocol:");
+			//System.out.println("[FILELOADER] with JAR-protocol:");
 		    try {
 		        InputStream input = JPlot.class.getResourceAsStream(resourceN+".shp");
 		        file = File.createTempFile("tempshape", ".shp");
@@ -131,7 +131,7 @@ public class FileLoader {
 		        ex.printStackTrace();
 		    }
 		} else {
-			System.out.println("[FILELOADER] with normal protocol");
+			//System.out.println("[FILELOADER] with normal protocol");
 		    //this will probably work in your IDE, but not from a JAR
 		    file = new File(resourceN+".shp");
 		}

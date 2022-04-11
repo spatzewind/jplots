@@ -1,6 +1,10 @@
 package jplots.transform;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jplots.JAxis;
+import jplots.maths.JDPolygon;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
 import jplots.shapes.JPlotShape;
@@ -28,6 +32,13 @@ public class IdentityJProjection implements JProjection {
 	@Override
 	public double[] tissotFromProj(double x, double y) {
 		return new double[] {1d,0d, 0d,1d};
+	}
+	
+	@Override
+	public List<JDPolygon> splitByMapBorder(JDPolygon poly) {
+		List<JDPolygon> res = new ArrayList<>();
+		res.add(poly);
+		return res;
 	}
 	
 	@Override

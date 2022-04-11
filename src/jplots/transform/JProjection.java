@@ -1,6 +1,9 @@
 package jplots.transform;
 
+import java.util.List;
+
 import jplots.JAxis;
+import jplots.maths.JDPolygon;
 import jplots.shapes.JGroupShape;
 
 public interface JProjection {
@@ -14,6 +17,7 @@ public interface JProjection {
 	public double[] fromLATLONtoPROJ(double u, double v, boolean input_in_degree);
 	public double[] tissotFromLatLon(double u, double v, boolean input_in_degree);
 	public double[] tissotFromProj(double x, double y);
+	public List<JDPolygon> splitByMapBorder(JDPolygon poly);
 	public double[] defaultMapExtend();
 	public void drawBorder(JAxis ax, JGroupShape s);
 }

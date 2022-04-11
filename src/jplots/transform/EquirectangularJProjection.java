@@ -1,6 +1,12 @@
 package jplots.transform;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jplots.JAxis;
+import jplots.helper.GeometryTools;
+import jplots.maths.JDPoint;
+import jplots.maths.JDPolygon;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
@@ -73,6 +79,83 @@ public class EquirectangularJProjection implements JProjection {
 	public double[] tissotFromProj(double x, double y) {
 		double[] xy = fromPROJtoLATLON(x, y, false);
 		return tissotFromLatLon(xy[0], xy[1], false);
+	}
+	
+	@Override
+	public List<JDPolygon> splitByMapBorder(JDPolygon poly) {
+		//double x_crit = 1.9d * radaequ;
+		int check_dirs = 0;
+		JDPoint[] points = new JDPoint[poly.c.length];
+		List<JDPolygon> res = new ArrayList<>();
+		double last_x=0d, mw = 2d;
+		double minx = Double.POSITIVE_INFINITY, maxx = Double.NEGATIVE_INFINITY;
+		double miny = Double.POSITIVE_INFINITY, maxy = Double.NEGATIVE_INFINITY;
+		for(int i=0; i<poly.c.length; i++) {
+			double next_x = poly.c[i].x / radaequ + 1d;
+			double next_y = poly.c[i].y / radpol;
+			if(i>0) {
+				if(Math.abs(next_x - last_x) > Math.abs(next_x - last_x + mw)) {
+					check_dirs += 1;
+				} else
+				if(Math.abs(next_x - last_x) > Math.abs(next_x - last_x - mw)) {
+					check_dirs -= 1;
+				}
+			}
+			double x = next_x + check_dirs*mw;
+			double y = next_y;
+			points[i] = new JDPoint(x, next_y);
+			last_x = next_x;
+			if(x < minx) minx = x;
+			if(x > maxx) maxx = x;
+			if(y < miny) miny = y;
+			if(y > maxy) maxy = y;
+		}
+		double next_x = poly.c[0].x/radaequ + 1d;
+		if(Math.abs(next_x - last_x) > Math.abs(next_x - last_x + mw)) {
+			check_dirs += 1;
+		} else
+		if(Math.abs(next_x - last_x) > Math.abs(next_x - last_x - mw)) {
+			check_dirs -= 1;
+		}
+		
+		if(check_dirs!=0) {
+			System.err.println("Impossible regular polygon, cannot wrap around dateline and map borders!");
+			//res.add(poly);
+			return res;
+		}
+		minx *= 0.5d;
+		maxx *= 0.5d;
+//		System.out.println("[EQUIRECTANGULAR-JPROJ.] x={"+minx+" ... "+maxx+"}  y={"+miny+" ... "+maxy+"}");
+		int min_off = (int) minx - (minx<0d ? 1 : 0);
+		int max_off = (int) maxx - (maxx<0d ? 1 : 0);
+		if(min_off==0 && max_off==0) {
+			res.add(poly);
+			return res;
+		}
+		List<JDPoint[]> temp = new ArrayList<>();
+		List<JDPoint[]> temp2 = new ArrayList<>();
+		double[] left_normal = { -1d, 0d };
+		double[] right_normal = { 1d, 0d };
+		for(int o=min_off; o<=max_off; o++) {
+			double left = 2d*o;
+			double right = left + 2d;
+			JDPoint ref = new JDPoint(left+1d, 0d);
+			temp.clear();
+			temp.addAll(GeometryTools.SutherlandHodgmanAlgorithm(points, left_normal, -left, 1.0e-10d, ref));
+//			System.out.println("    -> temp size = "+temp.size());
+			temp2.clear();
+			for(JDPoint[] p: temp)
+				temp2.addAll(GeometryTools.SutherlandHodgmanAlgorithm(p, right_normal, right, 1.0e-10d, ref));
+//			System.out.println("    -> temp2 size = "+temp2.size());
+			for(JDPoint[] p: temp2) {
+				JDPoint[] p2 = new JDPoint[p.length];
+				for(int i=0; i<p.length; i++)
+					p2[i] = new JDPoint( (p[i].x-left-1d)*radaequ, p[i].y*radpol );
+				res.add(new JDPolygon(p2));
+			}
+		}
+//		System.out.println("[EQUIRECTANGULAR-JPROJ.] offset={"+min_off+" ... "+max_off+"} found "+res.size()+" polygon(s)");
+		return res;
 	}
 	
 	@Override

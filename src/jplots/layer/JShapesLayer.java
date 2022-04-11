@@ -2,6 +2,7 @@ package jplots.layer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ import org.opengis.referencing.operation.TransformException;
 import jplots.JAxis;
 import jplots.JPlot;
 import jplots.maths.AffineBuilder;
+import jplots.maths.JDPoint;
 import jplots.maths.JDPolygon;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JEllipseShape;
@@ -204,15 +206,32 @@ public class JShapesLayer extends JPlotsLayer {
 				        		.scale(xs, ys)
 				        		.translate(p[0], p[1]);
 						JDPolygon poly = new JDPolygon(coords);
-				        poly.affine(affine.getMatrix());
 				        if(debug) System.out.println("[JShapesLayer] found geometry: p["+
 				        		poly.c.length+"points,"+poly.area()+"area]");
-				        List<JDPolygon> polys = poly.intersectsAABB(p[0],p[1],  p[0]+p[2],p[1]+p[3]);
+				        //System.out.print("    ("+(fidx<9?"  ":fidx<99?" ":"")+(fidx+1)+") ");
+				        List<JDPolygon> polys = poly.splitByMapBorder(ax);
+//				        List<JDPolygon> polys = new ArrayList<>();
+//				        polys.add(poly);
+				        for(int p_i=polys.size()-1; p_i>=0; p_i--) {
+					        polys.get(p_i).affine(affine.getMatrix());
+				        	polys.addAll(polys.get(p_i).intersectsAABB(p[0],p[1],  p[0]+p[2],p[1]+p[3]));
+				        	polys.remove(p_i);
+				        }
+				        int pidx = 0;
 				        for(JDPolygon pg: polys) {
 				        	if(pg.c.length==0) continue;
-				        	System.out.println("[JShapesLayer] add polygon p["+
-			        				pg.c.length+"points,"+pg.area()+"area]");
+				        	if(debug)
+				        		System.out.println("[JShapesLayer] add polygon p["+pg.c.length+"points,"+pg.area()+"area]");
 				        	s.addChild(new JPolygonShape(pg.getCoords(), true, true));
+//				        	if(fidx==0 && pidx==0) {
+//				        		double minx = Double.POSITIVE_INFINITY, maxx = Double.NEGATIVE_INFINITY;
+//				        		for(JDPoint pt: pg.c) {
+//				        			if(pt.x < minx) minx = pt.x;
+//				        			if(pt.x > maxx) maxx = pt.x;
+//				        		}
+//				        		System.out.println("     Polygon extent: x={"+minx+" ... "+maxx+"}");
+//				        	}
+				        	pidx++;
 				        }
 					}
 					fidx++;

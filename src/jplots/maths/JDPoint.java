@@ -33,6 +33,10 @@ public class JDPoint implements Comparable<JDPoint> {
 	public double value() {
 		return value;
 	}
+	
+	public JDPoint copy() {
+		return new JDPoint(this.x+0d, this.y+0d, this.value+0d);
+	}
 
 	@Override
 	public int compareTo(JDPoint p) {
@@ -109,6 +113,9 @@ public class JDPoint implements Comparable<JDPoint> {
 		return this;
 	}
 	
+	public double dist(JDPoint point) {
+		return Math.sqrt( (this.x-point.x)*(this.x-point.x) + (this.y-point.y)*(this.y-point.y) );
+	}
 	public JDPoint fractionTowards(double fraction, JDPoint towards) {
 		return new JDPoint(
 				this.x + fraction*(towards.x-this.x),

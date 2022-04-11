@@ -96,12 +96,12 @@ public class JPolygonShape extends JPlotShape {
 		if(xx==null || yy==null)
 			return;
 		float a = calcArea();
-		if(Float.isNaN(a) || a<0d)
+		if(Float.isNaN(a) || a<0.0001d)
 			return;
-		System.out.println("[JPolyg.Shape] draw polygon shape ("+
-				(isFilled?"fill":"nofill")+","+
-				(isStroked?"stroke":"nostroke")+","+
-				+a+")");
+//		System.out.println("[JPolyg.Shape] draw polygon shape ("+
+//				(isFilled?"fill":"nofill")+","+
+//				(isStroked?"stroke":"nostroke")+","+
+//				+a+")");
 //		for(int c=0; c<Math.min(10, xx.length); c++)
 //			System.out.println("[JPolyg.Shape]     ["+xx[c]+", "+yy[c]+"]");
 //		if(xx.length>10)
