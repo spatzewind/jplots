@@ -28,6 +28,22 @@ public class EquirectangularJProjection implements JProjection {
 		radaequ = EARTH_RADIUS_AEQU*Math.PI;
 		radpol  = EARTH_RADIUS_POL*Math.PI;
 	}
+	
+	@Override
+	public void setCentralLatitude(double latitude, boolean in_degree) {
+		double fac = in_degree ? JPlotMath.DEG_TO_RAD : 1d;
+		cenlat_r = latitude * fac;
+		fac = in_degree ? 1d : JPlotMath.RAD_TO_DEG;
+		cenlat_d = latitude * fac;
+	}
+	
+	@Override
+	public void setCentralLongitude(double longitude, boolean in_degree) {
+		double fac = in_degree ? JPlotMath.DEG_TO_RAD : 1d;
+		cenlon_r = longitude * fac;
+		fac = in_degree ? 1d : JPlotMath.RAD_TO_DEG;
+		cenlon_d = longitude * fac;
+	}
 
 	@Override
 	public double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree) {
@@ -139,13 +155,12 @@ public class EquirectangularJProjection implements JProjection {
 		for(int o=min_off; o<=max_off; o++) {
 			double left = 2d*o;
 			double right = left + 2d;
-			JDPoint ref = new JDPoint(left+1d, 0d);
 			temp.clear();
-			temp.addAll(GeometryTools.SutherlandHodgmanAlgorithm(points, left_normal, -left, 1.0e-10d, ref));
+			temp.addAll(GeometryTools.SutherlandHodgmanAlgorithm(points, left_normal, -left, 1.0e-10d));
 //			System.out.println("    -> temp size = "+temp.size());
 			temp2.clear();
 			for(JDPoint[] p: temp)
-				temp2.addAll(GeometryTools.SutherlandHodgmanAlgorithm(p, right_normal, right, 1.0e-10d, ref));
+				temp2.addAll(GeometryTools.SutherlandHodgmanAlgorithm(p, right_normal, right, 1.0e-10d));
 //			System.out.println("    -> temp2 size = "+temp2.size());
 			for(JDPoint[] p: temp2) {
 				JDPoint[] p2 = new JDPoint[p.length];

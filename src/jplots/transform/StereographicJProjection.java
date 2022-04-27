@@ -23,7 +23,21 @@ public class StereographicJProjection implements JProjection {
 		earth_scale = EARTH_RADIUS_MEAN * Math.PI;
 		calcMatrices();
 	}
-
+	
+	@Override
+	public void setCentralLatitude(double latitude, boolean in_degree) {
+		double fac = in_degree ? JPlotMath.DEG_TO_RAD : 1d;
+		cenlat = latitude * fac;
+		calcMatrices();
+	}
+	
+	@Override
+	public void setCentralLongitude(double longitude, boolean in_degree) {
+		double fac = in_degree ? JPlotMath.DEG_TO_RAD : 1d;
+		cenlon = longitude * fac;
+		calcMatrices();
+	}
+	
 	private void calcMatrices() {
 		double ca = Math.cos(cenlat), sa = Math.sin(cenlat);
 		double co = Math.cos(cenlon), so = Math.sin(cenlon);

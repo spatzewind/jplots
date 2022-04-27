@@ -13,7 +13,13 @@ public class IdentityJProjection implements JProjection {
 	
 	public IdentityJProjection() {
 	}
-
+	
+	@Override
+	public void setCentralLatitude(double latitude, boolean in_degree) { }
+	
+	@Override
+	public void setCentralLongitude(double longitude, boolean in_degree) { }
+	
 	@Override
 	public double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree) {
 		return new double[] {x,y};

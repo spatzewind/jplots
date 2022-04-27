@@ -19,7 +19,13 @@ public class PlateCarreeJProjection implements JProjection {
 		half_circle    = in_degree ? 180d : Math.PI;
 		quarter_circle = in_degree ? 90d : 0.5d*Math.PI;
 	}
-
+	
+	@Override
+	public void setCentralLatitude(double latitude, boolean in_degree) { }
+	
+	@Override
+	public void setCentralLongitude(double longitude, boolean in_degree) { }
+	
 	@Override
 	public double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree) {
 		if(!(Double.isFinite(x) && Double.isFinite(y)))

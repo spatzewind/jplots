@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jplots.helper.GeometryTools;
+
 public class JGridTriangulator {
 
 	public int[] triangles;
@@ -86,15 +88,18 @@ public class JGridTriangulator {
 			int i = triangles[3 * n + 0];
 			int j = triangles[3 * n + 1];
 			int k = triangles[3 * n + 2];
-			JDPoint a = points[i];
-			JDPoint b = points[j];
-			JDPoint c = points[k];
-
-			JDPoint[] tmp = { a, b, c };
-			Arrays.sort(tmp);
-			a = tmp[0];
-			b = tmp[1];
-			c = tmp[2];
+			JDPoint a, b, c;
+			JDPoint[] tmp = { points[i], points[j], points[k] };
+			//Arrays.sort(tmp);
+			if(GeometryTools.area(tmp)<0d) {
+				a = tmp[0];
+				b = tmp[2];
+				c = tmp[1];
+			} else {
+				a = tmp[0];
+				b = tmp[1];
+				c = tmp[2];
+			}
 
 			JDEdge ab = new JDEdge(a, b);
 			JDEdge bc = new JDEdge(b, c);
@@ -144,7 +149,7 @@ public class JGridTriangulator {
 			if (unq_edges.containsKey(e)) {
 				e = unq_edges.get(e);
 			} else {
-				System.err.println("[ERR] cannot found valid edge " + e);
+				System.err.println("[ERR] cannot find valid edge " + e);
 			}
 			hulledges.add(e);
 		}
@@ -186,6 +191,18 @@ public class JGridTriangulator {
 		this.hulls = hulledges;
 		this.voron = voronoiedges;
 		this.vhull = hulledges; // voronoihulledges; //TODO it must be implement !!!
+//		System.out.println("[GRID-TRIA]  triangles: "+this.trias.size());
+//		System.out.println("[GRID-TRIA]  edges:     "+this.edges.size());
+//		System.out.println("[GRID-TRIA]  points:    "+this.poinz.size());
+//		System.out.println("[GRID-TRIA]  hull:      "+this.hulls.size());
+//		System.out.println("[GRID-TRIA]  voronoi-edges: "+this.voron.size());
+//		System.out.println("[GRID-TRIA]  voronoi-hull:  "+this.vhull.size());
+//		for(JDTriangle t: trias)
+//			System.out.println("    -> t["+
+//					"("+t.x[0]+","+t.y[0]+") - "+
+//					"("+t.x[1]+","+t.y[1]+") - "+
+//					"("+t.x[2]+","+t.y[2]+") - "+
+//					"a="+t.area()+"]");
 	}
 
 	///////////////////////////////////////////////////////////////////////////
@@ -207,18 +224,18 @@ public class JGridTriangulator {
 					triangles[3 * n + 0] = p;
 					triangles[3 * n + 1] = p        + 1;
 					triangles[3 * n + 2] = p + xlen + 1;
-					n += 1;
-					triangles[3 * n + 0] = p;
-					triangles[3 * n + 1] = p + xlen + 1;
-					triangles[3 * n + 2] = p + xlen;
+					
+					triangles[3 * n + 3] = p;
+					triangles[3 * n + 4] = p + xlen + 1;
+					triangles[3 * n + 5] = p + xlen;
 				} else {
 					triangles[3 * n + 0] = p;
 					triangles[3 * n + 1] = p        + 1;
 					triangles[3 * n + 2] = p + xlen;
-					n += 1;
-					triangles[3 * n + 0] = p + xlen;
-					triangles[3 * n + 1] = p        + 1;
-					triangles[3 * n + 2] = p + xlen + 1;
+					
+					triangles[3 * n + 3] = p + xlen;
+					triangles[3 * n + 4] = p        + 1;
+					triangles[3 * n + 5] = p + xlen + 1;
 				}
 			}
 		

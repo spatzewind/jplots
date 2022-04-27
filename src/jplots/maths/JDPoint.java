@@ -114,7 +114,10 @@ public class JDPoint implements Comparable<JDPoint> {
 	}
 	
 	public double dist(JDPoint point) {
-		return Math.sqrt( (this.x-point.x)*(this.x-point.x) + (this.y-point.y)*(this.y-point.y) );
+		return Math.sqrt( dist2(point) );
+	}
+	public double dist2(JDPoint point) {
+		return (this.x-point.x)*(this.x-point.x) + (this.y-point.y)*(this.y-point.y); 
 	}
 	public JDPoint fractionTowards(double fraction, JDPoint towards) {
 		return new JDPoint(
@@ -123,6 +126,23 @@ public class JDPoint implements Comparable<JDPoint> {
 				Double.isNaN(this.value)?towards.value:Double.isNaN(towards.value)?this.value:
 				this.value + fraction*(towards.value-this.value)
 		);
+	}
+	public JDPoint circleCrossBetween(JDPoint p1, JDPoint p2, double radius) {
+		double dx = p2.x - p1.x;
+		double dy = p2.y - p1.y;
+		double dr = dx * dx + dy * dy;
+		double D  = (p1.x-this.x)*(p2.y-this.y)- (p2.x-this.x)*(p1.y-this.y);
+		double w  = dr*radius*radius - D*D;
+		if( w<0d ) return null;
+		w = Math.sqrt(w) * (dy<0d ? -1d : 1d);
+		double nx = ( D*dy + w*dx) / dr;
+		double ny = (-D*dx + w*dy) / dr;
+		double f  = (nx * dx + ny * dy) / dr;
+		if( f<0d || f>1d ) {
+			nx = ( D*dy + w*dx) / dr;
+			ny = (-D*dx + w*dy) / dr;
+		}
+		return new JDPoint( this.x+nx, this.y+ny );
 	}
 
 	

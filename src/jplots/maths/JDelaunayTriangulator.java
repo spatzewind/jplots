@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jplots.helper.GeometryTools;
+
 public class JDelaunayTriangulator {
 
 	private static final double EPSILON = Math.pow(2, -52);
@@ -141,15 +143,18 @@ public class JDelaunayTriangulator {
 			int i = triangles[3 * n + 0];
 			int j = triangles[3 * n + 1];
 			int k = triangles[3 * n + 2];
-			JDPoint a = points[i];
-			JDPoint b = points[j];
-			JDPoint c = points[k];
-
-			JDPoint[] tmp = { a, b, c };
-			Arrays.sort(tmp);
-			a = tmp[0];
-			b = tmp[1];
-			c = tmp[2];
+			JDPoint a, b, c;
+			JDPoint[] tmp = { points[i], points[j], points[k] };
+			//Arrays.sort(tmp);
+			if(GeometryTools.area(tmp)<0d) {
+				a = tmp[0];
+				b = tmp[2];
+				c = tmp[1];
+			} else {
+				a = tmp[0];
+				b = tmp[1];
+				c = tmp[2];
+			}
 
 			JDEdge ab = new JDEdge(a, b);
 			JDEdge bc = new JDEdge(b, c);

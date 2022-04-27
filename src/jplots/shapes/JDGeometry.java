@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jplots.maths.JDPolygon;
+import jplots.maths.JDTriangle;
 
 public class JDGeometry {
 
@@ -15,7 +16,7 @@ public class JDGeometry {
 	public JDGeometry(JDPolygon... polygons) {
 		polys = new ArrayList<JDPolygon>();
 		for(JDPolygon p: polygons)
-			polys.add(p);
+			addPolygon(p);
 	}
 	public JDGeometry(List<JDPolygon> polygons) {
 		polys = new ArrayList<JDPolygon>(polygons);
@@ -23,7 +24,7 @@ public class JDGeometry {
 	
 	public void add(JDPolygon... polygons) {
 		for(JDPolygon p: polygons)
-			polys.add(p);
+			addPolygon(p);
 	}
 	public void add(List<JDPolygon> polygons) {
 		polys.addAll(polygons);
@@ -31,5 +32,13 @@ public class JDGeometry {
 	
 	public List<JDPolygon> getPolygons() {
 		return polys;
+	}
+	
+	private void addPolygon(JDPolygon p) {
+		boolean addToExistingPoly = false;
+		for(int pi=polys.size()-1; pi>=0 && !addToExistingPoly; pi--)
+			addToExistingPoly = polys.get(pi).union(p, p.getDefaultTolerance());
+		if(!addToExistingPoly)
+			polys.add(p);
 	}
 }

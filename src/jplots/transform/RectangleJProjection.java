@@ -19,7 +19,13 @@ public class RectangleJProjection implements JProjection {
 		ys = ystart;
 		ye = yend;
 	}
-
+	
+	@Override
+	public void setCentralLatitude(double latitude, boolean in_degree) { }
+	
+	@Override
+	public void setCentralLongitude(double longitude, boolean in_degree) { }
+	
 	@Override
 	public double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree) {
 		if(Double.isNaN(x) || Double.isNaN(y)) return new double[] {Double.NaN, Double.NaN};

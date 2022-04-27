@@ -13,6 +13,8 @@ public interface JProjection {
 	public final static double EARTH_RADIUS_POL  = 6356752.000d; //m
 	public final static double EARTH_FLATTENING  = 1d/298.257222101d;
 
+	public void setCentralLatitude(double latitude, boolean in_degree);
+	public void setCentralLongitude(double longitude, boolean in_degree);
 	public double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree);
 	public double[] fromLATLONtoPROJ(double u, double v, boolean input_in_degree);
 	public double[] tissotFromLatLon(double u, double v, boolean input_in_degree);

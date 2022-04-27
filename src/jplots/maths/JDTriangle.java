@@ -4,6 +4,8 @@ import java.util.Arrays;
 
 import org.locationtech.jts.geom.Coordinate;
 
+import jplots.helper.GeometryTools;
+
 public class JDTriangle {
 
 	public int idx;
@@ -25,7 +27,7 @@ public class JDTriangle {
 	}
 	public JDTriangle(JDPoint a, JDPoint b, JDPoint c, int index) {
 		JDPoint[] tmp = { a, b, c };
-		Arrays.sort(tmp);
+		//Arrays.sort(tmp);
 		this.idx = index;
 		x = new double[] {tmp[0].x, tmp[1].x, tmp[2].x};
 		y = new double[] {tmp[0].y, tmp[1].y, tmp[2].y};
@@ -39,6 +41,18 @@ public class JDTriangle {
 		this.ab = ab.equals(a, b) ? ab : bc.equals(a, b) ? bc : ca;
 		this.bc = ab.equals(b, c) ? ab : bc.equals(b, c) ? bc : ca;
 		this.ca = ab.equals(c, a) ? ab : bc.equals(c, a) ? bc : ca;
+	}
+	
+	public void reverse_orientation() {
+		double t = x[2]; x[2] = x[1]; x[1] = t;
+		t = y[2]; y[2] = y[1]; y[1] = t;
+		t = value[2]; value[2] = value[1]; value[1] = t;
+		JDPoint a = getA();
+		JDPoint b = getB();
+		JDPoint c = getC();
+		this.ab = new JDEdge(a, b);
+		this.bc = new JDEdge(b, c);
+		this.ca = new JDEdge(c, a);
 	}
 	
 	public JDPoint getA() {
@@ -132,13 +146,15 @@ public class JDTriangle {
 		return false;
 	}
 
-	public JDTriangle affine(double[][] transformationMatrix) {
+	public JDTriangle affine(double[][] tm) {
 		for(int i=0; i<3; i++) {
-			double xx = x[i] * transformationMatrix[0][0] + y[i] * transformationMatrix[0][1] + transformationMatrix[0][2];
-			double yy = x[i] * transformationMatrix[1][0] + y[i] * transformationMatrix[1][1] + transformationMatrix[1][2];
+			double xx = x[i] * tm[0][0] + y[i] * tm[0][1] + tm[0][2];
+			double yy = x[i] * tm[1][0] + y[i] * tm[1][1] + tm[1][2];
 			x[i] = xx;
 			y[i] = yy;
 		}
+		if(tm[0][0] * tm[1][1] - tm[0][1] * tm[1][0] < 0d)
+			reverse_orientation();
 		return this;
 	}
 	public JDPolygon intersectsAABB(double le, double to,  double ri, double bt) {
@@ -692,10 +708,6 @@ public class JDTriangle {
 
 	
 	public double area() {
-		double a=0d;
-		a += (x[1]-x[0]) * (y[1]+y[0]);
-		a += (x[2]-x[1]) * (y[2]+y[1]);
-		a += (x[0]-x[2]) * (y[0]+y[2]);
-		return 0.5d * a;
+		return GeometryTools.area(getCorners());
 	}
 }

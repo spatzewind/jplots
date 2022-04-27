@@ -110,6 +110,8 @@ public class JDPolygon {
 	public List<JDTriangle> toTriangles() {
 		List<JDTriangle> triangles = new ArrayList<JDTriangle>();
 		List<JDPoint> points = new LinkedList<JDPoint>(Arrays.asList(c));
+		int failCount = 0, maxFails = points.size();
+		double sign = area()<0d ? -1d : 1d;
 		while(points.size()>3) {
 			int smallestIdx = -1;
 			double smallestArea = Double.POSITIVE_INFINITY;
@@ -117,15 +119,24 @@ public class JDPolygon {
 			for(int s0=0; s0<slen-1; s0++) {
 				int s1 = (s0+1)%slen;
 				int s2 = (s0+2)%slen;
-				double a = GeometryTools.area(points.get(s0), points.get(s1), points.get(s2));
+				double a = sign*GeometryTools.area(points.get(s0), points.get(s1), points.get(s2));
 				if(a<0d) continue;
 				if(a<smallestArea) {
 					smallestIdx = s0;
 					smallestArea = a;
 				}
 			}
-			if(smallestIdx==-1)
-				throw new RuntimeException("Triangulation of polygon failed!");
+			if(smallestIdx==-1) {
+//				failCount++;
+//				if(failCount>maxFails)
+//					break;
+//				points.add(points.get(0));
+//				points.remove(0);
+//				continue;
+				System.out.println("[POLY] failed to triangulate: ["+c.length+" points, "+area()+" area]");
+				break;
+//				throw new RuntimeException("Triangulation of polygon failed!");
+			}
 			int next0 = (smallestIdx+1)%slen;
 			int next1 = (smallestIdx+2)%slen;
 			triangles.add(new JDTriangle(points.get(smallestIdx), points.get(next0), points.get(next1)));
@@ -268,6 +279,20 @@ public class JDPolygon {
 		return coords;
 	}
 	
+	public double getDefaultTolerance() {
+		double minX = Double.POSITIVE_INFINITY;
+		double maxX = Double.NEGATIVE_INFINITY;
+		double minY = Double.POSITIVE_INFINITY;
+		double maxY = Double.NEGATIVE_INFINITY;
+		for(JDPoint p: c) {
+			if(p.x < minX) minX = p.x;
+			if(p.x > maxX) maxX = p.x;
+			if(p.y < minX) minY = p.y;
+			if(p.y > maxX) maxY = p.y;
+		}
+		return Math.max(maxX-minX, maxY-minY) * 1.0e-10d;
+	}
+	
 	/**
 	 * apply affine transformation to polygon
 	 * </b>
@@ -307,24 +332,23 @@ public class JDPolygon {
 		double minx = Math.min(le, ri), maxx = Math.max(le, ri);
 		double miny = Math.min(to, bt), maxy = Math.max(to, bt);
 		double eps = Math.max(Math.abs(le-ri), Math.abs(to-bt)) * 1.0e-10d;
-		JDPoint center = new JDPoint( 0.5d*(le+ri), 0.5d*(to+bt) );
 //		int[] counts = { 0, 0, 0, 0 };
 		double[] normal = { -1d, 0d };
-		List<JDPoint[]> first = GeometryTools.SutherlandHodgmanAlgorithm(c, normal, -minx, eps, center);
+		List<JDPoint[]> first = GeometryTools.SutherlandHodgmanAlgorithm(c, normal, -minx, eps);
 //		counts[0] = first.size();
 		List<JDPoint[]> second = new ArrayList<>();
 		normal[0] = 1d; normal[1] = 0d;
-		for(JDPoint[] p: first) second.addAll(GeometryTools.SutherlandHodgmanAlgorithm(p, normal, maxx, eps, center));
+		for(JDPoint[] p: first) second.addAll(GeometryTools.SutherlandHodgmanAlgorithm(p, normal, maxx, eps));
 //		counts[1] = second.size();
 		
 		
 		first.clear();
 		normal[0] = 0d; normal[1] = -1d;
-		for(JDPoint[] p: second) first.addAll(GeometryTools.SutherlandHodgmanAlgorithm(p, normal, -miny, eps, center));
+		for(JDPoint[] p: second) first.addAll(GeometryTools.SutherlandHodgmanAlgorithm(p, normal, -miny, eps));
 //		counts[2] = first.size();
 		second.clear();
 		normal[0] = 0d; normal[1] = 1d;
-		for(JDPoint[] p: first) second.addAll(GeometryTools.SutherlandHodgmanAlgorithm(p, normal, maxy, eps, center));
+		for(JDPoint[] p: first) second.addAll(GeometryTools.SutherlandHodgmanAlgorithm(p, normal, maxy, eps));
 //		counts[3] = second.size();
 //		System.out.println("[JDPOLYGON] intersectsAABB: created "+counts[0]+" -> "+counts[1]+" -> "+counts[2]+" -> "+counts[3]+" polygon(s)");
 		

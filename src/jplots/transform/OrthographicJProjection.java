@@ -18,14 +18,12 @@ public class OrthographicJProjection implements JProjection {
 	private static List<JDPoint> right_inserts;
 	static {
 		left_inserts = new ArrayList<>();
-		right_inserts = new ArrayList<>();
 		double f = Math.PI / 360d;
-		for(int a=-180; a<=180; a++) {
-			double x = 0.5d * ( 1d + Math.cos(f*a) );
-			double y = 0.5d * Math.sin(f*a);
-			double r = 1d / ( x*x + y*y );
-			left_inserts.add(new JDPoint(-1d, r*y));
-			right_inserts.add(new JDPoint(-3d, r*y));
+		for(int a=-359; a<=359; a++) {
+			double x = Math.cos(f*a) + 1d;
+			double y = Math.sin(f*a);
+			double r = 2d / ( x*x + y*y );
+			left_inserts.add(new JDPoint(1d, r*y));
 		}
 	}
 	
@@ -37,6 +35,20 @@ public class OrthographicJProjection implements JProjection {
 		cenlat = center_latitude * fac;
 		cenlon = center_longitude * fac;
 		updir = upward_direction * fac;
+		calcMatrices();
+	}
+	
+	@Override
+	public void setCentralLatitude(double latitude, boolean in_degree) {
+		double fac = in_degree ? JPlotMath.DEG_TO_RAD : 1d;
+		cenlat = latitude * fac;
+		calcMatrices();
+	}
+	
+	@Override
+	public void setCentralLongitude(double longitude, boolean in_degree) {
+		double fac = in_degree ? JPlotMath.DEG_TO_RAD : 1d;
+		cenlon = longitude * fac;
 		calcMatrices();
 	}
 	
@@ -160,17 +172,15 @@ public class OrthographicJProjection implements JProjection {
 //				y = y<0d ? -5.0e-9d : 5.0e-9d;
 //				r = 2d / ( x*x + y*y );
 //			}
-			p[i] = new JDPoint( r*x, r*y );
+			p[i] = new JDPoint( r*x, -r*y );
 		}
-//		List<JDPoint[]> polys = new ArrayList<>();
-//		polys.add(p);
 		List<JDPoint[]> polys = GeometryTools.SutherlandHodgmanAlgorithm(p,
-				new double[] {-1d,0d}, -1d, 1.0e-10d, new JDPoint(2d,0d), right_inserts);
+				new double[] {-1d,0d}, -1d, 1.0e-10d, left_inserts);
 		for(JDPoint[] pnts: polys) {
 			if(pnts.length<3) continue;
 			for(int i=0; i<pnts.length; i++) {
-				double  x = pnts[i].x,
-						y = pnts[i].y;
+				double  x =  pnts[i].x,
+						y = -pnts[i].y;
 				double r = 2d / ( x*x + y*y );
 				x = r * x - 1d;
 				y = r * y;
@@ -179,6 +189,9 @@ public class OrthographicJProjection implements JProjection {
 			}
 			res.add(new JDPolygon(pnts));
 		}
+//		List<JDPoint[]> polygons = GeometryTools.SutherlandHodgmanAlgorithmC(poly.c, EARTH_RADIUS_MEAN, new JDPoint(0d,0d));
+//		for(JDPoint[] pnts: polygons)
+//			res.add(new JDPolygon(pnts));
 //		System.out.println("[ORTHOGRAPHIC-JPROJ.] return "+res.size()+" polygon(s)");
 		return res;
 	}

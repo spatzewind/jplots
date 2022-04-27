@@ -2,6 +2,9 @@ package jplots.layer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+
+import com.metzner.enrico.JKriging.data.Constants;
 
 import jplots.JAxis;
 import jplots.JPlot;
@@ -200,7 +203,7 @@ public class JContourLayer extends JPlotsLayer {
 		collectValidPoints(ax.getGeoProjection(), ax.isXlogAxis(), ax.isYlogAxis(), ax.getPlot().isDebug());
         
 		//step 2: do delauney-triangulation
-		triangulate(ax.getPlot().isDebug(), ax);
+		triangulate(ax);
 		
 		//step 3: create contours
 		if(drawLines || !pixelFilling) {
@@ -212,6 +215,26 @@ public class JContourLayer extends JPlotsLayer {
 		
 		//step 4: create filling between contours if wished
 		if(isFilled) {
+//	        AffineBuilder affine = new AffineBuilder()
+//	        		.scale(invertAxisX?-1d:1d, invertAxisY?1d:-1d)
+//	        		.translate(invertAxisX?maxX:-minX, invertAxisY?-minY:maxY)
+//	        		.scale(xs, ys)
+//	        		.translate(p[0], p[1])
+//	        		;
+//			Random rand = new Random();
+//			for(JDTriangle t: triangles) {
+//				int red = rand.nextInt(255);
+//				int gre = rand.nextInt(255);
+//				int blu = rand.nextInt(255);
+//				if(t.area()<0d) { gre = 0; blu /= 2; }
+//				else { blu = 0; gre = 128 + (gre / 2); red /= 2; }
+//				int cct = 0xff000000 | (red<<16) | (gre<<8) | blu;
+//				s.addChild(new JPolygonShape(
+//						t.toPolygon().affine(affine.getMatrix()),
+//						cct, 0xff999999, 2f, true, false
+//					)
+//				);
+//			}
 			if(pixelFilling) {
 				if(ax.getPlot().isDebug())
 					System.out.println("[DEBUG] JContourLayer: 4] contour filling pixelwise ...");
@@ -227,9 +250,9 @@ public class JContourLayer extends JPlotsLayer {
 				}
 			}
 		} else {
-            if(ax.getPlot().isDebug())
-                System.out.println("[DEBUG] JContourLayer: 4] no filling ...");
-        }
+			if(ax.getPlot().isDebug())
+				System.out.println("[DEBUG] JContourLayer: 4] no filling ...");
+		}
 		
 		//step 5: add contours to plot
 		if(drawLines) {
@@ -285,7 +308,8 @@ public class JContourLayer extends JPlotsLayer {
 		if(debug)
             System.out.println("[DEBUG] JContourLayer: 1] has "+corners.size()+" valid sourcepoints");
 	}
-	private void triangulate(boolean debug, JAxis ax) {
+	private void triangulate(JAxis ax) {
+		boolean debug = ax.getPlot().isDebug();
         if(debug)
             System.out.println("[DEBUG] JContourLayer: 2] triangulate ...");
         if(input2d || ax.isGeoAxis()) {
@@ -564,9 +588,13 @@ public class JContourLayer extends JPlotsLayer {
         		;
         List<JDTriangle> visibleTriangles = new ArrayList<JDTriangle>();
     	for(JDTriangle t: triangles) {
+//    		if(t.area()<0d)
+//    			t.reverse_orientation();
     		JDPolygon poly = t.copy().affine(affine.getMatrix()).intersectsAABB(p[0],p[1],  p[0]+p[2],p[1]+p[2]);
     		if(poly==null)
     			continue;
+//    		if(poly.area()<0d)
+//    			poly.reverse_orientation();
     		visibleTriangles.addAll(poly.toTriangles());
     	}
         fillings = null;
@@ -627,7 +655,7 @@ public class JContourLayer extends JPlotsLayer {
 //			if(ax.getPlot().isDebug()) {
 //				JPlotShape.stroke(0xff999999); JPlotShape.strokeWeight(2f); }
 			for(JDPolygon ppp: fillings[lev+1].getPolygons()) {
-				trianglesh.addChild(new JPolygonShape(ppp, cct, 0xff999999, 2f, true, false));
+				trianglesh.addChild(new JPolygonShape(ppp, cct, cct, 1f, true, true));
 			}
         }
 		s.addChild(trianglesh);

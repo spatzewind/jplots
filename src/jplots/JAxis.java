@@ -305,13 +305,13 @@ public class JAxis {
 	public void coastLines() {
 		coastLines(110); }
 	public void coastLines(int resolution) {
-		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile("/data/ne_"+resolution+"m_coastline"), "line", coast_crs);
+		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile("/data/ne_"+resolution+"m_coastline", coast_crs), "line");
 		layers.add(shl); shl.setLineColour(0xff000000); }
 	public void land() {
 		land(0xff676767, 0xff000000); }
 	public void land(int land_colour, int coast_colour) {
 		//JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile("/data/simplified_land_polygons"), "polygon", 3857);
-		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile("/data/ne_110m_land"), "polygon", 4326);
+		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile("/data/ne_110m_land",4326), "polygon");
 		layers.add(shl); shl.setFillColour(land_colour); shl.setLineColour(coast_colour); }
 	public void showShapefile(String path_to_shapefile, String shapeType) {
 		showShapefile(path_to_shapefile, shapeType, null);
@@ -320,13 +320,13 @@ public class JAxis {
 //		int i = path_to_shapefile.lastIndexOf(".");
 //		if(i<0) i = path_to_shapefile.length();
 //		String path = path_to_shapefile.substring(0, i);
-		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile(path_to_shapefile), shapeType, user_crs);
-		layers.add(shl); readParams(shl, params); }	
+		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile(path_to_shapefile, user_crs), shapeType);
+		layers.add(shl); readParams(shl, params); }
 	public void showShapefile(String path_to_shapefile, String shapeType, int user_epsg_code, Object... params) {
 //		int i = path_to_shapefile.lastIndexOf(".");
 //		if(i<0) i = path_to_shapefile.length();
 //		String path = path_to_shapefile.substring(0, i);
-		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile(path_to_shapefile), shapeType, user_epsg_code);
+		JPlotsLayer shl = new JShapesLayer(FileLoader.loadResourceShapeFile(path_to_shapefile,user_epsg_code), shapeType);
 		layers.add(shl); readParams(shl, params); }
 	
 	/**
