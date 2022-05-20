@@ -4,7 +4,7 @@ public class JDEdge {
 
 	public JDPoint a;
 	public JDPoint b;
-	public boolean rightGradient; //left of edge are lower values than to the right
+	public boolean rightGradient; // left of edge are lower values than to the right
 
 	public JDEdge(JDPoint a, JDPoint b) {
 		boolean swap = 0 < a.compareTo(b);
@@ -26,18 +26,17 @@ public class JDEdge {
 	public void wing(JDTriangle t) {
 		if (this.A == null) {
 			this.A = t;
-		} else
-		if (this.B == null) {
+		} else if (this.B == null) {
 			this.B = t;
 		} else {
 			System.err.println("[ERR] error state in edge's wing triangle ...");
 		}
 	}
-	
+
 	public boolean has2triangles() {
-		return (this.A!=null && this.B!=null);
+		return (this.A != null && this.B != null);
 	}
-	
+
 	public boolean hasRightGradient() {
 		return rightGradient;
 	}
@@ -64,10 +63,7 @@ public class JDEdge {
 	}
 
 	public boolean equals(JDPoint a, JDPoint b) {
-		if (this.a.equals(a) && this.b.equals(b)) {
-			return true;
-		}
-		if (this.a.equals(b) && this.b.equals(a)) {
+		if ((this.a.equals(a) && this.b.equals(b)) || (this.a.equals(b) && this.b.equals(a))) {
 			return true;
 		}
 		return false;
@@ -78,10 +74,7 @@ public class JDEdge {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
+		if ((obj == null) || (getClass() != obj.getClass())) {
 			return false;
 		}
 		JDEdge A = this;

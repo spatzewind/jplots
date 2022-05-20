@@ -1,7 +1,7 @@
 package jplots.shapes;
 
 import jplots.JPlot;
-import processing.core.PApplet;
+import processing.core.PConstants;
 import processing.core.PGraphics;
 
 public class JTextShape extends JPlotShape {
@@ -13,16 +13,27 @@ public class JTextShape extends JPlotShape {
 	private String txt;
 
 	public JTextShape(String text) {
-		this(text,0f,0f,12f,PApplet.LEFT,PApplet.TOP,JPlotShape.fillColour,0); }
+		this(text, 0f, 0f, 12f, PConstants.LEFT, PConstants.TOP, JPlotShape.fillColour, 0);
+	}
+
 	public JTextShape(String text, int colour) {
-		this(text,0f,0f,12f,PApplet.LEFT,PApplet.TOP,colour,0); }
+		this(text, 0f, 0f, 12f, PConstants.LEFT, PConstants.TOP, colour, 0);
+	}
+
 	public JTextShape(String text, float x_pos, float y_pos) {
-		this(text,x_pos,y_pos,12f,PApplet.LEFT,PApplet.TOP,JPlotShape.fillColour,0); }
+		this(text, x_pos, y_pos, 12f, PConstants.LEFT, PConstants.TOP, JPlotShape.fillColour, 0);
+	}
+
 	public JTextShape(String text, float x_pos, float y_pos, int colour) {
-		this(text,x_pos,y_pos,12f,PApplet.LEFT,PApplet.TOP,colour,0); }
+		this(text, x_pos, y_pos, 12f, PConstants.LEFT, PConstants.TOP, colour, 0);
+	}
+
 	public JTextShape(String text, float x_pos, float y_pos, float size, int colour) {
-		this(text,x_pos,y_pos,size,PApplet.LEFT,PApplet.TOP,colour,0); }
-	public JTextShape(String text, float x_pos, float y_pos, float size, int horizontal_alignement, int vertical_alignement, int colour, float rotate) {
+		this(text, x_pos, y_pos, size, PConstants.LEFT, PConstants.TOP, colour, 0);
+	}
+
+	public JTextShape(String text, float x_pos, float y_pos, float size, int horizontal_alignement,
+			int vertical_alignement, int colour, float rotate) {
 		txt = text;
 		x = x_pos;
 		y = y_pos;
@@ -35,23 +46,39 @@ public class JTextShape extends JPlotShape {
 
 	@Override
 	public void draw(JPlot plot, PGraphics g) {
-		g.fill(txtColour); g.noStroke();
-		g.textAlign(halign,valign); g.textSize(txtSize);
-		if(rotation==0f) {
-			switch(valign) {
-				case PApplet.TOP:    g.text(txt, x, y+0.16666667f*txtSize); break;
-				case PApplet.CENTER: g.text(txt, x, y-0.10000000f*txtSize); break;
-				case PApplet.BOTTOM: g.text(txt, x, y-0.16666667f*txtSize); break;
-				default: g.text(txt, x, y); break;
+		g.fill(txtColour);
+		g.noStroke();
+		g.textAlign(halign, valign);
+		g.textSize(txtSize);
+		if (rotation == 0f) {
+			switch (valign) {
+			case PConstants.TOP:
+				g.text(txt, x, y + 0.16666667f * txtSize);
+				break;
+			case PConstants.CENTER:
+				g.text(txt, x, y - 0.10000000f * txtSize);
+				break;
+			case PConstants.BOTTOM:
+				g.text(txt, x, y - 0.16666667f * txtSize);
+				break;
+			default:
+				g.text(txt, x, y);
+				break;
 			}
 		} else {
 			g.pushMatrix();
 			g.translate(x, y);
 			g.rotate(rotation);
-			switch(valign) {
-				case PApplet.TOP:    g.text(txt, 0f,  0.16666667f*txtSize); break;
-				case PApplet.CENTER: g.text(txt, 0f, -0.10000000f*txtSize); break;
-				case PApplet.BOTTOM: g.text(txt, 0f, -0.16666667f*txtSize); break;
+			switch (valign) {
+			case PConstants.TOP:
+				g.text(txt, 0f, 0.16666667f * txtSize);
+				break;
+			case PConstants.CENTER:
+				g.text(txt, 0f, -0.10000000f * txtSize);
+				break;
+			case PConstants.BOTTOM:
+				g.text(txt, 0f, -0.16666667f * txtSize);
+				break;
 			}
 			g.popMatrix();
 		}

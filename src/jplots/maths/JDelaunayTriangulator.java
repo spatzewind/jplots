@@ -14,8 +14,8 @@ import jplots.helper.GeometryTools;
 public class JDelaunayTriangulator {
 
 	private static final double EPSILON = Math.pow(2, -52);
-	private static final int    SUCCESS        = 0;
-	private static final int    ERROR_CENTER   = 1;
+	private static final int SUCCESS = 0;
+	private static final int ERROR_CENTER = 1;
 	private int[] EDGE_STACK = new int[512];
 
 	public int[] triangles;
@@ -28,10 +28,10 @@ public class JDelaunayTriangulator {
 	private int[] hullTria;
 	private int[] hullHash;
 
-	private double minX=-1d, maxX=1d, minY=-1d, maxY=1d;
-	private double i0x,i0y, i1x,i1y, i2x,i2y;
+	private double minX = -1d, maxX = 1d, minY = -1d, maxY = 1d;
+	private double i0x, i0y, i1x, i1y, i2x, i2y;
 	private double cx, cy;
-	private int   i0, i1, i2;
+	private int i0, i1, i2;
 	private int[] ids;
 	private JDPoint center;
 
@@ -54,14 +54,14 @@ public class JDelaunayTriangulator {
 		points = unique(Arrays.asList(points));
 
 		this.points = points;
-		
-		//initialise and find seed-point;
+
+		// initialise and find seed-point;
 		initialise();
 		int n = this.points.length;
 
-		//find seed as point closest to mass-center of points
+		// find seed as point closest to mass-center of points
 		int err = SUCCESS;
-		if((err=findCenter())!=SUCCESS) {
+		if ((err = findCenter()) != SUCCESS) {
 			System.err.print(err);
 			return;
 		}
@@ -73,10 +73,10 @@ public class JDelaunayTriangulator {
 		}
 		quicksort(ids, dists, 0, n - 1);
 
-		//create convex hull
+		// create convex hull
 		findConvexHull();
 
-		//generate delaunay triangulation
+		// generate delaunay triangulation
 		generate();
 	}
 
@@ -121,11 +121,12 @@ public class JDelaunayTriangulator {
 
 	public static JDPoint[] unique(List<JDPoint> points) {
 		Set<JDPoint> unq = new LinkedHashSet<>();
-		for (int i = 0; i < points.size(); i++) {
-			JDPoint v = points.get(i);
+		for (JDPoint point : points) {
+			JDPoint v = point;
 			if (unq.contains(v)) {
-				while (unq.contains(v) == false) {
-					System.err.printf("[INF] found duplicated point (%f, %f), fix it will be plus +1e-6... \n", (float) v.x, (float) v.y);
+				while (!unq.contains(v)) {
+					System.err.printf("[INF] found duplicated point (%f, %f), fix it will be plus +1e-6... \n",
+							(float) v.x, (float) v.y);
 					v = new JDPoint(v.x() + 1e-6, v.y() + 1e-6, v.value);
 				}
 			}
@@ -145,8 +146,8 @@ public class JDelaunayTriangulator {
 			int k = triangles[3 * n + 2];
 			JDPoint a, b, c;
 			JDPoint[] tmp = { points[i], points[j], points[k] };
-			//Arrays.sort(tmp);
-			if(GeometryTools.area(tmp)<0d) {
+			// Arrays.sort(tmp);
+			if (GeometryTools.area(tmp) < 0d) {
 				a = tmp[0];
 				b = tmp[2];
 				c = tmp[1];
@@ -213,7 +214,7 @@ public class JDelaunayTriangulator {
 
 		List<JDEdge> voronoiedges = new ArrayList<>();
 		List<JDEdge> voronoihulledges = new ArrayList<>();
-		Set<Integer> tmp = new LinkedHashSet<Integer>();
+		Set<Integer> tmp = new LinkedHashSet<>();
 		for (int i = 0; i < triangles.length; i++) {
 			int id = triangles[nextHalfEdge(i)];
 			if (!tmp.contains(id)) {
@@ -240,8 +241,8 @@ public class JDelaunayTriangulator {
 			}
 		}
 
-		this.trias = new ArrayList<JDTriangle>(unq_trias.values());
-		this.edges = new ArrayList<JDEdge>(unq_edges.values());
+		this.trias = new ArrayList<>(unq_trias.values());
+		this.edges = new ArrayList<>(unq_edges.values());
 		this.poinz = Arrays.asList(points);
 		this.hulls = hulledges;
 		this.voron = voronoiedges;
@@ -286,8 +287,8 @@ public class JDelaunayTriangulator {
 			int pl = triangles[al];
 			int p1 = triangles[bl];
 
-			boolean illegal = inCircle(coords[2 * p0], coords[2 * p0 + 1], coords[2 * pr], coords[2 * pr + 1], coords[2 * pl],
-					coords[2 * pl + 1], coords[2 * p1], coords[2 * p1 + 1]);
+			boolean illegal = inCircle(coords[2 * p0], coords[2 * p0 + 1], coords[2 * pr], coords[2 * pr + 1],
+					coords[2 * pl], coords[2 * pl + 1], coords[2 * p1], coords[2 * p1 + 1]);
 
 			if (illegal) {
 				triangles[a] = p1;
@@ -354,7 +355,8 @@ public class JDelaunayTriangulator {
 		return (int) (Math.floor(pseudoAngle(x - cx, y - cy) * hashSize) % hashSize);
 	}
 
-	private static boolean inCircle(double ax, double ay, double bx, double by, double cx, double cy, double px, double py) {
+	private static boolean inCircle(double ax, double ay, double bx, double by, double cx, double cy, double px,
+			double py) {
 		double dx = ax - px;
 		double dy = ay - py;
 		double ex = bx - px;
@@ -591,7 +593,7 @@ public class JDelaunayTriangulator {
 		center = circumcenter(i0x, i0y, i1x, i1y, i2x, i2y);
 		this.cx = center.x;
 		this.cy = center.y;
-		
+
 		return SUCCESS;
 	}
 
@@ -832,8 +834,7 @@ public class JDelaunayTriangulator {
 		List<Integer> adjacentTriangles = new ArrayList<>();
 		int[] triangleEdges = edgesOfTriangle(t);
 
-		for (int i = 0; i < triangleEdges.length; i++) {
-			int e = triangleEdges[i];
+		for (int e : triangleEdges) {
 			int opposite = halfedges[e];
 			if (opposite >= 0) {
 				adjacentTriangles.add(triangleOfEdge(opposite));

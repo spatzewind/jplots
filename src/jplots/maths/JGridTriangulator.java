@@ -3,10 +3,8 @@ package jplots.maths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import jplots.helper.GeometryTools;
 
@@ -18,7 +16,7 @@ public class JGridTriangulator {
 
 	private double[] coords;
 	public int[] hull;
-	
+
 	private int xlen;
 	private int ylen;
 
@@ -30,24 +28,23 @@ public class JGridTriangulator {
 
 		xlen = x.length;
 		ylen = y.length;
-		points = new JDPoint[xlen*ylen];
-		coords = new double[xlen*ylen*2];
-		for(int j=0; j<ylen; j++) {
-			for(int i=0; i<xlen; i++) {
-				int p = j*xlen + i;
+		points = new JDPoint[xlen * ylen];
+		coords = new double[xlen * ylen * 2];
+		for (int j = 0; j < ylen; j++) {
+			for (int i = 0; i < xlen; i++) {
+				int p = j * xlen + i;
 				points[p] = new JDPoint(x[i], y[j], z[j][i]);
-				coords[2*p+0] = x[i];
-				coords[2*p+1] = y[j];
+				coords[2 * p + 0] = x[i];
+				coords[2 * p + 1] = y[j];
 			}
 		}
 
-		//create convex hull
+		// create convex hull
 		findConvexHull();
 
-		//generate delaunay triangulation
+		// generate delaunay triangulation
 		generate();
 	}
-
 
 	private List<JDTriangle> trias = null;
 	private List<JDEdge> edges = null;
@@ -90,8 +87,8 @@ public class JGridTriangulator {
 			int k = triangles[3 * n + 2];
 			JDPoint a, b, c;
 			JDPoint[] tmp = { points[i], points[j], points[k] };
-			//Arrays.sort(tmp);
-			if(GeometryTools.area(tmp)<0d) {
+			// Arrays.sort(tmp);
+			if (GeometryTools.area(tmp) < 0d) {
 				a = tmp[0];
 				b = tmp[2];
 				c = tmp[1];
@@ -185,8 +182,8 @@ public class JGridTriangulator {
 //			}
 //		}
 
-		this.trias = new ArrayList<JDTriangle>(unq_trias.values());
-		this.edges = new ArrayList<JDEdge>(unq_edges.values());
+		this.trias = new ArrayList<>(unq_trias.values());
+		this.edges = new ArrayList<>(unq_edges.values());
 		this.poinz = Arrays.asList(points);
 		this.hulls = hulledges;
 		this.voron = voronoiedges;
@@ -208,52 +205,53 @@ public class JGridTriangulator {
 	///////////////////////////////////////////////////////////////////////////
 
 	private void findConvexHull() {
-		//create triangle set
-		int count = 2 * (xlen-1) * (ylen-1);
+		// create triangle set
+		int count = 2 * (xlen - 1) * (ylen - 1);
 		triangles = new int[3 * count];
-		for(int j=0; j<ylen-1; j++)
-			for(int i=0; i<xlen-1; i++) {
-				int n = 2 * ( j * (xlen-1) +  i );
+		for (int j = 0; j < ylen - 1; j++)
+			for (int i = 0; i < xlen - 1; i++) {
+				int n = 2 * (j * (xlen - 1) + i);
 				int p = j * xlen + i;
-				boolean mirror = Double.isNaN(points[p+1].value) || Double.isNaN(points[p+xlen].value);
-				if(mirror && (Double.isNaN(points[p].value) || Double.isNaN(points[p+xlen+1].value)))
+				boolean mirror = Double.isNaN(points[p + 1].value) || Double.isNaN(points[p + xlen].value);
+				if (mirror && (Double.isNaN(points[p].value) || Double.isNaN(points[p + xlen + 1].value)))
 					mirror = false;
-				if(Math.abs(points[p].value-points[p+xlen+1].value)<Math.abs(points[p+1].value-points[p+xlen].value))
+				if (Math.abs(points[p].value - points[p + xlen + 1].value) < Math
+						.abs(points[p + 1].value - points[p + xlen].value))
 					mirror = true;
-				if(mirror) {
+				if (mirror) {
 					triangles[3 * n + 0] = p;
-					triangles[3 * n + 1] = p        + 1;
+					triangles[3 * n + 1] = p + 1;
 					triangles[3 * n + 2] = p + xlen + 1;
-					
+
 					triangles[3 * n + 3] = p;
 					triangles[3 * n + 4] = p + xlen + 1;
 					triangles[3 * n + 5] = p + xlen;
 				} else {
 					triangles[3 * n + 0] = p;
-					triangles[3 * n + 1] = p        + 1;
+					triangles[3 * n + 1] = p + 1;
 					triangles[3 * n + 2] = p + xlen;
-					
+
 					triangles[3 * n + 3] = p + xlen;
-					triangles[3 * n + 4] = p        + 1;
+					triangles[3 * n + 4] = p + 1;
 					triangles[3 * n + 5] = p + xlen + 1;
 				}
 			}
-		
-		//create hull set
-		count = 2 * ( ( xlen - 1 ) + ( ylen - 1) );
+
+		// create hull set
+		count = 2 * ((xlen - 1) + (ylen - 1));
 		hull = new int[count];
 		int halfcount = count / 2;
-		for(int i=0; i<xlen-1; i++) {
+		for (int i = 0; i < xlen - 1; i++) {
 			int p = i;
-			int q = xlen*ylen - 1 - i;
-			hull[i]             = p;
+			int q = xlen * ylen - 1 - i;
+			hull[i] = p;
 			hull[i + halfcount] = q;
 		}
-		for(int j=0; j<ylen-1; j++) {
+		for (int j = 0; j < ylen - 1; j++) {
 			int p = j * xlen + xlen - 1;
-			int q = (ylen-1 - j) * xlen;
-			hull[xlen-1 + j]             = p;
-			hull[xlen-1 + j + halfcount] = q;
+			int q = (ylen - 1 - j) * xlen;
+			hull[xlen - 1 + j] = p;
+			hull[xlen - 1 + j + halfcount] = q;
 		}
 	}
 
@@ -351,8 +349,7 @@ public class JGridTriangulator {
 		List<Integer> adjacentTriangles = new ArrayList<>();
 		int[] triangleEdges = edgesOfTriangle(t);
 
-		for (int i = 0; i < triangleEdges.length; i++) {
-			int e = triangleEdges[i];
+		for (int e : triangleEdges) {
 			int opposite = halfedges[e];
 			if (opposite >= 0) {
 				adjacentTriangles.add(triangleOfEdge(opposite));
