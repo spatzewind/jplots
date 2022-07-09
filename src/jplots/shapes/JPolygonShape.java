@@ -4,6 +4,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 
 import jplots.JPlot;
+import jplots.helper.GeometryTools;
 import jplots.maths.JDPoint;
 import jplots.maths.JDPolygon;
 import processing.core.PConstants;
@@ -17,8 +18,7 @@ public class JPolygonShape extends JPlotShape {
 	private float[] xx, yy;
 
 	public JPolygonShape(float[]... coords) {
-		this(coords, JPlotShape.fillColour, JPlotShape.strokeColour, JPlotShape.strokeWeight, JPlotShape.useFill,
-				JPlotShape.useStroke);
+		this(coords, JPlotShape.fillColour, JPlotShape.strokeColour, JPlotShape.strokeWeight, JPlotShape.useFill, JPlotShape.useStroke);
 	}
 
 	public JPolygonShape(float[][] coords, boolean filled, boolean withOutline) {
@@ -41,8 +41,7 @@ public class JPolygonShape extends JPlotShape {
 		this(coords, colour, colour, JPlotShape.strokeWeight, filled, withOutline);
 	}
 
-	public JPolygonShape(float[][] coords, int inner_colour, int outer_colour, float stroke_weight, boolean filled,
-			boolean withOutline) {
+	public JPolygonShape(float[][] coords, int inner_colour, int outer_colour, float stroke_weight, boolean filled, boolean withOutline) {
 		if (coords == null) {
 			System.err.println("[JDPolygonShape] invalid geometry!");
 			xx = null;
@@ -111,11 +110,11 @@ public class JPolygonShape extends JPlotShape {
 
 	@Override
 	public void draw(JPlot plot, PGraphics g) {
-		if (xx == null || yy == null)
+		float a = GeometryTools.area(xx, yy);
+		if (Float.isNaN(a) || a < 0.0001d) {
+			System.out.println(a);
 			return;
-		float a = calcArea();
-		if (Float.isNaN(a) || a < 0.0001d)
-			return;
+		}
 //		System.out.println("[JPolyg.Shape] draw polygon shape ("+
 //				(isFilled?"fill":"nofill")+","+
 //				(isStroked?"stroke":"nostroke")+","+

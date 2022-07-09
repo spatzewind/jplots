@@ -402,14 +402,15 @@ public class JPlotMath {
 				ticks[1] = 0d;
 				return ticks;
 			} else {
-				double[] temp = optimalLinearTicks(tin[2] + 1, tax[2] + 1, maxTickCount);
+				int mtc = (int) Math.min(diffA, 0x000000003fffffffL);
+				mtc = Math.min(maxTickCount, 4*mtc+1);
+				double[] temp = optimalLinearTicks(tin[2], tax[2], mtc);
 				double[] ticks = new double[temp.length];
 				for (int j = 2; j < ticks.length; j++) {
-					int y = (int) temp[j];
-					int m = 1 + (int) (12d * (temp[j] - y));
-					if (y <= 0)
-						y--;
-					ticks[j] = new DateTime(y + "-" + m + "-01 00:00:00", calendar).toDouble(unit, calendar);
+					int y = (int) (temp[j]+0.5d) - (temp[j]<-0.5d?1:0);
+					if (y >= 0)
+						y++;
+					ticks[j] = new DateTime(y + "-01-01 00:00:00", calendar).toDouble(unit, calendar);
 				}
 				ticks[0] = 0d;
 				ticks[1] = 0d;
@@ -423,6 +424,7 @@ public class JPlotMath {
 				for (int j = 0; j <= diffM; j++) {
 					int m = tin[1] + j - 1;
 					int y = tin[2] + m / 12;
+					if(y>=0) y++;
 					m = (m % 12) + 1;
 					ticks[j + 2] = new DateTime(y + "-" + m + "-01 00:00:00", calendar).toDouble(unit, calendar);
 				}
@@ -436,6 +438,7 @@ public class JPlotMath {
 					int tm = (int) temp[j];
 					int m = 1 + (tm % 12);
 					int y = tin[2] + (tm / 12);
+					if(y>=0) y++;
 					int d = 1 + (int) ((m == 2 ? 27d : 29d) * (temp[j] - tm));
 					ticks[j] = new DateTime(y + "-" + m + "-" + d + " 00:00:00", calendar).toDouble(unit, calendar);
 				}
@@ -478,6 +481,36 @@ public class JPlotMath {
 		return ticks;
 	}
 
+	public static double[] mult(double[][] mat, double[] vec) {
+		if(mat[0].length != vec.length)
+			throw new IllegalArgumentException("Length of vector has to be the same as inner dimension of matrix!");
+		double[] res = new double[mat.length];
+		for(int j=0; j<res.length; j++) {
+			res[j] = 0d;
+			for(int i=0; i<vec.length; i++)
+				res[j] += mat[j][i] * vec[i];
+		}
+		return res;
+	}
+	
+	public static double[][] invert(double[][] mat) {
+		if(mat.length!=3)
+			throw new IllegalAccessError("Cannot invert non-3x3 matrices!");
+		double det = 1d / (mat[0][0]*mat[1][1]*mat[2][2]+mat[0][1]*mat[1][2]*mat[2][0]+mat[0][2]*mat[1][0]*mat[2][1]
+							-mat[0][0]*mat[1][2]*mat[2][1]-mat[0][1]*mat[1][0]*mat[2][2]-mat[0][2]*mat[1][1]*mat[2][0]);
+		double[][] res = new double[3][3];
+		res[0][0] =  (mat[1][1]*mat[2][2]-mat[1][2]*mat[2][1]) * det;
+		res[0][1] = -(mat[0][1]*mat[2][2]-mat[0][2]*mat[2][1]) * det;
+		res[0][2] =  (mat[0][1]*mat[1][2]-mat[0][2]*mat[1][1]) * det;
+		res[1][0] = -(mat[1][0]*mat[2][2]-mat[1][2]*mat[2][0]) * det;
+		res[1][1] =  (mat[0][0]*mat[2][2]-mat[0][2]*mat[2][0]) * det;
+		res[1][2] = -(mat[0][0]*mat[1][2]-mat[0][2]*mat[1][0]) * det;
+		res[2][0] =  (mat[1][0]*mat[2][1]-mat[1][1]*mat[2][0]) * det;
+		res[2][1] = -(mat[0][0]*mat[2][1]-mat[0][1]*mat[2][0]) * det;
+		res[2][2] =  (mat[0][0]*mat[1][1]-mat[0][1]*mat[1][0]) * det;
+		return res;
+	}
+	
 	public static class DateTime {
 		private long days;
 		private double dayfraction;

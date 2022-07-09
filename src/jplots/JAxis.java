@@ -18,6 +18,7 @@ import jplots.colour.JColourtable;
 import jplots.colour.LinearSegmentedJColourtable;
 import jplots.helper.FileLoader;
 import jplots.layer.JContourLayer;
+import jplots.layer.JHatchLayer;
 import jplots.layer.JImageLayer;
 import jplots.layer.JLegend;
 import jplots.layer.JLineLayer;
@@ -327,7 +328,7 @@ public class JAxis {
 	}
 
 	public void contourp(double[] x, double[] y, double[][] z) {
-		this.contourf(x, y, z, 10, (Object[]) null);
+		this.contourp(x, y, z, 10, (Object[]) null);
 	}
 
 	public void contourp(double[] x, double[] y, double[][] z, int levels, Object... params) {
@@ -347,7 +348,7 @@ public class JAxis {
 	}
 
 	public void contourp(double[][] x, double[][] y, double[][] z) {
-		this.contourf(x, y, z, 10, (Object[]) null);
+		this.contourp(x, y, z, 10, (Object[]) null);
 	}
 
 	public void contourp(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
@@ -410,6 +411,50 @@ public class JAxis {
 		updateRange(scl);
 	}
 
+	public void hatch(float[] x, float[] y, float[][] z, float lower, float upper, String pattern) {
+		this.hatch(x,y,z, lower,upper, pattern, (Object)null);
+	}
+	
+	public void hatch(float[] x, float[] y, float[][] z, float lower, float upper, String pattern, Object... params) {
+		JPlotsLayer hl = new JHatchLayer(x, y, null, null, z, 1f, lower, upper, pattern);
+		layers.add(hl);
+		readParams(hl, params);
+		updateRange(hl);
+	}
+	
+	public void hatch(float[][] x, float[][] y, float[][] z, float lower, float upper, String pattern) {
+		this.hatch(x,y,z, lower,upper, pattern, (Object)null);
+	}
+	
+	public void hatch(float[][] x, float[][] y, float[][] z, float lower, float upper, String pattern, Object... params) {
+		JPlotsLayer hl = new JHatchLayer(null, null, x, y, z, 1f, lower, upper, pattern);
+		layers.add(hl);
+		readParams(hl, params);
+		updateRange(hl);
+	}
+	
+	public void hatch(double[] x, double[] y, double[][] z, double lower, double upper, String pattern) {
+		this.hatch(x, y, z, lower, upper, pattern, (Object)null);
+	}
+	
+	public void hatch(double[] x, double[] y, double[][] z, double lower, double upper, String pattern, Object... params) {
+		JPlotsLayer hl = new JHatchLayer(x, y, null, null, z, 1d, lower, upper, pattern);
+		layers.add(hl);
+		readParams(hl, params);
+		updateRange(hl);
+	}
+	
+	public void hatch(double[][] x, double[][] y, double[][] z, double lower, double upper, String pattern) {
+		this.hatch(x, y, z, lower, upper, pattern, (Object)null);
+	}
+	
+	public void hatch(double[][] x, double[][] y, double[][] z, double lower, double upper, String pattern, Object... params) {
+		JPlotsLayer hl = new JHatchLayer(null, null, x, y, z, 1d, lower, upper, pattern);
+		layers.add(hl);
+		readParams(hl, params);
+		updateRange(hl);
+	}
+	
 	public void axhline(double y) {
 		axhline(y, 0xff000000, 3f, "-");
 	}
@@ -1175,6 +1220,7 @@ public class JAxis {
 		// create new ticks
 		double[] ticks = null;
 		String[] tickmark = null;
+		String tickmarkFactor = "";
 		if (xLog) {
 			ticks = JPlotMath.optimalLogarithmicTicks(minX, maxX, tickcount);
 			tickmark = new String[ticks.length];
@@ -1191,10 +1237,17 @@ public class JAxis {
 			ticks = JPlotMath.optimalLinearTicks(minX, maxX, tickcount);
 			double vf = 1d / (ticks[0]);
 			int decimal = (int) (1000d * ticks[1] + 0.5d);
-			decimal = decimal % 100 == 0 ? 1 : decimal % 10 == 0 ? 2 : 3;
+			decimal = decimal % 1000 == 0 ? 0 : decimal % 100 == 0 ? 1 : decimal % 10 == 0 ? 2 : 3;
 			tickmark = new String[ticks.length];
-			for (int t = 2; t < tickmark.length; t++)
-				tickmark[t] = PApplet.nf((float) (ticks[t] * vf), 0, decimal).replace(",", ".");
+			for (int t = 2; t < tickmark.length; t++) {
+				if(decimal==0) tickmark[t] = ""+(int)(ticks[t]*vf+0.0005d-(ticks[t]*vf<0d?1:0));
+				else tickmark[t] = PApplet.nf((float) (ticks[t] * vf), 0, decimal).replace(",", ".");
+			}
+			double lvf = Math.log10(ticks[0]);
+			if(Math.abs(lvf)>2.9d) {
+				int ivf = (int) (lvf+0.5d) - (lvf<0d ? -1 : 0);
+				tickmarkFactor = "10^"+ivf;
+			}
 		}
 		tickmark[0] = "";
 		tickmark[1] = "";
@@ -1231,12 +1284,17 @@ public class JAxis {
 						axisgrid.addChild(new JTextShape(tickmark[t], (float) tcpos[t], py + 1.03f * ph,
 								(float) txtsize, PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
 					}
+				if(titleX.length()==0)
+					axisgrid.addChild(new JTextShape(tickmarkFactor, px+pw, py+ph, (float) txtsize,
+							PConstants.LEFT, PConstants.CENTER, 0xff000000, 0));
 			}
 			if (titleX.length() > 0) {
 				if (pplot.isDebug())
 					System.out.println(
 							"[DEBUG] JAxi-object: add x-axis title \"" + titleX + "\" with text size " + txtsize);
-				axisgrid.addChild(new JTextShape(titleX, px + 0.5f * pw, py + 1.04f * ph + (float) txtsize,
+				String txtemp = ""+titleX;
+				if(tickmarkFactor.length()>0) txtemp += " (*"+tickmarkFactor+")";
+				axisgrid.addChild(new JTextShape(txtemp, px + 0.5f * pw, py + 1.04f * ph + (float) txtsize,
 						(float) (1.1d * txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
 			}
 		}
@@ -1249,6 +1307,7 @@ public class JAxis {
 		JGroupShape axisgrid = new JGroupShape();
 		double[] ticks = null;
 		String[] tickmark = null;
+		String   tickmarkFactor = "";
 		if (yLog) {
 			ticks = JPlotMath.optimalLogarithmicTicks(minY, maxY);
 			tickmark = new String[ticks.length];
@@ -1265,10 +1324,17 @@ public class JAxis {
 			ticks = JPlotMath.optimalLinearTicks(minY, maxY);
 			double vf = 1d / (ticks[0]);
 			int decimal = (int) (1000d * ticks[1] + 0.5d);
-			decimal = decimal % 100 == 0 ? 1 : decimal % 10 == 0 ? 2 : 3;
+			decimal = decimal % 1000 == 0 ? 0 : decimal % 100 == 0 ? 1 : decimal % 10 == 0 ? 2 : 3;
 			tickmark = new String[ticks.length];
-			for (int t = 2; t < ticks.length; t++)
+			for (int t = 2; t < ticks.length; t++) {
+				if(decimal==0) tickmark[t] = ""+(int)(ticks[t]*vf+0.0005d - (ticks[t]*vf<0d?1:0));
 				tickmark[t] = PApplet.nf((float) (ticks[t] * vf), 0, decimal).replace(",", ".");
+			}
+			double lvf = Math.log10(ticks[0]);
+			if(Math.abs(lvf)>2.9d) {
+				int ivf = (int) lvf - (lvf<0d ? 1 : 0);
+				tickmarkFactor = "10^"+ivf;
+			}
 		}
 		double[] tcpos = JPlotMath.map(ticks, Yin, Yax, py + ph, py);
 		if (yAxInv)
@@ -1304,12 +1370,17 @@ public class JAxis {
 						axisgrid.addChild(new JTextShape(tickmark[t], px - 0.03f * pw, (float) tcpos[t],
 								(float) txtsize, PConstants.RIGHT, PConstants.CENTER, 0xff000000, 0));
 					}
+				if(titleY.length()==0)
+					axisgrid.addChild(new JTextShape(tickmarkFactor, px, py, (float) txtsize,
+							PConstants.CENTER, PConstants.BOTTOM, 0xff000000, 0));
 			}
 			if (titleY.length() > 0) {
 				if (pplot.isDebug())
 					System.out.println(
 							"[DEBUG] JAxi-object: add y-axis title \"" + titleY + "\" with text size " + txtsize);
-				axisgrid.addChild(new JTextShape(titleY, px - 0.03f * pw - tw, py + 0.5f * ph, (float) (1.1d * txtsize),
+				String tytemp = ""+titleY;
+				if(tickmarkFactor.length() > 0) tytemp += " (*"+tickmarkFactor+")";
+				axisgrid.addChild(new JTextShape(tytemp, px - 0.03f * pw - tw, py + 0.5f * ph, (float) (1.1d * txtsize),
 						PConstants.CENTER, PConstants.BOTTOM, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE));
 			}
 		}

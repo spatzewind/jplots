@@ -227,6 +227,11 @@ public class JContourLayer extends JPlotsLayer {
 		// step 2: do delauney-triangulation
 		triangulate(ax);
 
+		AffineBuilder affine = new AffineBuilder().scale(invertAxisX ? -1d : 1d, invertAxisY ? 1d : -1d)
+				.translate(invertAxisX ? maxX : -minX, invertAxisY ? -minY : maxY).scale(xs, ys).translate(p[0], p[1]);
+		for(JDTriangle tri: triangles)
+			tri.affine(affine.getMatrix());
+
 		// step 3: create contours
 		if (drawLines || !pixelFilling) {
 			createContours(ax.getPlot().isDebug());
@@ -265,7 +270,7 @@ public class JContourLayer extends JPlotsLayer {
 //				fillContours(ax.getGeoProjection(), ax.getPlot().isDebug());
 //				fillByPolygons(p, ax, xs, ys, s);
 				try {
-					fillContours(ax.getGeoProjection(), p, ax, xs, ys, s);
+					fillVectorByVector(ax.getGeoProjection(), p, ax, xs, ys, s);
 				} catch (Exception e) {
 					e.printStackTrace();
 					throw new RuntimeException(e);
@@ -616,18 +621,16 @@ public class JContourLayer extends JPlotsLayer {
 		return points.size() - 1;
 	}
 
-	private void fillContours(JProjection outproj, int[] p, JAxis ax, double xs, double ys, JGroupShape s) {
+	private void fillVectorByVector(JProjection outproj, int[] p, JAxis ax, double xs, double ys, JGroupShape s) {
 		if (ax.getPlot().isDebug())
 			System.out.println("[DEBUG] JContourLayer: 4] fill contours ...");
 		double eps = Math.min(p[2], p[3]) * 1.0e-9d;
 		double eps2 = eps * 0.0001d;
-		AffineBuilder affine = new AffineBuilder().scale(invertAxisX ? -1d : 1d, invertAxisY ? 1d : -1d)
-				.translate(invertAxisX ? maxX : -minX, invertAxisY ? -minY : maxY).scale(xs, ys).translate(p[0], p[1]);
 		List<JDTriangle> visibleTriangles = new ArrayList<>();
 		for (JDTriangle t : triangles) {
 //    		if(t.area()<0d)
 //    			t.reverse_orientation();
-			JDPolygon poly = t.copy().affine(affine.getMatrix()).intersectsAABB(p[0], p[1], p[0] + p[2], p[1] + p[2]);
+			JDPolygon poly = t.copy().intersectsAABB(p[0], p[1], p[0] + p[2], p[1] + p[2]);
 			if (poly == null)
 				continue;
 //    		if(poly.area()<0d)
@@ -714,21 +717,21 @@ public class JContourLayer extends JPlotsLayer {
 		}
 		img.loadPixels();
 		for (JDTriangle tri : triangles) {
-			JDPoint va = tri.getA();
-			JDPoint vb = tri.getB();
-			JDPoint vc = tri.getC();
-			double x1 = xs * (invertAxisX ? Xax - va.x : va.x - Xin);
-			double x2 = xs * (invertAxisX ? Xax - vb.x : vb.x - Xin);
-			double x3 = xs * (invertAxisX ? Xax - vc.x : vc.x - Xin);
-			double y1 = ys * (invertAxisY ? va.y - Yin : Yax - va.y);
-			double y2 = ys * (invertAxisY ? vb.y - Yin : Yax - vb.y);
-			double y3 = ys * (invertAxisY ? vc.y - Yin : Yax - vc.y);
-			double txi = Math.min(x1, Math.min(x2, x3)), txa = Math.max(x1, Math.max(x2, x3));
-			double tyi = Math.min(y1, Math.min(y2, y3)), tya = Math.max(y1, Math.max(y2, y3));
-			int ixs = Math.max((int) txi - (txi < 0 ? 1 : 0), 0),
-					ixe = -Math.max((int) (-txa) - (txa > 0 ? 1 : 0), 1 - p[2]);
-			int iys = Math.max((int) tyi - (tyi < 0 ? 1 : 0), 0),
-					iye = -Math.max((int) (-tya) - (tya > 0 ? 1 : 0), 1 - p[3]);
+//			JDPoint va = tri.getA();
+//			JDPoint vb = tri.getB();
+//			JDPoint vc = tri.getC();
+//			double x1 = tri.x[0];//xs * (invertAxisX ? Xax - va.x : va.x - Xin);
+//			double x2 = tri.x[1];//xs * (invertAxisX ? Xax - vb.x : vb.x - Xin);
+//			double x3 = tri.x[2];//xs * (invertAxisX ? Xax - vc.x : vc.x - Xin);
+//			double y1 = tri.y[0];//ys * (invertAxisY ? va.y - Yin : Yax - va.y);
+//			double y2 = tri.y[1];//ys * (invertAxisY ? vb.y - Yin : Yax - vb.y);
+//			double y3 = tri.y[2];//ys * (invertAxisY ? vc.y - Yin : Yax - vc.y);
+			double txi = Math.min(tri.x[0], Math.min(tri.x[1], tri.x[2])), txa = Math.max(tri.x[0], Math.max(tri.x[1], tri.x[2]));
+			double tyi = Math.min(tri.y[0], Math.min(tri.y[1], tri.y[2])), tya = Math.max(tri.y[0], Math.max(tri.y[1], tri.y[2]));
+			int ixs = Math.max((int) txi - (txi < 0 ? 1 : 0), p[0]),
+				ixe = -Math.max((int) (-txa) - (txa > 0 ? 1 : 0), 1 - p[0] - p[2]);
+			int iys = Math.max((int) tyi - (tyi < 0 ? 1 : 0), p[1]),
+				iye = -Math.max((int) (-tya) - (tya > 0 ? 1 : 0), 1 - p[1] - p[3]);
 			if ((ixe < ixs) || (iye < iys))
 				continue;
 			double minCI = contourIntervals[0] < 1d ? contourIntervals[0] * 2d : contourIntervals[0] - 10d;
@@ -737,63 +740,68 @@ public class JContourLayer extends JPlotsLayer {
 					: contourIntervals[contourIntervals.length - 1] + 10d;
 			for (int j = iys; j <= iye; j++)
 				for (int i = ixs; i <= ixe; i++) {
-					double vx = i + 0.5d, vy = j + 0.5d;
-					double det = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
-					double lambda1 = ((y2 - y3) * (vx - x3) + (x3 - x2) * (vy - y3)) / det;
-					if (lambda1 < 0d || lambda1 > 1d)
-						continue;
-					double lambda2 = ((y3 - y1) * (vx - x3) + (x1 - x3) * (vy - y3)) / det;
-					if (lambda2 < 0d || lambda2 > 1d)
-						continue;
-					double lambda3 = 1d - lambda1 - lambda2;
-					if (lambda3 < 0d || lambda3 > 1d)
-						continue;
-					int nancode = 0;
-					if (Double.isNaN(va.value))
-						nancode |= 1;
-					if (Double.isNaN(vb.value))
-						nancode |= 2;
-					if (Double.isNaN(vc.value))
-						nancode |= 4;
-					double val = 0d;
-					switch (nancode) {
-					case 0:
-						val = lambda1 * va.value + lambda2 * vb.value + lambda3 * vc.value;
-						break;
-					case 1:
-					case 2:
-					case 4:
-						if (nancode == 1)
-							val = lambda1 <= 0.5d ? (lambda2 * vb.value + lambda3 * vc.value) / (lambda2 + lambda3)
-									: Double.NaN;
-						if (nancode == 2)
-							val = lambda2 <= 0.5d ? (lambda1 * va.value + lambda3 * vc.value) / (lambda1 + lambda3)
-									: Double.NaN;
-						if (nancode == 4)
-							val = lambda3 <= 0.5d ? (lambda1 * va.value + lambda2 * vb.value) / (lambda1 + lambda2)
-									: Double.NaN;
-						break;
-					case 3:
-					case 5:
-					case 6:
-						if (nancode == 3)
-							val = lambda3 >= 0.5d ? vc.value : Double.NaN;
-						if (nancode == 5)
-							val = lambda2 >= 0.5d ? vb.value : Double.NaN;
-						if (nancode == 6)
-							val = lambda1 >= 0.5d ? va.value : Double.NaN;
-						break;
-					default:
-						val = Double.NaN;
-						break;
-					}
+//					if(i<p[0] || j<p[1]) continue;
+//					if(i>=p[0]+p[2]) continue;
+//					if(j>=p[1]+p[3]) continue;
+					JDPoint ij = new JDPoint(i+0.5d,j+0.5d);
+					if(!tri.contains(ij)) continue;
+//					double det = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
+//					double lambda1 = ((y2 - y3) * (vx - x3) + (x3 - x2) * (vy - y3)) / det;
+//					if (lambda1 < 0d || lambda1 > 1d)
+//						continue;
+//					double lambda2 = ((y3 - y1) * (vx - x3) + (x1 - x3) * (vy - y3)) / det;
+//					if (lambda2 < 0d || lambda2 > 1d)
+//						continue;
+//					double lambda3 = 1d - lambda1 - lambda2;
+//					if (lambda3 < 0d || lambda3 > 1d)
+//						continue;
+//					int nancode = 0;
+//					if (Double.isNaN(tri.value[0]))
+//						nancode |= 1;
+//					if (Double.isNaN(tri.value[1]))
+//						nancode |= 2;
+//					if (Double.isNaN(tri.value[2]))
+//						nancode |= 4;
+//					double val = 0d;
+//					switch (nancode) {
+//					case 0:
+//						val = lambda1 * tri.value[0] + lambda2 * tri.value[1] + lambda3 * tri.value[2];
+//						break;
+//					case 1:
+//					case 2:
+//					case 4:
+//						if (nancode == 1)
+//							val = lambda1 <= 0.5d ? (lambda2 * tri.value[1] + lambda3 * tri.value[2]) / (lambda2 + lambda3)
+//									: Double.NaN;
+//						if (nancode == 2)
+//							val = lambda2 <= 0.5d ? (lambda1 * tri.value[0] + lambda3 * tri.value[2]) / (lambda1 + lambda3)
+//									: Double.NaN;
+//						if (nancode == 4)
+//							val = lambda3 <= 0.5d ? (lambda1 * tri.value[0] + lambda2 * tri.value[1]) / (lambda1 + lambda2)
+//									: Double.NaN;
+//						break;
+//					case 3:
+//					case 5:
+//					case 6:
+//						if (nancode == 3)
+//							val = lambda3 >= 0.5d ? tri.value[2] : Double.NaN;
+//						if (nancode == 5)
+//							val = lambda2 >= 0.5d ? tri.value[1] : Double.NaN;
+//						if (nancode == 6)
+//							val = lambda1 >= 0.5d ? tri.value[0] : Double.NaN;
+//						break;
+//					default:
+//						val = Double.NaN;
+//						break;
+//					}
+					double val = tri.valueAt(ij);
 					if (Double.isNaN(val))
 						continue;
 					int il = getLevel(val, contourIntervals, -1);
 					double dl = il < 1 ? minCI
 							: il > contourIntervals.length - 1 ? maxCI
 									: 0.5d * (contourIntervals[il - 1] + contourIntervals[il]);
-					img.pixels[j * p[2] + i] = colourtable.getColour(dl, contourIntervals[0],
+					img.pixels[(j-p[1]) * p[2] + i-p[0]] = colourtable.getColour(dl, contourIntervals[0],
 							contourIntervals[contourIntervals.length - 1]);
 				}
 		}
@@ -843,10 +851,10 @@ public class JContourLayer extends JPlotsLayer {
 			for (int cl = cs; cl < ce; cl++) {
 				JDPoint lvs = contours.get(cl).a;
 				JDPoint lve = contours.get(cl).b;
-				double x1 = p[0] + xs * (invertAxisX ? Xax - lvs.x : lvs.x - Xin);
-				double x2 = p[0] + xs * (invertAxisX ? Xax - lve.x : lve.x - Xin);
-				double y1 = p[1] + ys * (invertAxisY ? lvs.y - Yin : Yax - lvs.y);
-				double y2 = p[1] + ys * (invertAxisY ? lve.y - Yin : Yax - lve.y);
+				double x1 = lvs.x; //p[0] + xs * (invertAxisX ? Xax - lvs.x : lvs.x - Xin);
+				double x2 = lve.x; //p[0] + xs * (invertAxisX ? Xax - lve.x : lve.x - Xin);
+				double y1 = lvs.y; //p[1] + ys * (invertAxisY ? lvs.y - Yin : Yax - lvs.y);
+				double y2 = lve.y; //p[1] + ys * (invertAxisY ? lve.y - Yin : Yax - lve.y);
 				double dx = x2 - x1, dy = y2 - y1;
 				double l = Math.sqrt(dx * dx + dy * dy);
 				dx /= l;

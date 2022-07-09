@@ -3,6 +3,8 @@ package jplots;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import jplots.colour.JColourbar;
+import jplots.layer.JHatchLayer;
+import jplots.layer.JPlotsLayer;
 import jplots.shapes.JPlotShape;
 import jplots.transform.JProjection;
 import processing.core.PApplet;
@@ -466,6 +468,13 @@ public class JPlot {
 		hasWelcomed = true;
 	}
 
+	public int getNumColumns() {
+		return n_cols;
+	}
+	public int getNumRows() {
+		return n_rows;
+	}
+	
 	// ************************************
 	// **** PASS ON ***********************
 	// ************************************
@@ -678,10 +687,43 @@ public class JPlot {
 		gca().contourp(x, y, z, levels, params);
 	}
 
+
+	public void hatch(float[] x, float[] y, float[][] z, float lower, float upper, String pattern) {
+		gca().hatch(x,y,z, lower,upper, pattern, (Object)null);
+	}
+	
+	public void hatch(float[] x, float[] y, float[][] z, float lower, float upper, String pattern, Object... params) {
+		gca().hatch(x, y, z, lower, upper, pattern, params);
+	}
+	
+	public void hatch(float[][] x, float[][] y, float[][] z, float lower, float upper, String pattern) {
+		gca().hatch(x,y,z, lower,upper, pattern, (Object)null);
+	}
+	
+	public void hatch(float[][] x, float[][] y, float[][] z, float lower, float upper, String pattern, Object... params) {
+		gca().hatch(x, y, z, lower, upper, pattern, params);
+	}
+	
+	public void hatch(double[] x, double[] y, double[][] z, double lower, double upper, String pattern) {
+		gca().hatch(x, y, z, lower, upper, pattern, (Object)null);
+	}
+	
+	public void hatch(double[] x, double[] y, double[][] z, double lower, double upper, String pattern, Object... params) {
+		gca().hatch(x, y, z, lower, upper, pattern, params);
+	}
+	
+	public void hatch(double[][] x, double[][] y, double[][] z, double lower, double upper, String pattern) {
+		gca().hatch(x, y, z, lower, upper, pattern, (Object)null);
+	}
+	
+	public void hatch(double[][] x, double[][] y, double[][] z, double lower, double upper, String pattern, Object... params) {
+		gca().hatch(x, y, z, lower, upper, pattern, params);
+	}
+	
 	public void coastLines() {
 		gca().coastLines();
 	}
-
+	
 	public void coastLines(int resolution) {
 		gca().coastLines(resolution);
 	}

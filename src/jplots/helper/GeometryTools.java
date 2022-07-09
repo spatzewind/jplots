@@ -6,13 +6,46 @@ import java.util.List;
 import jplots.maths.JDPoint;
 
 public class GeometryTools {
-
+	
+	/**
+	 * calculates the signed area from a polygon defined by the series of x,y coordinates
+	 * @param x array of all x-coordinates
+	 * @param y array of all y-coordinates
+	 * @return negative area when corners are counterclockwise in right-handed coordinate system
+	 */
+	public static float area(float[] x, float[] y) {
+		if ((x == null) || (y == null) || (x.length < 2))
+			return Float.NaN;
+		if (x.length == 2)
+			return 0f;
+		float a = 0f;
+		for (int s = x.length - 1, e = 0; e < x.length; s = e++)
+			a += (x[e] - x[s]) * (y[e] + y[s]);
+		return 0.5f * a;
+	}
+	
+	/**
+	 * calculates the signed area from a polygon defined by the series of x,y coordinates
+	 * @param x array of all x-coordinates
+	 * @param y array of all y-coordinates
+	 * @return negative area when corners are counterclockwise in right-handed coordinate system
+	 */
+	public static double area(double[] x, double[] y) {
+		if ((x == null) || (y == null) || (x.length < 2))
+			return Double.NaN;
+		if (x.length == 2)
+			return 0d;
+		double a = 0d;
+		for (int s = x.length - 1, e = 0; e < x.length; s = e++)
+			a += (x[e] - x[s]) * (y[e] + y[s]);
+		return 0.5d * a;
+	}
+	
 	/**
 	 * calculates the signed area of a polygon
 	 * 
 	 * @param points sequence of corner points of the polygon
-	 * @return negative area when corners are counterclockwise in right-handed
-	 *         coordinate system
+	 * @return negative area when corners are counterclockwise in right-handed coordinate system
 	 */
 	public static double area(JDPoint... points) {
 		if ((points == null) || (points.length < 2))

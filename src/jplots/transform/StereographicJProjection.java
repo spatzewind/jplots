@@ -268,12 +268,15 @@ public class StereographicJProjection implements JProjection {
 		JPlotShape.noFill();
 		JPlotShape.stroke(0xff999999);
 		JPlotShape.strokeWeight(2f);
-		if (ax.isXGridVisible()) {
+		if (ax.isXGridVisible()) { //longitudes
 			for (int o = minO; o <= maxO; o++) {
 				double glon = o * spcO;
-				double[] uv0 = fromLATLONtoPROJ(glon, minLat, true);
+				double miA = minLat, maA = maxLat;
+				if(minLat<-89.9999d && o%3!=0) miA += spcA;
+				if(maxLat>89.9999d && o%3!=0)  maA -= spcA;
+				double[] uv0 = fromLATLONtoPROJ(glon, miA, true);
 				for (int a = 1; a <= 90; a++) {
-					double glat = minLat + a * (maxLat - minLat) / 90d;
+					double glat = miA + a * (maA - miA) / 90d;
 					double[] uv1 = fromLATLONtoPROJ(glon, glat, true);
 					drawLine(ax, s, uv0, uv1, extent);
 					uv0[0] = uv1[0];
@@ -281,7 +284,7 @@ public class StereographicJProjection implements JProjection {
 				}
 			}
 		}
-		if (ax.isYGridVisible()) {
+		if (ax.isYGridVisible()) { //latitudes
 			for (int a = minA; a <= maxA; a++) {
 				double glat = a * spcA;
 				double[] uv0 = fromLATLONtoPROJ(minLon, glat, true);

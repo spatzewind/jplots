@@ -14,6 +14,7 @@ public class JDTriangle {
 	public JDEdge ab;
 	public JDEdge bc;
 	public JDEdge ca;
+	public double[][] barycenterMatrix;
 
 	private Integer hash = null;
 
@@ -26,12 +27,12 @@ public class JDTriangle {
 	}
 
 	public JDTriangle(JDPoint a, JDPoint b, JDPoint c, int index) {
-		JDPoint[] tmp = { a, b, c };
-		// Arrays.sort(tmp);
 		this.idx = index;
-		x = new double[] { tmp[0].x, tmp[1].x, tmp[2].x };
-		y = new double[] { tmp[0].y, tmp[1].y, tmp[2].y };
-		value = new double[] { tmp[0].value, tmp[1].value, tmp[2].value };
+		x = new double[] { a.x, b.x, c.x };
+		y = new double[] { a.y, b.y, c.y };
+		value = new double[] { a.value, b.value, c.value };
+		barycenterMatrix = JPlotMath.invert(new double[][] {
+			{ a.x, b.x, c.x }, { a.y, b.y, c.y }, { 1.d, 1.d, 1.d } });
 	}
 
 	public void edges(JDEdge ab, JDEdge bc, JDEdge ca) {
@@ -59,6 +60,8 @@ public class JDTriangle {
 		this.ab = new JDEdge(a, b);
 		this.bc = new JDEdge(b, c);
 		this.ca = new JDEdge(c, a);
+		barycenterMatrix = JPlotMath.invert(new double[][] {
+			x, y, { 1.d, 1.d, 1.d } });
 	}
 
 	public JDPoint getA() {
@@ -1931,7 +1934,64 @@ public class JDTriangle {
 			return null;
 		}
 	}
-
+	public JDPoint[] intersectsLine(JDPoint p1, JDPoint p2) {
+		return intersectsLine(p1, p2, 0.00000001d);
+	}
+	public JDPoint[] intersectsLine(JDPoint p1, JDPoint p2, double tol) {
+		double[] w1 = barycentricCoords(p1);
+		double[] w2 = barycentricCoords(p2);
+		double[] zo = { 0d, 1d };
+		// w1->0, w2->1, find 0->t1, 1->
+		double[] t1 = JPlotMath.map(zo, w1[0], w2[0], 0d, 1d);
+		if(t1[0]>t1[1]) t1 = new double[] {t1[1], t1[0]};
+		if(Math.abs(w1[0]-w2[0])<tol) { if(w1[0]<-tol || w1[0]>1d+tol) return null;
+			t1[0] = Double.NEGATIVE_INFINITY; t1[1] = Double.POSITIVE_INFINITY; }
+		double[] t2 = JPlotMath.map(zo, w1[1], w2[1], 0d, 1d);
+		if(t2[0]>t2[1]) t2 = new double[] {t2[1], t2[0]};
+		if(Math.abs(w1[1]-w2[1])<tol) { if(w1[1]<-tol || w1[1]>1d+tol) return null;
+			t2[0] = Double.NEGATIVE_INFINITY; t2[1] = Double.POSITIVE_INFINITY; }
+		double[] t3 = JPlotMath.map(zo, w1[2], w2[2], 0d, 1d);
+		if(t3[0]>t3[1]) t3 = new double[] {t3[1], t3[0]};
+		if(Math.abs(w1[2]-w2[2])<tol) { if(w1[2]<-tol || w1[2]>1d+tol) return null;
+			t3[0] = Double.NEGATIVE_INFINITY; t3[1] = Double.POSITIVE_INFINITY; }
+		double ts = Math.max(Math.max(0d, t1[0]), Math.max(t2[0], t3[0]));
+		double te = Math.min(Math.min(1d, t1[1]), Math.min(t2[1], t3[1]));
+		if(te<ts) return null;
+		return new JDPoint[] {
+				p1.fractionTowards(ts, p2),
+				p1.fractionTowards(te, p2)
+		};
+	}
+	
+	public boolean contains(JDPoint p) {
+		return contains(p, 0.0001d);
+	}
+	public boolean contains(JDPoint p, double delta) {
+		double[] w = barycentricCoords(p);
+		if(w[0]<-delta || w[0]>1d+delta) return false;
+		if(w[1]<-delta || w[1]>1d+delta) return false;
+		if(w[2]<-delta || w[2]>1d+delta) return false;
+		return true;
+	}
+	public double[] barycentricCoords(JDPoint p) {
+		return JPlotMath.mult(barycenterMatrix, new double[] {p.x, p.y, 1.0d});
+	}
+	public double valueAt(JDPoint p) {
+		double[] w = barycentricCoords(p);
+		int nancode = (Double.isNaN(value[0])?1:0) | (Double.isNaN(value[1])?2:0) | (Double.isNaN(value[2])?4:0);
+		switch(nancode) {
+			default:
+			case 0: return value[0]*w[0] + value[1]*w[1] + value[2]*w[2];
+			case 1: return w[0]>0.5d ? Double.NaN : (value[1]*w[1]+value[2]*w[2])/(w[1]+w[2]);
+			case 2: return w[1]>0.5d ? Double.NaN : (value[0]*w[0]+value[2]*w[2])/(w[0]+w[2]);
+			case 3: return w[2]>0.5d ? value[2] : Double.NaN;
+			case 4: return w[2]>0.5d ? Double.NaN : (value[0]*w[0]+value[1]*w[1])/(w[0]+w[1]);
+			case 5: return w[1]>0.5d ? value[1] : Double.NaN;
+			case 6: return w[0]>0.5d ? value[0] : Double.NaN;
+			case 7: return Double.NaN;
+		}
+	}
+	
 	public double area() {
 		return GeometryTools.area(getCorners());
 	}

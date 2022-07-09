@@ -1,5 +1,7 @@
 package jplots.maths;
 
+import java.util.Random;
+
 import org.locationtech.jts.geom.Coordinate;
 
 public class JDPoint implements Comparable<JDPoint> {
@@ -44,7 +46,11 @@ public class JDPoint implements Comparable<JDPoint> {
 
 	@Override
 	public int compareTo(JDPoint p) {
-		return this.x != p.x ? Double.compare(this.x, p.x) : Double.compare(this.y, p.y);
+		boolean fxsy = Math.abs(p.x-this.x) >= Math.abs(p.y-this.y);
+		if(fxsy)
+			return Double.compare(this.x, p.x);
+		else
+			return Double.compare(this.y, p.y);
 	}
 
 	@Override
