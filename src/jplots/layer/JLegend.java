@@ -16,8 +16,8 @@ import processing.core.PGraphics;
 
 public class JLegend extends JPlotsLayer {
 
-	private JAxis srcAxis;
-	private boolean isHorizontal, borders;
+//	private JAxis srcAxis;
+//	private boolean isHorizontal, borders;
 	private double rts;
 	private List<LegendEntry> entries;
 
@@ -36,9 +36,9 @@ public class JLegend extends JPlotsLayer {
 	}
 
 	public JLegend(JAxis parent, int pos_x, int pos_y, int width, int height, boolean horizontal, double relTextSize) {
-		srcAxis = parent;
-		isHorizontal = horizontal;
-		borders = true;
+//		srcAxis = parent;
+//		isHorizontal = horizontal;
+//		borders = true;
 		rts = relTextSize;
 
 		entries = new ArrayList<>();

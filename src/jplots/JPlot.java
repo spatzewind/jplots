@@ -3,8 +3,6 @@ package jplots;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import jplots.colour.JColourbar;
-import jplots.layer.JHatchLayer;
-import jplots.layer.JPlotsLayer;
 import jplots.shapes.JPlotShape;
 import jplots.transform.JProjection;
 import processing.core.PApplet;

@@ -1,7 +1,5 @@
 package jplots.maths;
 
-import java.util.Random;
-
 import org.locationtech.jts.geom.Coordinate;
 
 public class JDPoint implements Comparable<JDPoint> {

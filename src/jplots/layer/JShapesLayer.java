@@ -135,7 +135,7 @@ public class JShapesLayer extends JPlotsLayer {
 					polys.addAll(polys.get(p_i).intersectsAABB(p[0], p[1], p[0] + p[2], p[1] + p[3]));
 					polys.remove(p_i);
 				}
-				int pidx = 0;
+//				int pidx = 0;
 				for (JDPolygon pg : polys) {
 					if (pg.c.length == 0)
 						continue;
@@ -151,7 +151,7 @@ public class JShapesLayer extends JPlotsLayer {
 //				        }
 //				        System.out.println("     Polygon extent: x={"+minx+" ... "+maxx+"}");
 //				    }
-					pidx++;
+//					pidx++;
 				}
 			}
 			fidx++;

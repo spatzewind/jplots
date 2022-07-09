@@ -153,6 +153,7 @@ public class GeometryTools {
 		}
 	}
 
+	/*
 	private static JDPoint circle_line_intersection(JDPoint start_point, JDPoint end_point, JDPoint circle_center,
 			double circle_radius) {
 		double dx = end_point.x - start_point.x;
@@ -176,6 +177,7 @@ public class GeometryTools {
 						: start_point.value + f * (end_point.value - start_point.value);
 		return new JDPoint(rx, ry, rv);
 	}
+	*/
 
 	private static void insert_circlepoints(List<JDPoint> sub_polygon, JDPoint center, double radius,
 			double angle_resolution, double[] x_dir) {
@@ -204,7 +206,8 @@ public class GeometryTools {
 			}
 		}
 	}
-
+	
+	/*
 	private static void add_if_negative(List<JDPoint> points, List<Double> ids, double[] norm, double value,
 			double epsilon) {
 		JDPoint p = points.get(points.size() - 2);
@@ -218,6 +221,7 @@ public class GeometryTools {
 				ids.add(0d + points.size());
 		}
 	}
+	*/
 
 	public static List<JDPoint[]> SutherlandHodgmanAlgorithm(JDPoint[] points, double[] normal, double crit,
 			double eps) {
@@ -334,6 +338,7 @@ public class GeometryTools {
 //
 //		return res;
 //	}
+	/*
 	private static double isInside(JDPoint test_point, JDPoint[] polygon) {
 		double r = -1d;
 		for (int i = polygon.length - 1, j = 0; j < polygon.length; i = j++) {
@@ -345,6 +350,7 @@ public class GeometryTools {
 		}
 		return r;
 	}
+	*/
 
 	public static List<JDPoint[]> SutherlandHodgmanAlgorithmC(JDPoint[] points, double circle_radius,
 			JDPoint circle_center) {
@@ -362,9 +368,9 @@ public class GeometryTools {
 			res.add(points);
 			return res;
 		}
-		double sig = radius < 0d ? -1d : 1d;
+//		double sig = radius < 0d ? -1d : 1d;
 		double crit = radius * Math.abs(radius);
-		double eps = Math.abs(crit) * 1.0e-10d;
+//		double eps = Math.abs(crit) * 1.0e-10d;
 		List<JDPoint> new_points = new ArrayList<>();
 		List<double[]> cutids = new ArrayList<>();
 		double[] null_dir = { 0d, 0d };

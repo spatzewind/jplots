@@ -139,12 +139,4 @@ public class JPolygonShape extends JPlotShape {
 			g.vertex(xx[c], yy[c]);
 		g.endShape(PConstants.CLOSE);
 	}
-
-	private float calcArea() {
-		float a = 0f;
-		for (int i = 0, j = xx.length - 1; i < xx.length; j = i++) {
-			a += (xx[i] - xx[j]) * (yy[i] + yy[j]);
-		}
-		return 0.5f * a;
-	}
 }

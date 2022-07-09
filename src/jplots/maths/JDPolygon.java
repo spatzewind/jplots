@@ -115,7 +115,7 @@ public class JDPolygon {
 	public List<JDTriangle> toTriangles() {
 		List<JDTriangle> triangles = new ArrayList<>();
 		List<JDPoint> points = new LinkedList<>(Arrays.asList(c));
-		int failCount = 0, maxFails = points.size();
+//		int failCount = 0, maxFails = points.size();
 		double sign = area() < 0d ? -1d : 1d;
 		while (points.size() > 3) {
 			int smallestIdx = -1;

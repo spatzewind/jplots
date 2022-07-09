@@ -213,7 +213,7 @@ public class JDelaunayTriangulator {
 		////
 
 		List<JDEdge> voronoiedges = new ArrayList<>();
-		List<JDEdge> voronoihulledges = new ArrayList<>();
+//		List<JDEdge> voronoihulledges = new ArrayList<>();
 		Set<Integer> tmp = new LinkedHashSet<>();
 		for (int i = 0; i < triangles.length; i++) {
 			int id = triangles[nextHalfEdge(i)];
