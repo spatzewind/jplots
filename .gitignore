@@ -3,3 +3,4 @@ tmp
 distribution
 /dependend_libs/
 /not_data/
+/hs_err*

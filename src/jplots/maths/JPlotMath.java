@@ -14,7 +14,6 @@ public class JPlotMath {
 				im = i;
 		return im;
 	}
-
 	public static int imax(int[] arr) {
 		int im = Integer.MIN_VALUE;
 		for (int i : arr)
@@ -22,7 +21,6 @@ public class JPlotMath {
 				im = i;
 		return im;
 	}
-
 	public static int imin(int[][] arr) {
 		int im = Integer.MAX_VALUE;
 		for (int[] ia : arr)
@@ -31,7 +29,6 @@ public class JPlotMath {
 					im = i;
 		return im;
 	}
-
 	public static int imax(int[][] arr) {
 		int im = Integer.MIN_VALUE;
 		for (int[] ia : arr)
@@ -50,7 +47,6 @@ public class JPlotMath {
 			return Float.NaN;
 		return fm;
 	}
-
 	public static float fmax(float[] arr) {
 		float fm = Float.NEGATIVE_INFINITY;
 		for (float f : arr)
@@ -60,7 +56,6 @@ public class JPlotMath {
 			return Float.NaN;
 		return fm;
 	}
-
 	public static float fmin(float[][] arr) {
 		float fm = Float.POSITIVE_INFINITY;
 		for (float[] fa : arr)
@@ -71,7 +66,6 @@ public class JPlotMath {
 			return Float.NaN;
 		return fm;
 	}
-
 	public static float fmax(float[][] arr) {
 		float fm = Float.NEGATIVE_INFINITY;
 		for (float[] fa : arr)
@@ -92,7 +86,6 @@ public class JPlotMath {
 			return Double.NaN;
 		return dm;
 	}
-
 	public static double dmax(double[] arr) {
 		double dm = Double.NEGATIVE_INFINITY;
 		for (double d : arr)
@@ -102,7 +95,6 @@ public class JPlotMath {
 			return Double.NaN;
 		return dm;
 	}
-
 	public static double dmin(double[][] arr) {
 		double dm = Double.POSITIVE_INFINITY;
 		for (double[] da : arr)
@@ -113,7 +105,6 @@ public class JPlotMath {
 			return Double.NaN;
 		return dm;
 	}
-
 	public static double dmax(double[][] arr) {
 		double dm = Double.NEGATIVE_INFINITY;
 		for (double[] da : arr)
@@ -128,7 +119,6 @@ public class JPlotMath {
 	public static float map(float val, float in_s, float in_e, float out_s, float out_e) {
 		return out_s + (val - in_s) * (out_e - out_s) / (in_e - in_s);
 	}
-
 	public static float[] map(float[] arr, float in_s, float in_e, float out_s, float out_e) {
 		float convertion = (out_e - out_s) / (in_e - in_s);
 		float[] res = new float[arr.length];
@@ -136,11 +126,9 @@ public class JPlotMath {
 			res[i] = out_s + convertion * (arr[i] - in_s);
 		return res;
 	}
-
 	public static double map(double val, double in_s, double in_e, double out_s, double out_e) {
 		return out_s + (val - in_s) * (out_e - out_s) / (in_e - in_s);
 	}
-
 	public static double[] map(double[] arr, double in_s, double in_e, double out_s, double out_e) {
 		double convertion = (out_e - out_s) / (in_e - in_s);
 		double[] res = new double[arr.length];
@@ -152,25 +140,22 @@ public class JPlotMath {
 	public static float lerp(float valA, float valB, float fraction) {
 		return valA + fraction * (valB - valA);
 	}
-
 	public static float[] lerp(float valA, float valB, float[] fraction) {
 		float[] res = new float[fraction.length];
 		for (int i = 0; i < fraction.length; i++)
 			res[i] = valA + fraction[i] * (valB - valA);
 		return res;
 	}
-
 	public static double lerp(double valA, double valB, double fraction) {
 		return valA + fraction * (valB - valA);
 	}
-
 	public static double[] lerp(double valA, double valB, double[] fraction) {
 		double[] res = new double[fraction.length];
 		for (int i = 0; i < fraction.length; i++)
 			res[i] = valA + fraction[i] * (valB - valA);
 		return res;
 	}
-
+	
 	public static float nlerp(float valA, float valB, float fraction) {
 		if (Float.isNaN(valA) && fraction >= 0.4999f)
 			return valB;
@@ -178,7 +163,6 @@ public class JPlotMath {
 			return valA;
 		return valA + fraction * (valB - valA);
 	}
-
 	public static float[] nlerp(float valA, float valB, float[] fraction) {
 		float[] res = new float[fraction.length];
 		for (int i = 0; i < fraction.length; i++)
@@ -186,7 +170,6 @@ public class JPlotMath {
 					: Float.isNaN(valB) && fraction[i] <= 0.5001f ? valA : valA + fraction[i] * (valB - valA);
 		return res;
 	}
-
 	public static double nlerp(double valA, double valB, double fraction) {
 		if (Double.isNaN(valA) && fraction >= 0.4999d)
 			return valB;
@@ -194,7 +177,6 @@ public class JPlotMath {
 			return valA;
 		return valA + fraction * (valB - valA);
 	}
-
 	public static double[] nlerp(double valA, double valB, double[] fraction) {
 		double[] res = new double[fraction.length];
 		for (int i = 0; i < fraction.length; i++)
@@ -209,11 +191,120 @@ public class JPlotMath {
 			res[a] = Math.log10(arr[a]);
 		return res;
 	}
-
+	
+	public static float[] linspace(float start, float end, int interval_count) {
+		float[] ls = new float[interval_count+1];
+		for(int i=0; i<=interval_count; i++)
+			ls[i] = start + i*(end-start)/interval_count;
+		return ls;
+	}
+	public static double[] linspace(double start, double end, int interval_count) {
+		double[] ls = new double[interval_count+1];
+		for(int i=0; i<=interval_count; i++)
+			ls[i] = start + i*(end-start)/interval_count;
+		return ls;
+	}
+	
+	public static float[] toFloatArray1D(Object o) {
+		if(o instanceof byte[]) {
+			byte[] bytes = (byte[])o; float[] res = new float[bytes.length];
+			for(int i=0; i<res.length; i++) res[i] = (float) bytes[i];
+			return res;
+		}
+		if(o instanceof short[]) {
+			short[] shorts = (short[])o; float[] res = new float[shorts.length];
+			for(int i=0; i<res.length; i++) res[i] = (float) shorts[i];
+			return res;
+		}
+		if(o instanceof int[]) {
+			int[] ints = (int[])o; float[] res = new float[ints.length];
+			for(int i=0; i<res.length; i++) res[i] = (float) ints[i];
+			return res;
+		}
+		if(o instanceof long[]) {
+			long[] longs = (long[])o; float[] res = new float[longs.length];
+			for(int i=0; i<res.length; i++) res[i] = (float) longs[i];
+			return res;
+		}
+		if(o instanceof float[]) {
+			return (float[])o;
+		}
+		if(o instanceof double[]) {
+			double[] floats = (double[])o; float[] res = new float[floats.length];
+			for(int i=0; i<res.length; i++) res[i] = (float) floats[i];
+			return res;
+		}
+		System.err.println("Unsupported type. Cannot convert to "+double[].class.getName());
+		return null;
+	}
+	public static double[] toDoubleArray1D(Object o) {
+		if(o instanceof byte[]) {
+			byte[] bytes = (byte[])o; double[] res = new double[bytes.length];
+			for(int i=0; i<res.length; i++) res[i] = (double) bytes[i];
+			return res;
+		}
+		if(o instanceof short[]) {
+			short[] shorts = (short[])o; double[] res = new double[shorts.length];
+			for(int i=0; i<res.length; i++) res[i] = (double) shorts[i];
+			return res;
+		}
+		if(o instanceof int[]) {
+			int[] ints = (int[])o; double[] res = new double[ints.length];
+			for(int i=0; i<res.length; i++) res[i] = (double) ints[i];
+			return res;
+		}
+		if(o instanceof long[]) {
+			long[] longs = (long[])o; double[] res = new double[longs.length];
+			for(int i=0; i<res.length; i++) res[i] = (double) longs[i];
+			return res;
+		}
+		if(o instanceof float[]) {
+			float[] floats = (float[])o; double[] res = new double[floats.length];
+			for(int i=0; i<res.length; i++) res[i] = (double) floats[i];
+			return res;
+		}
+		if(o instanceof double[]) {
+			return (double[])o;
+		}
+		System.err.println("Unsupported type. Cannot convert to "+double[].class.getName());
+		return null;
+	}
+	public static double[][] toDoubleArray2D(Object o) {
+		if(o instanceof byte[][]) {
+			byte[][] bytes = (byte[][])o; double[][] res = new double[bytes.length][bytes[0].length];
+			for(int j=0; j<res.length; j++) for(int i=0; i<res[0].length; i++) res[j][i] = (double) bytes[j][i];
+			return res;
+		}
+		if(o instanceof short[][]) {
+			short[][] shorts = (short[][])o; double[][] res = new double[shorts.length][shorts[0].length];
+			for(int j=0; j<res.length; j++) for(int i=0; i<res[0].length; i++) res[j][i] = (double) shorts[j][i];
+			return res;
+		}
+		if(o instanceof int[][]) {
+			int[][] ints = (int[][])o; double[][] res = new double[ints.length][ints[0].length];
+			for(int j=0; j<res.length; j++) for(int i=0; i<res[0].length; i++) res[j][i] = (double) ints[j][i];
+			return res;
+		}
+		if(o instanceof long[][]) {
+			long[][] longs = (long[][])o; double[][] res = new double[longs.length][longs[0].length];
+			for(int j=0; j<res.length; j++) for(int i=0; i<res[0].length; i++) res[j][i] = (double) longs[j][i];
+			return res;
+		}
+		if(o instanceof float[][]) {
+			float[][] floats = (float[][])o; double[][] res = new double[floats.length][floats[0].length];
+			for(int j=0; j<res.length; j++) for(int i=0; i<res[0].length; i++) res[j][i] = (double) floats[j][i];
+			return res;
+		}
+		if(o instanceof double[][]) {
+			return (double[][])o;
+		}
+		System.err.println("Unsupported type. Cannot convert to "+double[][].class.getName());
+		return null;
+	}
+	
 	public static double[] optimalLinearTicks(double vmin, double vmax) {
 		return optimalLinearTicks(vmin, vmax, 10);
 	}
-
 	public static double[] optimalLinearTicks(double vmin, double vmax, int maxTickCount) {
 		if (vmin == vmax)
 			return new double[] { 0d, 0d };
@@ -274,11 +365,9 @@ public class JPlotMath {
 			ticks[t + 2 - vS] = t * f10 * p10;
 		return ticks;
 	}
-
 	public static double[] optimalLogarithmicTicks(double vmin, double vmax) {
 		return optimalLogarithmicTicks(vmin, vmax, 10);
 	}
-
 	public static double[] optimalLogarithmicTicks(double vmin, double vmax, int maxTickCount) {
 		if (vmin == vmax)
 			return new double[] { 0d, 0d };
@@ -371,11 +460,9 @@ public class JPlotMath {
 			return ticks;
 		}
 	}
-
 	public static double[] optimalTimeTicks(double vmin, double vmax, String unit, String calendar) {
 		return optimalTimeTicks(vmin, vmax, unit, calendar, 10);
 	}
-
 	public static double[] optimalTimeTicks(double vmin, double vmax, String unit, String calendar, int maxTickCount) {
 		if (vmin == vmax)
 			return new double[] { 0d, 0d };
@@ -492,7 +579,6 @@ public class JPlotMath {
 		}
 		return res;
 	}
-	
 	public static double[][] invert(double[][] mat) {
 		if(mat.length!=3)
 			throw new IllegalAccessError("Cannot invert non-3x3 matrices!");

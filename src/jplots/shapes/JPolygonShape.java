@@ -16,6 +16,7 @@ public class JPolygonShape extends JPlotShape {
 	private int inCol, outCol;
 	private float sw;
 	private float[] xx, yy;
+	private boolean[] isInner;
 
 	public JPolygonShape(float[]... coords) {
 		this(coords, JPlotShape.fillColour, JPlotShape.strokeColour, JPlotShape.strokeWeight, JPlotShape.useFill, JPlotShape.useStroke);
@@ -60,6 +61,7 @@ public class JPolygonShape extends JPlotShape {
 		sw = stroke_weight;
 		isFilled = filled;
 		isStroked = withOutline;
+		if(isStroked) checkInnerEdges();
 	}
 
 	public JPolygonShape(Geometry geom, int inner_colour, int outer_colour, float stroke_weight, boolean filled,
@@ -83,6 +85,7 @@ public class JPolygonShape extends JPlotShape {
 		sw = stroke_weight;
 		isFilled = filled;
 		isStroked = withOutline;
+		if(isStroked) checkInnerEdges();
 	}
 
 	public JPolygonShape(JDPolygon geom, int inner_colour, int outer_colour, float stroke_weight, boolean filled,
@@ -106,6 +109,7 @@ public class JPolygonShape extends JPlotShape {
 		sw = stroke_weight;
 		isFilled = filled;
 		isStroked = withOutline;
+		if(isStroked) checkInnerEdges();
 	}
 
 	@Override
@@ -125,18 +129,49 @@ public class JPolygonShape extends JPlotShape {
 //			System.out.println("[JPolyg.Shape]     ... (and "+(xx.length-10)+" more)");
 		if (isFilled) {
 			g.fill(inCol);
-		} else {
-			g.noFill();
+			g.stroke(inCol);
+			g.strokeWeight(1f);
+			g.beginShape();
+			for (int c = 0; c < xx.length; c++)
+				g.vertex(xx[c], yy[c]);
+			g.endShape(PConstants.CLOSE);
 		}
 		if (isStroked) {
+			g.noFill();
 			g.stroke(outCol);
 			g.strokeWeight(sw);
-		} else {
-			g.noStroke();
+			for(int c=0; c<xx.length; c++) {
+				if(isInner[c]) continue; //skip inner edges
+				int d = (c+1) % xx.length;
+				g.line(xx[c],yy[c], xx[d],yy[d]);
+			}
 		}
-		g.beginShape();
-		for (int c = 0; c < xx.length; c++)
-			g.vertex(xx[c], yy[c]);
-		g.endShape(PConstants.CLOSE);
+	}
+
+	private void checkInnerEdges() {
+		isInner = new boolean[xx.length];
+		for(int i=0; i<xx.length; i++)
+			isInner[i] = false;
+		for(int a=xx.length-1,b=0; b<xx.length; a=b++) {
+			double dx = xx[b]-xx[a];
+			double dy = yy[b]-yy[a];
+			double dr = 1d / (dx*dx + dy*dy + 1.0e-20);
+			dx *= dr;
+			dy *= dr;
+			for(int c=0; c+1<xx.length; c++) {
+				int i = (b+c) % xx.length;
+				int j = (i+1) % xx.length;
+				double s = Math.abs(dx*(yy[i]-yy[a]) - dy*(xx[i]-xx[a]));
+				if(s>0.0001d) continue; //they are not on the same line
+				double t = Math.abs(dx*(yy[j]-yy[i]) - dy*(xx[j]-xx[i]));
+				if(t>0.0001d) continue; //they are not parallel
+				s = dx*(xx[i]-xx[a]) + dy*(yy[i]-yy[a]);
+				t = dx*(xx[j]-xx[a]) + dy*(yy[j]-yy[a]);
+				if((-0.0001d<s && s<1.0001d) || (-0.0001d<t && t<1.0001d)) {
+					isInner[a] = true;
+					isInner[i] = true;
+				}
+			}
+		}
 	}
 }

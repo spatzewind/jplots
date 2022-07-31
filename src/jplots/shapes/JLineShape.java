@@ -1,33 +1,22 @@
 package jplots.shapes;
 
 import jplots.JPlot;
+import processing.core.PApplet;
 import processing.core.PGraphics;
 
 public class JLineShape extends JPlotShape {
 
 	private int col;
-	private float xstart, ystart, xend, yend;
 	private float sw;
-
-	public JLineShape(float x1, float y1, float x2, float y2) {
-		this(x1, y1, x2, y2, JPlotShape.strokeColour, JPlotShape.strokeWeight);
-	}
-
-	public JLineShape(float x1, float y1, float x2, float y2, float stroke_weight) {
-		this(x1, y1, x2, y2, JPlotShape.strokeColour, stroke_weight);
-	}
-
-	public JLineShape(float x1, float y1, float x2, float y2, int colour) {
-		this(x1, y1, x2, y2, colour, JPlotShape.strokeWeight);
-	}
-
-	public JLineShape(float x1, float y1, float x2, float y2, int colour, float stroke_weight) {
-		xstart = x1;
-		ystart = y1;
-		xend = x2;
-		yend = y2;
+	private float[] coords;
+	
+//	public JLineShape(float... xy) {
+//		this(JPlotShape.strokeWeight, JPlotShape.strokeColour, xy);
+//	}
+	public JLineShape(float stroke_weight, int colour, float... xy) {
 		col = colour;
 		sw = stroke_weight;
+		coords = xy;
 	}
 
 	@Override
@@ -35,7 +24,15 @@ public class JLineShape extends JPlotShape {
 		g.noFill();
 		g.stroke(col);
 		g.strokeWeight(sw);
-		g.line(xstart, ystart, xend, yend);
+//		if(coords.length==4) {
+//			g.line(coords[0], coords[1], coords[2], coords[3]);
+//		} else {
+			g.beginShape(PApplet.LINE_STRIP);
+			for(int i=0; i+1<coords.length; i+=2) {
+				g.vertex(coords[i],coords[i+1]);
+			}
+			g.endShape();
+//		}
 	}
 
 }

@@ -179,7 +179,6 @@ public class JLegend extends JPlotsLayer {
 			dx /= l;
 			dy /= l;
 			double lpos = 0d, ldif = 0d;
-			JPlotShape.stroke(col);
 			while (lpos < l) {
 				ldif = 0d;
 				switch (li) {
@@ -208,7 +207,7 @@ public class JLegend extends JPlotsLayer {
 						xf2 = (float) (x1 + (lpos + ldif) * dx), yf2 = (float) (y1 + (lpos + ldif) * dy);
 				// xf1=x1; xf2=x2; yf1=y1; yf2=y2;
 				if (li % 2 == 0 && ldif > 0d)
-					s.addChild(new JLineShape(xf1, yf1, xf2, yf2));
+					s.addChild(new JLineShape(lw, col, xf1, yf1, xf2, yf2));
 				loff += ldif;
 				switch (li) {
 				case 0:
@@ -256,18 +255,18 @@ public class JLegend extends JPlotsLayer {
 				s.addChild(new JRectShape(x1 - 2f * lw, y1 - 2f * lw, x1 + 2f * lw, y1 + 2f * lw));
 			}
 			if ("x".equals(linestyle)) {
-				s.addChild(new JLineShape(x1 - 2f * lw, y1 - 2f * lw, x1 + 2f * lw, y1 + 2f * lw));
-				s.addChild(new JLineShape(x1 - 2f * lw, y1 + 2f * lw, x1 + 2f * lw, y1 - 2f * lw));
+				s.addChild(new JLineShape(lw, lc, x1 - 2f * lw, y1 - 2f * lw, x1 + 2f * lw, y1 + 2f * lw));
+				s.addChild(new JLineShape(lw, lc, x1 - 2f * lw, y1 + 2f * lw, x1 + 2f * lw, y1 - 2f * lw));
 			}
 			if ("+".equals(linestyle)) {
-				s.addChild(new JLineShape(x1 - 3f * lw, y1, x1 + 3f * lw, y1));
-				s.addChild(new JLineShape(x1, y1 - 3f * lw, x1, y1 + 3f * lw));
+				s.addChild(new JLineShape(lw, lc, x1 - 3f * lw, y1, x1 + 3f * lw, y1));
+				s.addChild(new JLineShape(lw, lc, x1, y1 - 3f * lw, x1, y1 + 3f * lw));
 			}
 			if ("<>".equals(linestyle)) {
-				s.addChild(new JLineShape(x1, y1 - 3f * lw, x1 + 3f * lw, y1));
-				s.addChild(new JLineShape(x1 + 3f * lw, y1, x1, y1 + 3f * lw));
-				s.addChild(new JLineShape(x1, y1 + 3f * lw, x1 - 3f * lw, y1));
-				s.addChild(new JLineShape(x1 - 3f * lw, y1, x1, y1 - 3f * lw));
+				s.addChild(new JLineShape(lw, lc, x1, y1 - 3f * lw, x1 + 3f * lw, y1));
+				s.addChild(new JLineShape(lw, lc, x1 + 3f * lw, y1, x1, y1 + 3f * lw));
+				s.addChild(new JLineShape(lw, lc, x1, y1 + 3f * lw, x1 - 3f * lw, y1));
+				s.addChild(new JLineShape(lw, lc, x1 - 3f * lw, y1, x1, y1 - 3f * lw));
 			}
 		}
 

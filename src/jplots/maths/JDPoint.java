@@ -1,5 +1,8 @@
 package jplots.maths;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.locationtech.jts.geom.Coordinate;
 
 public class JDPoint implements Comparable<JDPoint> {
@@ -7,23 +10,27 @@ public class JDPoint implements Comparable<JDPoint> {
 	public double x, y, value;
 	public int idx, lev;
 	private Integer hash = null;
+	private List<JDPoint> neighbors;
 
 	public JDPoint(Coordinate c) {
 		x = c.x;
 		y = c.y;
 		value = c.z;
+		neighbors = new ArrayList<>();
 	}
 
 	public JDPoint(double _x, double _y) {
 		x = _x;
 		y = _y;
 		value = Double.NaN;
+		neighbors = new ArrayList<>();
 	}
 
 	public JDPoint(double _x, double _y, double _v) {
 		x = _x;
 		y = _y;
 		value = _v;
+		neighbors = new ArrayList<>();
 	}
 
 	public double x() {
@@ -64,7 +71,7 @@ public class JDPoint implements Comparable<JDPoint> {
 		return hash = hash(x, y);
 	}
 
-	public static int hash(double x, double y) {
+	private static int hash(double x, double y) {
 		final int prime = 31;
 		int result = 1;
 		long temp;
@@ -82,7 +89,7 @@ public class JDPoint implements Comparable<JDPoint> {
 		if ((obj == null) || (getClass() != obj.getClass())) {
 			return false;
 		}
-
+		
 		JDPoint a = this;
 		JDPoint b = (JDPoint) obj;
 		if (a.x != b.x || a.y != b.y) {
@@ -90,7 +97,6 @@ public class JDPoint implements Comparable<JDPoint> {
 		}
 		return true;
 	}
-
 	public boolean equals(Object obj, double tolerance) {
 		if (this == obj) {
 			return true;
@@ -118,16 +124,17 @@ public class JDPoint implements Comparable<JDPoint> {
 	public double dist(JDPoint point) {
 		return Math.sqrt(dist2(point));
 	}
-
 	public double dist2(JDPoint point) {
 		return (this.x - point.x) * (this.x - point.x) + (this.y - point.y) * (this.y - point.y);
 	}
 
 	public JDPoint fractionTowards(double fraction, JDPoint towards) {
-		return new JDPoint(this.x + fraction * (towards.x - this.x), this.y + fraction * (towards.y - this.y),
-				Double.isNaN(this.value) ? towards.value
-						: Double.isNaN(towards.value) ? this.value
-								: this.value + fraction * (towards.value - this.value));
+		return new JDPoint(
+				this.x + fraction * (towards.x - this.x),
+				this.y + fraction * (towards.y - this.y),
+				Double.isNaN(this.value) ? towards.value :
+				Double.isNaN(towards.value) ? this.value :
+				this.value + fraction * (towards.value - this.value));
 	}
 
 	public JDPoint circleCrossBetween(JDPoint p1, JDPoint p2, double radius) {

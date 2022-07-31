@@ -5,7 +5,6 @@ import jplots.JPlot;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
-import jplots.shapes.JPlotShape;
 import processing.core.PGraphics;
 
 public class JLineLayer extends JPlotsLayer {
@@ -40,8 +39,6 @@ public class JLineLayer extends JPlotsLayer {
 		double Xin = ax.isXlogAxis() ? Math.log10(minX) : minX, Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
 		double Yin = ax.isYlogAxis() ? Math.log10(minY) : minY, Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
 		JGroupShape xyShape = new JGroupShape();
-		JPlotShape.stroke(col);
-		JPlotShape.strokeWeight((float) lw);
 		double lln = 1d, llf = 0d, lpn = 0d, lpf = 0d, loff = 0d;
 		if ("-".equals(ls)) {
 			lln = 1000 * lw;
@@ -141,7 +138,7 @@ public class JLineLayer extends JPlotsLayer {
 			if (xf1 >= p[0] && xf1 <= p[0] + p[2] && xf2 >= p[0] && xf2 <= p[0] + p[2] && yf1 >= p[1]
 					&& yf1 <= p[1] + p[3] && yf2 >= p[1] && yf2 <= p[1] + p[3]) {
 				if (li % 2 == 0 && ldif > 0d)
-					xyShape.addChild(new JLineShape(xf1, yf1, xf2, yf2));
+					xyShape.addChild(new JLineShape((float)lw, col, xf1, yf1, xf2, yf2));
 				loff += ldif;
 				switch (li) {
 				case 0:

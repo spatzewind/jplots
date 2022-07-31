@@ -18,6 +18,7 @@ import jplots.colour.JColourtable;
 import jplots.colour.LinearSegmentedJColourtable;
 import jplots.helper.FileLoader;
 import jplots.layer.JContourLayer;
+import jplots.layer.JContourLayer2D;
 import jplots.layer.JHatchLayer;
 import jplots.layer.JImageLayer;
 import jplots.layer.JLegend;
@@ -497,7 +498,7 @@ public class JAxis {
 	}
 
 	public void colourbar() {
-		pplot.colourbar(this);
+		pplot.colourbar(this, "");
 	}
 
 	public void colourbar(String name) {
@@ -866,8 +867,10 @@ public class JAxis {
 		return layers;
 	}
 
-	public void addJPlotsLayer(JPlotsLayer layer) {
+	public void addJPlotsLayer(JPlotsLayer layer, Object... params) {
 		layers.add(layer);
+		readParams(layer, params);
+		updateRange(layer);
 	}
 
 	public PFont getFont() {
@@ -914,12 +917,12 @@ public class JAxis {
 				graph.addChild(createYAxis());
 			if (xAxOn || yAxOn) {
 				if (xAxOn) {
-					graph.addChild(new JLineShape(px, py, px + pw, py));
-					graph.addChild(new JLineShape(px, py + ph, px + pw, py + ph));
+					graph.addChild(new JLineShape(3f, 0xff000000, px, (float)py, px + pw, py));
+					graph.addChild(new JLineShape(3f, 0xff000000, px, (float)py + ph, px + pw, py + ph));
 				}
 				if (yAxOn) {
-					graph.addChild(new JLineShape(px, py, px, py + ph));
-					graph.addChild(new JLineShape(px + pw, py, px + pw, py + ph));
+					graph.addChild(new JLineShape(3f, 0xff000000, px, (float)py, px, py + ph));
+					graph.addChild(new JLineShape(3f, 0xff000000, px + pw, (float)py, px + pw, py + ph));
 				}
 			}
 		}
@@ -1017,7 +1020,11 @@ public class JAxis {
 					isunread = false;
 				}
 				if (isunread && ("ls".equals(p) || "linestyle".equals(p)) && o + 1 < params.length) {
-					layer.setStyle((String) params[o + 1]);
+					if(params[o+1] instanceof String[] && (layer instanceof JContourLayer || layer instanceof JContourLayer2D)) {
+						if(layer instanceof JContourLayer)   ((JContourLayer)   layer).setStyles((String[]) params[o+1]);
+						if(layer instanceof JContourLayer2D) ((JContourLayer2D) layer).setStyles((String[]) params[o+1]);
+					} else
+						layer.setStyle((String) params[o + 1]);
 					o++;
 					isunread = false;
 				}
@@ -1078,6 +1085,11 @@ public class JAxis {
 					o++;
 					isunread = false;
 				}
+				if (isunread && ("zrange".equals(p)) && o + 2 < params.length) {
+					layer.setZRange((double)params[o+1], (double)params[o+2]);
+					o+=2;
+					isunread = false;
+				}
 				if (isunread && "invertxaxis".equals(p)) {
 					layer.invert("x", true);
 					xAxInv = true;
@@ -1096,6 +1108,7 @@ public class JAxis {
 	}
 
 	private void updateRange(JPlotsLayer layer) {
+		if(isGeoAxis) return;
 		double[] r = layer.getRange();
 		double xmin = r[0], xmax = r[1], ymin = r[2], ymax = r[3];
 		if (r[1] - r[0] < 1.e-20) {
@@ -1136,6 +1149,7 @@ public class JAxis {
 	}
 
 	private void updateRange(JPlotsLayer layer, String axis) {
+		if(isGeoAxis) return;
 		double[] r = layer.getRange();
 		double xmin = r[0], xmax = r[1], ymin = r[2], ymax = r[3];
 		if (r[1] - r[0] < 1.e-20) {
@@ -1266,19 +1280,15 @@ public class JAxis {
 			System.out.println("[DEBUG] JAxis-object: Xtickpos={" + posStr.substring(2) + "}");
 		}
 		if (xGrdOn) {
-			JPlotShape.stroke(0xff999999);
-			JPlotShape.strokeWeight(2f);
 			for (int t = 2; t < ticks.length; t++)
 				if (ticks[t] >= Math.min(Xin, Xax) && ticks[t] <= Math.max(Xin, Xax))
-					axisgrid.addChild(new JLineShape((float) tcpos[t], py, (float) tcpos[t], py + ph));
+					axisgrid.addChild(new JLineShape(2f, 0xff999999, (float) tcpos[t], py, (float) tcpos[t], py + ph));
 		}
 		if (xAxOn) {
 			if (xTkOn) {
-				JPlotShape.stroke(0xff000000);
-				JPlotShape.strokeWeight(2f);
 				for (int t = 2; t < ticks.length; t++)
 					if (ticks[t] >= Math.min(Xin, Xax) && ticks[t] <= Math.max(Xin, Xax)) {
-						axisgrid.addChild(new JLineShape((float) tcpos[t], py + ph, (float) tcpos[t], py + 1.02f * ph));
+						axisgrid.addChild(new JLineShape(2f, 0xff000000, (float) tcpos[t], py + ph, (float) tcpos[t], py + 1.02f * ph));
 						// axisgrid.addChild(ap.createShape(PShape.TEXT, "H",
 						// (float)tcpos[t],py-0.1f*ph,(float)tcpos[t],py));
 						axisgrid.addChild(new JTextShape(tickmark[t], (float) tcpos[t], py + 1.03f * ph,
@@ -1351,20 +1361,16 @@ public class JAxis {
 			System.out.println("[DEBUG] JAxis-object: Ytickpos={" + posStr.substring(2) + "}");
 		}
 		if (yGrdOn) {
-			JPlotShape.stroke(0xff999999);
-			JPlotShape.strokeWeight(2f);
 			for (int t = 2; t < ticks.length; t++)
 				if (ticks[t] >= Math.min(Yin, Yax) && ticks[t] <= Math.max(Yin, Yax))
-					axisgrid.addChild(new JLineShape(px, (float) tcpos[t], px + pw, (float) tcpos[t]));
+					axisgrid.addChild(new JLineShape(2f, 0xff999999, px, (float) tcpos[t], px + pw, (float) tcpos[t]));
 		}
 		if (yAxOn) {
-			JPlotShape.stroke(0xff000000);
-			JPlotShape.strokeWeight(2f);
 			float tw = 0f;
 			if (yTkOn) {
 				for (int t = 2; t < ticks.length; t++)
 					if (ticks[t] >= Math.min(Yin, Yax) && ticks[t] <= Math.max(Yin, Yax)) {
-						axisgrid.addChild(new JLineShape(px - 0.02f * pw, (float) tcpos[t], px, (float) tcpos[t]));
+						axisgrid.addChild(new JLineShape(2f, 0xff000000, px - 0.02f * pw, (float) tcpos[t], px, (float) tcpos[t]));
 						tw = Math.max(tw, (float) txtsize * pplot.getGraphic().textWidth(tickmark[t])
 								/ pplot.getGraphic().textSize);
 						axisgrid.addChild(new JTextShape(tickmark[t], px - 0.03f * pw, (float) tcpos[t],

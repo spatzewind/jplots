@@ -15,6 +15,7 @@ import jplots.maths.JDelaunayTriangulator;
 import jplots.maths.JGridTriangulator;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JDGeometry;
+import jplots.shapes.JEllipseShape;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JImageShape;
 import jplots.shapes.JLineShape;
@@ -38,7 +39,7 @@ public class JContourLayer extends JPlotsLayer {
 	private List<JDEdge> edges, contours;
 	private List<JDTriangle> triangles;
 	private JDGeometry[] fillings;
-
+	
 	public JContourLayer(float[] x, float[] y, float[][] z, float zmin, float zmax, int nintervals, JColourtable ct,
 			float stroke_weight, boolean drawContours, boolean filled, boolean filledAsImage) {
 		float zin = Float.isNaN(zmin) ? JPlotMath.fmin(z) : zmin;
@@ -49,13 +50,11 @@ public class JContourLayer extends JPlotsLayer {
 		input2d = false;
 		JContourLayerFloat(x, y, null, null, z, cntIntervals, ct, stroke_weight, drawContours, filled, filledAsImage);
 	}
-
 	public JContourLayer(float[] x, float[] y, float[][] z, float[] intervals, JColourtable ct, float stroke_weight,
 			boolean drawContours, boolean filled, boolean filledAsImage) {
 		input2d = false;
 		JContourLayerFloat(x, y, null, null, z, intervals, ct, stroke_weight, drawContours, filled, filledAsImage);
 	}
-
 	public JContourLayer(double[] x, double[] y, double[][] z, double zmin, double zmax, int nintervals,
 			JColourtable ct, double stroke_weight, boolean drawContours, boolean filled, boolean filledAsImage) {
 		double zin = Double.isNaN(zmin) ? JPlotMath.dmin(z) : zmin;
@@ -66,13 +65,11 @@ public class JContourLayer extends JPlotsLayer {
 		input2d = false;
 		JContourLayerDouble(x, y, null, null, z, cntIntervals, ct, stroke_weight, drawContours, filled, filledAsImage);
 	}
-
 	public JContourLayer(double[] x, double[] y, double[][] z, double[] intervals, JColourtable ct,
 			double stroke_weight, boolean drawContours, boolean filled, boolean filledAsImage) {
 		input2d = false;
 		JContourLayerDouble(x, y, null, null, z, intervals, ct, stroke_weight, drawContours, filled, filledAsImage);
 	}
-
 	public JContourLayer(float[][] x, float[][] y, float[][] z, float zmin, float zmax, int nintervals, JColourtable ct,
 			float stroke_weight, boolean drawContours, boolean filled, boolean filledAsImage) {
 		float zin = Float.isNaN(zmin) ? JPlotMath.fmin(z) : zmin;
@@ -83,13 +80,11 @@ public class JContourLayer extends JPlotsLayer {
 		input2d = true;
 		JContourLayerFloat(null, null, x, y, z, cntIntervals, ct, stroke_weight, drawContours, filled, filledAsImage);
 	}
-
 	public JContourLayer(float[][] x, float[][] y, float[][] z, float[] intervals, JColourtable ct, float stroke_weight,
 			boolean drawContours, boolean filled, boolean filledAsImage) {
 		input2d = true;
 		JContourLayerFloat(null, null, x, y, z, intervals, ct, stroke_weight, drawContours, filled, filledAsImage);
 	}
-
 	public JContourLayer(double[][] x, double[][] y, double[][] z, double zmin, double zmax, int nintervals,
 			JColourtable ct, double stroke_weight, boolean drawContours, boolean filled, boolean filledAsImage) {
 		double zin = Double.isNaN(zmin) ? JPlotMath.dmin(z) : zmin;
@@ -100,13 +95,22 @@ public class JContourLayer extends JPlotsLayer {
 		input2d = true;
 		JContourLayerDouble(null, null, x, y, z, cntIntervals, ct, stroke_weight, drawContours, filled, filledAsImage);
 	}
-
 	public JContourLayer(double[][] x, double[][] y, double[][] z, double[] intervals, JColourtable ct,
 			double stroke_weight, boolean drawContours, boolean filled, boolean filledAsImage) {
 		input2d = true;
 		JContourLayerDouble(null, null, x, y, z, intervals, ct, stroke_weight, drawContours, filled, filledAsImage);
 	}
 
+	/*
+	public JContourLayer(float[] x1, float[] y1, float[][] x2, float[][] y2, float[][] z, float zmin, float zmax, int nintervals, float[] zintervals,
+			JColourtable ct, float stroke_weight, boolean drawContours, boolean filled, boolean filledAsImage) {
+		
+		
+		
+	}
+	*/
+	
+	
 	private void JContourLayerFloat(float[] x, float[] y, float[][] x2, float[][] y2, float[][] z, float[] intervals,
 			JColourtable ct, float stroke_weight, boolean drawContours, boolean filled, boolean filledAsImage) {
 		if (!input2d) {
@@ -190,7 +194,7 @@ public class JContourLayer extends JPlotsLayer {
 		pixelFilling = filledAsImage;
 		init();
 	}
-
+	
 	private void init() {
 		contourStyle = new String[contourIntervals.length];
 		for (int cs = 0; cs < contourStyle.length; cs++)
@@ -223,15 +227,15 @@ public class JContourLayer extends JPlotsLayer {
 
 		// step 1: collect valid corners of grid and project them
 		collectValidPoints(ax.getGeoProjection(), ax.isXlogAxis(), ax.isYlogAxis(), ax.getPlot().isDebug());
-
+		
 		// step 2: do delauney-triangulation
 		triangulate(ax);
-
+		
 		AffineBuilder affine = new AffineBuilder().scale(invertAxisX ? -1d : 1d, invertAxisY ? 1d : -1d)
 				.translate(invertAxisX ? maxX : -minX, invertAxisY ? -minY : maxY).scale(xs, ys).translate(p[0], p[1]);
 		for(JDTriangle tri: triangles)
 			tri.affine(affine.getMatrix());
-
+		
 		// step 3: create contours
 		if (drawLines || !pixelFilling) {
 			createContours(ax.getPlot().isDebug());
@@ -239,36 +243,14 @@ public class JContourLayer extends JPlotsLayer {
 			if (ax.getPlot().isDebug())
 				System.out.println("[DEBUG] JContourLayer: 3] no contours ...");
 		}
-
+		
 		// step 4: create filling between contours if wished
 		if (isFilled) {
-//	        AffineBuilder affine = new AffineBuilder()
-//	        		.scale(invertAxisX?-1d:1d, invertAxisY?1d:-1d)
-//	        		.translate(invertAxisX?maxX:-minX, invertAxisY?-minY:maxY)
-//	        		.scale(xs, ys)
-//	        		.translate(p[0], p[1])
-//	        		;
-//			Random rand = new Random();
-//			for(JDTriangle t: triangles) {
-//				int red = rand.nextInt(255);
-//				int gre = rand.nextInt(255);
-//				int blu = rand.nextInt(255);
-//				if(t.area()<0d) { gre = 0; blu /= 2; }
-//				else { blu = 0; gre = 128 + (gre / 2); red /= 2; }
-//				int cct = 0xff000000 | (red<<16) | (gre<<8) | blu;
-//				s.addChild(new JPolygonShape(
-//						t.toPolygon().affine(affine.getMatrix()),
-//						cct, 0xff999999, 2f, true, false
-//					)
-//				);
-//			}
 			if (pixelFilling) {
 				if (ax.getPlot().isDebug())
 					System.out.println("[DEBUG] JContourLayer: 4] contour filling pixelwise ...");
 				fillPixelByPixel(p, ax, xs, ys, s);
 			} else {
-//				fillContours(ax.getGeoProjection(), ax.getPlot().isDebug());
-//				fillByPolygons(p, ax, xs, ys, s);
 				try {
 					fillVectorByVector(ax.getGeoProjection(), p, ax, xs, ys, s);
 				} catch (Exception e) {
@@ -291,8 +273,16 @@ public class JContourLayer extends JPlotsLayer {
 			if (ax.getPlot().isDebug())
 				System.out.println("[DEBUG] JContourLayer: 5] contours itself will not be drawn ...");
 		}
+		
+		if(ax.getPlot().isDebug()) {
+			drawTriangleBorders(p,ax,xs,xs,s);
+		}
 	}
 
+	//* **************************************** *
+	//* ********** GETTER AND SETTER  ********** *
+	//* **************************************** *
+	
 	public double[] getZRange() {
 		return new double[] { minZ, maxZ };
 	}
@@ -300,7 +290,40 @@ public class JContourLayer extends JPlotsLayer {
 	public double[] getLevels() {
 		return contourIntervals;
 	}
+	
+	@Override
+	public JColourtable getColourtable() {
+		if(!isFilled) return null;
+		return super.getColourtable();
+	}
+	
+	//* **************************************** *
+	//* ********** PUBLIC METHODS     ********** *
+	//* **************************************** *
+	
+	public void setStyles(String[] nstyle) {
+		contourStyle = nstyle;
+	}
+	
+	public void drawContours(List<JDTriangle> triangles, JGroupShape s, JAxis ax) {
+		int[] p = ax.getSize();
+		JPlot parent = ax.getPlot();
+		int[] psize = parent.getSize();
+		double pdist = Math.min((double)p[0]/(double)parent.getNumColumns(), (double)p[1]/(double)parent.getNumRows()) / 10d;
+		psize = ax.getSize();
+		
+	}
 
+	public void drawTriangleBorders(int[] p, JAxis ax, double xs, double ys, JGroupShape s) {
+		
+	}
+	
+	
+
+	//* **************************************** *
+	//* ********** PRIVATE METHODS    ********** *
+	//* **************************************** *
+	
 	private void collectValidPoints(JProjection outproj, boolean xLog, boolean yLog, boolean debug) {
 		int nx = 0, ny = 0;
 		if (input2d) {
@@ -716,99 +739,42 @@ public class JContourLayer extends JPlotsLayer {
 			img = ax.getPlot().getApplet().createImage(p[2], p[3], PConstants.ARGB);
 		}
 		img.loadPixels();
+		double minCI = contourIntervals[0] < 1d ? contourIntervals[0] * 2d : contourIntervals[0] - 10d;
+		double maxCI = contourIntervals[contourIntervals.length - 1] > 1d
+				? contourIntervals[contourIntervals.length - 1] * 2d
+				: contourIntervals[contourIntervals.length - 1] + 10d;
 		for (JDTriangle tri : triangles) {
-//			JDPoint va = tri.getA();
-//			JDPoint vb = tri.getB();
-//			JDPoint vc = tri.getC();
-//			double x1 = tri.x[0];//xs * (invertAxisX ? Xax - va.x : va.x - Xin);
-//			double x2 = tri.x[1];//xs * (invertAxisX ? Xax - vb.x : vb.x - Xin);
-//			double x3 = tri.x[2];//xs * (invertAxisX ? Xax - vc.x : vc.x - Xin);
-//			double y1 = tri.y[0];//ys * (invertAxisY ? va.y - Yin : Yax - va.y);
-//			double y2 = tri.y[1];//ys * (invertAxisY ? vb.y - Yin : Yax - vb.y);
-//			double y3 = tri.y[2];//ys * (invertAxisY ? vc.y - Yin : Yax - vc.y);
-			double txi = Math.min(tri.x[0], Math.min(tri.x[1], tri.x[2])), txa = Math.max(tri.x[0], Math.max(tri.x[1], tri.x[2]));
-			double tyi = Math.min(tri.y[0], Math.min(tri.y[1], tri.y[2])), tya = Math.max(tri.y[0], Math.max(tri.y[1], tri.y[2]));
-			int ixs = Math.max((int) txi - (txi < 0 ? 1 : 0), p[0]),
+			double	txi = Math.min(tri.x[0], Math.min(tri.x[1], tri.x[2])),
+					txa = Math.max(tri.x[0], Math.max(tri.x[1], tri.x[2]));
+			double	tyi = Math.min(tri.y[0], Math.min(tri.y[1], tri.y[2])),
+					tya = Math.max(tri.y[0], Math.max(tri.y[1], tri.y[2]));
+			int ixs =  Math.max((int) txi    - (txi < 0 ? 1 : 0), p[0]),
 				ixe = -Math.max((int) (-txa) - (txa > 0 ? 1 : 0), 1 - p[0] - p[2]);
-			int iys = Math.max((int) tyi - (tyi < 0 ? 1 : 0), p[1]),
+			int iys =  Math.max((int) tyi    - (tyi < 0 ? 1 : 0), p[1]),
 				iye = -Math.max((int) (-tya) - (tya > 0 ? 1 : 0), 1 - p[1] - p[3]);
 			if ((ixe < ixs) || (iye < iys))
 				continue;
-			double minCI = contourIntervals[0] < 1d ? contourIntervals[0] * 2d : contourIntervals[0] - 10d;
-			double maxCI = contourIntervals[contourIntervals.length - 1] > 1d
-					? contourIntervals[contourIntervals.length - 1] * 2d
-					: contourIntervals[contourIntervals.length - 1] + 10d;
-			for (int j = iys; j <= iye; j++)
+			for (int j = iys; j <= iye; j++) {
 				for (int i = ixs; i <= ixe; i++) {
-//					if(i<p[0] || j<p[1]) continue;
-//					if(i>=p[0]+p[2]) continue;
-//					if(j>=p[1]+p[3]) continue;
 					JDPoint ij = new JDPoint(i+0.5d,j+0.5d);
 					if(!tri.contains(ij)) continue;
-//					double det = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
-//					double lambda1 = ((y2 - y3) * (vx - x3) + (x3 - x2) * (vy - y3)) / det;
-//					if (lambda1 < 0d || lambda1 > 1d)
-//						continue;
-//					double lambda2 = ((y3 - y1) * (vx - x3) + (x1 - x3) * (vy - y3)) / det;
-//					if (lambda2 < 0d || lambda2 > 1d)
-//						continue;
-//					double lambda3 = 1d - lambda1 - lambda2;
-//					if (lambda3 < 0d || lambda3 > 1d)
-//						continue;
-//					int nancode = 0;
-//					if (Double.isNaN(tri.value[0]))
-//						nancode |= 1;
-//					if (Double.isNaN(tri.value[1]))
-//						nancode |= 2;
-//					if (Double.isNaN(tri.value[2]))
-//						nancode |= 4;
-//					double val = 0d;
-//					switch (nancode) {
-//					case 0:
-//						val = lambda1 * tri.value[0] + lambda2 * tri.value[1] + lambda3 * tri.value[2];
-//						break;
-//					case 1:
-//					case 2:
-//					case 4:
-//						if (nancode == 1)
-//							val = lambda1 <= 0.5d ? (lambda2 * tri.value[1] + lambda3 * tri.value[2]) / (lambda2 + lambda3)
-//									: Double.NaN;
-//						if (nancode == 2)
-//							val = lambda2 <= 0.5d ? (lambda1 * tri.value[0] + lambda3 * tri.value[2]) / (lambda1 + lambda3)
-//									: Double.NaN;
-//						if (nancode == 4)
-//							val = lambda3 <= 0.5d ? (lambda1 * tri.value[0] + lambda2 * tri.value[1]) / (lambda1 + lambda2)
-//									: Double.NaN;
-//						break;
-//					case 3:
-//					case 5:
-//					case 6:
-//						if (nancode == 3)
-//							val = lambda3 >= 0.5d ? tri.value[2] : Double.NaN;
-//						if (nancode == 5)
-//							val = lambda2 >= 0.5d ? tri.value[1] : Double.NaN;
-//						if (nancode == 6)
-//							val = lambda1 >= 0.5d ? tri.value[0] : Double.NaN;
-//						break;
-//					default:
-//						val = Double.NaN;
-//						break;
-//					}
 					double val = tri.valueAt(ij);
 					if (Double.isNaN(val))
 						continue;
 					int il = getLevel(val, contourIntervals, -1);
-					double dl = il < 1 ? minCI
-							: il > contourIntervals.length - 1 ? maxCI
-									: 0.5d * (contourIntervals[il - 1] + contourIntervals[il]);
-					img.pixels[(j-p[1]) * p[2] + i-p[0]] = colourtable.getColour(dl, contourIntervals[0],
-							contourIntervals[contourIntervals.length - 1]);
+					double dl = il < 1 ? minCI : maxCI;
+					if(il>0 && il<contourIntervals.length)
+						dl = 0.5d * (contourIntervals[il - 1] + contourIntervals[il]);
+					img.pixels[(j-p[1]) * p[2] + i-p[0]] =
+							colourtable.getColour(dl,	contourIntervals[0],
+														contourIntervals[contourIntervals.length - 1]);
 				}
+			}
 		}
 		img.updatePixels();
 		s.addChild(new JImageShape(img, p[0], p[1], p[2], p[3]));
 	}
-
+	
 	private void drawContourLines(int[] p, JAxis ax, double xs, double ys, JGroupShape s) {
 		JGroupShape linesh = new JGroupShape();
 		for (int c = 0; c < contourIntervals.length; c++) {
@@ -819,8 +785,6 @@ public class JContourLayer extends JPlotsLayer {
 			// TODO edit colour and linestyle info for different contour lines
 			int lc = 0xff000000;
 			// String ls = "-"; //TODO recreate line-drawing with different linestyles
-			JPlotShape.stroke(lc);
-			JPlotShape.strokeWeight((float) lw);
 			String ls = contourStyle[c];
 			double lln = 1d, llf = 0d, lpn = 0d, lpf = 0d, loff = 0d;
 			if ("-".equals(ls)) {
@@ -913,7 +877,7 @@ public class JContourLayer extends JPlotsLayer {
 					if (xf1 >= p[0] && xf1 <= p[0] + p[2] && xf2 >= p[0] && xf2 <= p[0] + p[2] && yf1 >= p[1]
 							&& yf1 <= p[1] + p[3] && yf2 >= p[1] && yf2 <= p[1] + p[3]) {
 						if (li % 2 == 0 && ldif > 0d)
-							linesh.addChild(new JLineShape(xf1, yf1, xf2, yf2));
+							linesh.addChild(new JLineShape((float)lw, lc, xf1, yf1, xf2, yf2));
 						loff += ldif;
 						switch (li) {
 						case 0:
@@ -948,7 +912,11 @@ public class JContourLayer extends JPlotsLayer {
 		}
 		s.addChild(linesh);
 	}
-
+	
+	//* **************************************** *
+	//* ********** STATIC METHODS     ********** *
+	//* **************************************** *
+	
 	public static int getLevel(double value, double[] intervalBorders, int nanLev) {
 		if (Double.isNaN(value))
 			return nanLev;
@@ -1357,8 +1325,10 @@ public class JContourLayer extends JPlotsLayer {
 			list.add(tri.toPolygon());
 		} else {
 			boolean failed = true;
-			for (int l = 0; l < list.size() && failed; l++)
+			for (int l = 0; l < list.size() && failed; l++) {
+				if(list.get(l).c.length>999) continue;
 				failed = !list.get(l).union(tri, tol);
+			}
 			if (failed)
 				list.add(tri.toPolygon());
 		}
@@ -1369,8 +1339,10 @@ public class JContourLayer extends JPlotsLayer {
 			list.add(poly.copy());
 		} else {
 			boolean failed = true;
-			for (int l = 0; l < list.size() && failed; l++)
+			for (int l = 0; l < list.size() && failed; l++) {
+				if(list.get(l).c.length>999) continue;
 				failed = !list.get(l).union(poly, tol);
+			}
 			if (failed)
 				list.add(poly.copy());
 		}

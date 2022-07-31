@@ -2,14 +2,14 @@ import jplots.*;
 import jplots.colour.*;
 import jplots.layer.*;
 
-int n = 21;
+int n = 257, m = 257;
 JPlot plt;
 
 void setup() {
     size(600,600,P2D);
     
     plt = new JPlot(this);
-    plt.figure(5d,5d);
+    plt.figure(4d,4d);
     newPlot();
 }
 
@@ -31,14 +31,14 @@ void keyReleased() {
 void newPlot() {
     noiseSeed(System.currentTimeMillis());
     float[] xx = new float[n+1];
-    float[] yy = new float[n+1];
-    float[][] zz = new float[n+1][n+1];
-    for(int j=0; j<=n; j++) {
-        yy[j] = j - 0.5*n;
+    float[] yy = new float[m+1];
+    float[][] zz = new float[m+1][n+1];
+    for(int j=0; j<=m; j++) {
+        yy[j] = j - 0.5*m;
         for(int i=0; i<=n; i++) {
             if(j==0)
-                xx[i] = i - 0.5*n;
-            zz[j][i] = noise(1.2345*xx[i]/n+19.632, 3.6224*yy[j]/n-8635.3257);
+                xx[i] = i + 0.5; //338.84736; // - 0.5*n;
+            zz[j][i] = noise(1.2345*xx[i]/n+19.632, 3.6224*yy[j]/m-8635.3257);
         }
     }
     
@@ -60,7 +60,7 @@ void newPlot() {
         }
     }
     plt.clear();
-    plt.contourf(xx,yy,zz,10, "lines",true,"linewidth",3f,"linecolor",0xff7f0000);
-    plt.setAsTimeAxis('x', "dayssince1.1.2000 00:00:00", "proleptic", "dd.mm.'yy");
+    plt.contourp(xx,yy,zz,10,"lines",true,"linewidth",3f,"linecolor",0xff7f0000);
+    //plt.setAsTimeAxis('x', "dayssince1.1.2000 00:00:00", "proleptic", "dd.mm.'yy");
     plt.colourbar();
 }

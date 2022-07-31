@@ -1,5 +1,6 @@
 package jplots.layer;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.locationtech.jts.geom.Coordinate;
@@ -21,6 +22,7 @@ public class JShapesLayer extends JPlotsLayer {
 
 	private String shapefileKey;
 	private String shapeType;
+	private List<double[][]> coordsSave;
 
 	public JShapesLayer(String resource, String type) {
 		super();
@@ -28,6 +30,7 @@ public class JShapesLayer extends JPlotsLayer {
 		lc = 0xff336699;
 		shapefileKey = resource;
 		shapeType = type;
+		coordsSave = new ArrayList<>();
 	}
 
 	@Override
@@ -43,7 +46,6 @@ public class JShapesLayer extends JPlotsLayer {
 		boolean debug = ax.getPlot().isDebug();
 //		if(debug)
 //			System.out.println("[DEBUG] JShapeLayer: begin reading shape file \""+connect.get("url")+"\"");
-
 		int fidx = 0;
 		for (Coordinate[] points : FileLoader.shapefiles.get(shapefileKey)) {
 			int ppcc = pc, llcc = lc;
@@ -62,6 +64,7 @@ public class JShapesLayer extends JPlotsLayer {
 				if (ax.isYlogAxis())
 					coords[c][1] = Math.log10(coords[c][1]);
 			}
+			coordsSave.add(coords.clone());
 			if (shapeType.equalsIgnoreCase("point")) {
 				JPlotShape.noFill();
 				JPlotShape.stroke(llcc);
@@ -76,8 +79,6 @@ public class JShapesLayer extends JPlotsLayer {
 			}
 			if (shapeType.equalsIgnoreCase("line")) {
 				JPlotShape.noFill();
-				JPlotShape.stroke(llcc);
-				JPlotShape.strokeWeight((float) lw);
 				for (int c = 1; c < points.length; c++) {
 					double x1 = p[0] + xs * (invertAxisX ? Xax - coords[c - 1][0] : coords[c - 1][0] - Xin);
 					double x2 = p[0] + xs * (invertAxisX ? Xax - coords[c][0] : coords[c][0] - Xin);
@@ -110,7 +111,7 @@ public class JShapesLayer extends JPlotsLayer {
 					}
 					if (x1 >= p[0] && x1 <= p[0] + p[2] && x2 >= p[0] && x2 <= p[0] + p[2] && y1 >= p[1]
 							&& y1 <= p[1] + p[3] && y2 >= p[1] && y2 <= p[1] + p[3])
-						s.addChild(new JLineShape((float) x1, (float) y1, (float) x2, (float) y2));
+						s.addChild(new JLineShape((float)lw, llcc, (float) x1, (float) y1, (float) x2, (float) y2));
 				}
 			}
 			if (shapeType.equalsIgnoreCase("polygon")) {
@@ -157,5 +158,8 @@ public class JShapesLayer extends JPlotsLayer {
 			fidx++;
 		}
 	}
-
+	
+	public List<double[][]> getCoords() {
+		return coordsSave;
+	}
 }

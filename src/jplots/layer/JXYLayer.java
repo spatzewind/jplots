@@ -5,7 +5,6 @@ import jplots.JPlot;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
-import jplots.shapes.JPlotShape;
 import processing.core.PGraphics;
 
 public class JXYLayer extends JPlotsLayer {
@@ -24,13 +23,15 @@ public class JXYLayer extends JPlotsLayer {
 		maxX = JPlotMath.dmax(xarrayx);
 		minY = JPlotMath.dmin(yarrayy);
 		maxY = JPlotMath.dmax(yarrayy);
+		maxZ = Double.NaN;
+		minZ = Double.NaN;
 		setLineColour(colour);
 		col = colour;
 		lw = linewidth;
 		setStyle(linestyle);
 		ls = linestyle;
 	}
-
+	
 	public JXYLayer(double[] x, double[] y, int colour, double linewidth, String linestyle) {
 		xarrayx = x;
 		yarrayy = y;
@@ -38,6 +39,8 @@ public class JXYLayer extends JPlotsLayer {
 		maxX = JPlotMath.dmax(xarrayx);
 		minY = JPlotMath.dmin(yarrayy);
 		maxY = JPlotMath.dmax(yarrayy);
+		maxZ = Double.NaN;
+		minZ = Double.NaN;
 		setLineColour(colour);
 		col = colour;
 		lw = linewidth;
@@ -55,14 +58,24 @@ public class JXYLayer extends JPlotsLayer {
 		double Xin = ax.isXlogAxis() ? Math.log10(minX) : minX, Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
 		double Yin = ax.isYlogAxis() ? Math.log10(minY) : minY, Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
 		JGroupShape xyShape = new JGroupShape();
-		JPlotShape.strokeWeight((float) lw);
 		int[] cols = new int[xarrayx.length - 1];
+		double[] pa = null;
 		if (parallelArray != null) {
-			if (parallelArray instanceof double[]) {
-				double[] pa = (double[]) parallelArray;
-				double pmin = JPlotMath.dmin(pa), pmax = JPlotMath.dmax(pa);
+			pa = JPlotMath.toDoubleArray1D(parallelArray);
+		}
+		if(pa!=null) {
+			double pmin = JPlotMath.dmin(pa), pmax = JPlotMath.dmax(pa);
+			if(!Double.isNaN(minZ)) pmin = minZ;
+			if(!Double.isNaN(maxZ)) pmax = maxZ;
+			if(pa.length>=xarrayx.length) {
 				for (int i = 0; i < cols.length; i++)
 					cols[i] = colourtable.getColour(0.5d * (pa[i] + pa[i + 1]), pmin, pmax);
+			} else if(pa.length==xarrayx.length-1) {
+				for(int i = 0; i < cols.length; i++)
+					cols[i] = colourtable.getColour(pa[i], pmin, pmax);
+			} else {
+				for(int i = 0; i < cols.length; i++)
+					cols[i] = col;
 			}
 		}
 		double lln = 1d, llf = 0d, lpn = 0d, lpf = 0d, loff = 0d;
@@ -119,9 +132,9 @@ public class JXYLayer extends JPlotsLayer {
 			dx /= l;
 			dy /= l;
 			double lpos = 0d, ldif = 0d;
-			JPlotShape.stroke(col);
-			if (parallelArray != null)
-				JPlotShape.stroke(cols[i]);
+			int llcc = col;
+			if (pa != null)
+				llcc = cols[i];
 			while (lpos < l) {
 				ldif = 0d;
 				switch (li) {
@@ -175,7 +188,7 @@ public class JXYLayer extends JPlotsLayer {
 				if (xf1 >= p[0] && xf1 <= p[0] + p[2] && xf2 >= p[0] && xf2 <= p[0] + p[2] && yf1 >= p[1]
 						&& yf1 <= p[1] + p[3] && yf2 >= p[1] && yf2 <= p[1] + p[3]) {
 					if (li % 2 == 0 && ldif > 0d)
-						xyShape.addChild(new JLineShape(xf1, yf1, xf2, yf2));
+						xyShape.addChild(new JLineShape((float)lw, llcc, xf1, yf1, xf2, yf2));
 					loff += ldif;
 					switch (li) {
 					case 0:
@@ -209,5 +222,8 @@ public class JXYLayer extends JPlotsLayer {
 		}
 		s.addChild(xyShape);
 	}
-
+	
+	public double[] getZRange() {
+		return new double[] {minZ, maxZ};
+	}
 }

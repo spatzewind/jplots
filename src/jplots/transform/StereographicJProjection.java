@@ -313,7 +313,7 @@ public class StereographicJProjection implements JProjection {
 		if (!stIn && !enIn)
 			return;
 		if (stIn && enIn) {
-			s.addChild(new JLineShape((float) x1, (float) y1, (float) x2, (float) y2));
+			s.addChild(new JLineShape(JPlotShape.strokeWeight, JPlotShape.strokeColour, (float) x1, (float) y1, (float) x2, (float) y2));
 			return;
 		}
 		if (!stIn) {
@@ -354,6 +354,6 @@ public class StereographicJProjection implements JProjection {
 		}
 		if (Math.abs(x2 - x1) < 0.0001d && Math.abs(y2 - y1) < 0.0001d)
 			return;
-		s.addChild(new JLineShape((float) x1, (float) y1, (float) x2, (float) y2));
+		s.addChild(new JLineShape(JPlotShape.strokeWeight, JPlotShape.strokeColour, (float) x1, (float) y1, (float) x2, (float) y2));
 	}
 }

@@ -18,7 +18,7 @@ public abstract class JPlotsLayer {
 	int lc, pc;
 	int[] lcs, pcs;
 	double lw;
-	double minX, maxX, minY, maxY;
+	double minX, maxX, minY, maxY, minZ, maxZ;
 	double angleMode;
 	String ls;
 	String label;
@@ -31,7 +31,7 @@ public abstract class JPlotsLayer {
 		lw = 2d;
 		lc = 0xff000000;
 		pc = 0xff7f7f7f;
-		ls = "";
+		ls = "-";
 		singleLineColour = true;
 		lcs = new int[] { 0xff000000 };
 		pcs = new int[] { 0xff7f7f7f };
@@ -125,6 +125,11 @@ public abstract class JPlotsLayer {
 	public void setFillColours(int[] _pcs) {
 		pcs = _pcs;
 		singleFillColour = false;
+	}
+	
+	public void setZRange(double zmin, double zmax) {
+		minZ = zmin;
+		maxZ = zmax;
 	}
 
 	public int getFillColour() {

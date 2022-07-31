@@ -4,7 +4,7 @@ import org.locationtech.jts.geom.Coordinate;
 
 import jplots.helper.GeometryTools;
 
-public class JDTriangle {
+public class JDQuad {
 
 	public int idx;
 	public int lev;
@@ -14,25 +14,59 @@ public class JDTriangle {
 	public JDEdge ab;
 	public JDEdge bc;
 	public JDEdge ca;
-	public double[][] barycenterMatrix;
-
+	private boolean parallelogram;
+	public double[][] k;
+	
 	private Integer hash = null;
 
-	public JDTriangle(Coordinate[] c) {
-		this(new JDPoint(c[0]), new JDPoint(c[1]), new JDPoint(c[2]), 0);
+	public JDQuad(Coordinate[] c) {
+		this(new JDPoint(c[0]), new JDPoint(c[1]), new JDPoint(c[2]), new JDPoint(c[3]), 0);
 	}
 
-	public JDTriangle(JDPoint a, JDPoint b, JDPoint c) {
-		this(a, b, c, 0);
+	public JDQuad(JDPoint a, JDPoint b, JDPoint c, JDPoint d) {
+		this(a, b, c, d, 0);
 	}
 
-	public JDTriangle(JDPoint a, JDPoint b, JDPoint c, int index) {
+	public JDQuad(JDPoint a, JDPoint b, JDPoint c, JDPoint d, int index) {
 		this.idx = index;
-		x = new double[] { a.x, b.x, c.x };
-		y = new double[] { a.y, b.y, c.y };
-		value = new double[] { a.value, b.value, c.value };
-		barycenterMatrix = JPlotMath.invert(new double[][] {
-			{ a.x, b.x, c.x }, { a.y, b.y, c.y }, { 1.d, 1.d, 1.d } });
+		x = new double[] { a.x, b.x, c.x, d.x };
+		y = new double[] { a.y, b.y, c.y, d.y };
+		value = new double[] { a.value, b.value, c.value, d.value };
+		/*
+		   p.x  =  a.x*(1-u)*(1-v) + b.x*u*(1-v) + d.x*(1-u)*v + c.x*u*v
+		   p.y  =  a.y*(1-u)*(1-v) + b.y*u*(1-v) + d.y*(1-u)*v + c.y*u*v
+		   
+		   u = (1+s)/2    v = (1+t)/2
+		   
+		   4*px  =  ax*(1-s)(1-t) + bx*(1+s)*(1-t) + cx*(1-s)*(1+t) + dx*(1+s)*(1+t)
+		   k1x =  ax+bx+cx+dx
+		   k2x = -ax+bx-cx+dx
+		   k3x = -ax-bx+cx+dx
+		   k4x =  ax-bx-cx+dx
+		   =>
+		   4px - k1x  =  k2x*s + k3x*t + k4x*s*t
+		   4py - k1y  =  k2y*s + k3y*t + k4y*s*t
+		   =>
+		   [4px-k1x-k3x*t] = [k2x+k4x*t]*s
+		   [4py-k1y-k3y*t] = [k2y+k4y*t]*s
+		   
+		   eliminate s:
+		   [4px-k1x-k3x*t]*[k2y+k4y*t] = [4py-k1y-k3y*t]*[k2x+k4x*t]
+		   =>
+		   0.0 = [k3y*k4x-k3x*k4y]*t²
+		        +[(4px-k1x)*k4y-k3x*k2y-(4py-k1y)*k4x+k3y*k2x)]*t
+		        +[(4px-k1x)*k2y-(4py-k1y)*k2x]
+		   q0 = px*4k2y-py*4k2x  -k1x*k2y+k1y*k2x
+		   q1 = px*4k4y-py*4k4x  -k1x*k4y-k3x*k2y+k1y*k4x+k3y*k2x
+		   q2 = k3y*l4x - k3x*k4y
+		   =>
+		   s = (-q1 +/- sqrt(q1*q1-4*q0*q2)) / 2q2
+		   
+		   with s calc t:
+		   t = (4px-k1x-k2x*s) / (k3x+k4x*s)
+		     = (4py-k1y-k2y*s) / (k3y+k4y*s)
+		 */
+		calcBarycenterHelper();
 	}
 
 	public void edges(JDEdge ab, JDEdge bc, JDEdge ca) {
@@ -60,91 +94,72 @@ public class JDTriangle {
 		this.ab = new JDEdge(a, b);
 		this.bc = new JDEdge(b, c);
 		this.ca = new JDEdge(c, a);
-		barycenterMatrix = JPlotMath.invert(new double[][] {
-			x, y, { 1.d, 1.d, 1.d } });
+		calcBarycenterHelper();
 	}
 
 	public JDPoint getA() {
 		return new JDPoint(x[0], y[0], value[0]);
 	}
-
 	public JDPoint getB() {
 		return new JDPoint(x[1], y[1], value[1]);
 	}
-
 	public JDPoint getC() {
 		return new JDPoint(x[2], y[2], value[2]);
+	}
+	public JDPoint getD() {
+		return new JDPoint(x[3], y[3], value[3]);
 	}
 
 	public JDPoint[] getCorners() {
 		return new JDPoint[] { getA(), getB(), getC() };
 	}
 
-	public JDTriangle copy() {
-		return new JDTriangle(getA(), getB(), getC(), idx);
+	public JDQuad copy() {
+		return new JDQuad(getA(), getB(), getC(), getD(), idx);
 	}
 
 	public JDPolygon toPolygon() {
 		return new JDPolygon(getCorners(), idx);
 	}
-
-	public void contourIntervalLevel(double[] intervals) {
-		JDPoint[] tmpP = getCorners();
-		int[] tmpL = { -1, -1, -1 };
-		for (int c = 0; c < 3; c++) {
-			if (Double.isNaN(tmpP[c].value))
-				continue;
-			tmpL[c] = 0;
-			for (double interval : intervals)
-				if (tmpP[c].value > interval)
-					tmpL[c]++;
-		}
-		lev = tmpL[0] + tmpL[1] + tmpL[2];
-		if (lev >= 0) {
-			lev /= 3;
-		} else {
-			lev = -1;
-		}
-	}
 	
-	public JDTriangle[] withoutNaNCorners() {
-		JDTriangle sub1 = null;
-		JDTriangle sub2 = null;
-		int nancode = (Double.isNaN(value[0])?1:0) | (Double.isNaN(value[1])?2:0) | (Double.isNaN(value[2])?4:0);
-		JDPoint ab = getA().fractionTowards(0.5d, getB());
-		JDPoint bc = getB().fractionTowards(0.5d, getC());
-		JDPoint ca = getC().fractionTowards(0.5d, getA());
-		switch(nancode) {
-			case 0: break;
-			case 1: ab.value = value[1]; ca.value = value[2];
-					sub1 = new JDTriangle(getB(),getC(),ca); sub2 = new JDTriangle(getB(),ca,ab);
-					break;
-			case 2: ab.value = value[0]; bc.value = value[2];
-					sub1 = new JDTriangle(getC(),getA(),ab); sub2 = new JDTriangle(getC(),ab,bc);
-					break;
-			case 3: bc.value = value[2]; ca.value = value[2];
-					sub1 = new JDTriangle(getC(),ca,bc);
-					break;
-			case 4: bc.value = value[1]; ca.value = value[0];
-					sub1 = new JDTriangle(getA(),getB(),bc); sub2 = new JDTriangle(getA(),bc,ca);
-					break;
-			case 5: ab.value = value[1]; bc.value = value[1];
-					sub1 = new JDTriangle(getB(),bc,ab);
-					break;
-			case 6: ab.value = value[0]; ca.value = value[0];
-					sub1 = new JDTriangle(getA(),ab,ca);
-					break;
-			default:
-			case 7:	return new JDTriangle[0];
-		}
-		if(sub1==null)
-			return new JDTriangle[] {this};
-		
-		if(sub2==null)
-			return new JDTriangle[] {sub1};
-		
-		return new JDTriangle[] {sub1, sub2};
-	}
+//	public JDQuad[] withoutNaNCorners() {
+//		JDQuad sub1 = null;
+//		JDQuad sub2 = null;
+//		int nancode = (Double.isNaN(value[0])?1:0) | (Double.isNaN(value[1])?2:0) | (Double.isNaN(value[2])?4:0);
+//		JDPoint ab = getA().fractionTowards(0.5d, getB());
+//		JDPoint bc = getB().fractionTowards(0.5d, getC());
+//		JDPoint ca = getC().fractionTowards(0.5d, getA());
+//		switch(nancode) {
+//			case 0: break;
+//			case 1: ab.value = value[1]; ca.value = value[2];
+//					sub1 = new JDQuad(getB(),getC(),ca); sub2 = new JDQuad(getB(),ca,ab);
+//					break;
+//			case 2: ab.value = value[0]; bc.value = value[2];
+//					sub1 = new JDQuad(getC(),getA(),ab); sub2 = new JDQuad(getC(),ab,bc);
+//					break;
+//			case 3: bc.value = value[2]; ca.value = value[2];
+//					sub1 = new JDQuad(getC(),ca,bc);
+//					break;
+//			case 4: bc.value = value[1]; ca.value = value[0];
+//					sub1 = new JDQuad(getA(),getB(),bc); sub2 = new JDQuad(getA(),bc,ca);
+//					break;
+//			case 5: ab.value = value[1]; bc.value = value[1];
+//					sub1 = new JDQuad(getB(),bc,ab);
+//					break;
+//			case 6: ab.value = value[0]; ca.value = value[0];
+//					sub1 = new JDQuad(getA(),ab,ca);
+//					break;
+//			default:
+//			case 7:	return new JDQuad[0];
+//		}
+//		if(sub1==null)
+//			return new JDQuad[] {this};
+//		
+//		if(sub2==null)
+//			return new JDQuad[] {sub1};
+//		
+//		return new JDQuad[] {sub1, sub2};
+//	}
 
 	@Override
 	public String toString() {
@@ -182,7 +197,7 @@ public class JDTriangle {
 			return false;
 
 		JDPoint[] A = this.getCorners();
-		JDPoint[] B = ((JDTriangle) obj).getCorners();
+		JDPoint[] B = ((JDQuad) obj).getCorners();
 
 		if (A[0].equals(B[0])) {
 			return (A[1].equals(B[1]) && A[2].equals(B[2])) || (A[1].equals(B[2]) && A[2].equals(B[1]));
@@ -195,19 +210,17 @@ public class JDTriangle {
 		return false;
 	}
 	
-	public JDTriangle affine(double[][] tm) {
+	public JDQuad affine(double[][] tm) {
 		for (int i = 0; i < 3; i++) {
 			double xx = x[i] * tm[0][0] + y[i] * tm[0][1] + tm[0][2];
 			double yy = x[i] * tm[1][0] + y[i] * tm[1][1] + tm[1][2];
 			x[i] = xx;
 			y[i] = yy;
 		}
-		barycenterMatrix = JPlotMath.invert(new double[][] {
-			x, y, { 1.d, 1.d, 1.d } });
 		if(tm[0][0]*tm[1][1]-tm[0][1]*tm[1][0]<0d)
 			reverse_orientation();
-//		if (tm[0][0] * tm[1][1] - tm[0][1] * tm[1][0] < 0d)
-//			reverse_orientation();
+		else
+			calcBarycenterHelper();
 		return this;
 	}
 
@@ -2010,32 +2023,117 @@ public class JDTriangle {
 		return contains(p, 0.0001d);
 	}
 	public boolean contains(JDPoint p, double delta) {
+		double kk = 1d + delta;
 		double[] w = barycentricCoords(p);
-		if(w[0]<-delta || w[0]>1d+delta) return false;
-		if(w[1]<-delta || w[1]>1d+delta) return false;
-		if(w[2]<-delta || w[2]>1d+delta) return false;
-		return true;
+		return Math.abs(w[0])<=kk && Math.abs(w[1])<=kk;
 	}
 	public double[] barycentricCoords(JDPoint p) {
-		return JPlotMath.mult(barycenterMatrix, new double[] {p.x, p.y, 1.0d});
+		return barycentricCoords(p, 0.0001d);
+	}
+	public double[] barycentricCoords(JDPoint p, double delta) {
+		/* Quad:
+		         A---B
+		         |   |
+		         D---C
+		 */
+		if(parallelogram) {
+			double u = k[0][0]*p.x + k[0][1]*p.y + k[0][2];
+			double v = k[1][0]*p.x + k[1][1]*p.y + k[1][2];
+			return new double[] { u, v };
+		} else {
+			double q0 = (2*p.x+k[0][0])*k[1][2]                 - (2*p.y+k[1][0])*k[0][2];
+			double q1 = (2*p.x+k[0][0])*k[1][3]+k[0][1]*k[1][2] - (2*p.y+k[1][0])*k[0][3]-k[1][1]*k[0][2];
+			double q2 =                         k[0][1]*k[1][3] -                         k[1][1]*k[0][3];
+			double v = -q0 / q1;
+			if(Math.abs(q2)>1e-32d) {
+				double qs = Math.sqrt(q1*q1 - 4d*q2*q0);
+				v = 0.5d*(-q1+qs)/q2;
+				if(Math.abs(v)>1d) v = 0.5d*(-q1-qs)/q2;
+			}
+			double u = (2*p.x+k[0][0]+k[0][1]*v) / (k[0][2]+k[0][3]*v);
+			return new double[] {2*u-1d,v};
+		}
 	}
 	public double valueAt(JDPoint p) {
 		double[] w = barycentricCoords(p);
-		int nancode = (Double.isNaN(value[0])?1:0) | (Double.isNaN(value[1])?2:0) | (Double.isNaN(value[2])?4:0);
+		double u = w[0];
+		double v = w[1];
+		int nancode =	(Double.isNaN(value[0])?1:0) | (Double.isNaN(value[1])?2:0) | (Double.isNaN(value[2])?4:0) | (Double.isNaN(value[3])?8:0);
 		switch(nancode) {
 			default:
-			case 0: return value[0]*w[0] + value[1]*w[1] + value[2]*w[2];
-			case 1: return w[0]>0.5d ? Double.NaN : (value[1]*w[1]+value[2]*w[2])/(w[1]+w[2]);
-			case 2: return w[1]>0.5d ? Double.NaN : (value[0]*w[0]+value[2]*w[2])/(w[0]+w[2]);
-			case 3: return w[2]>0.5d ? value[2] : Double.NaN;
-			case 4: return w[2]>0.5d ? Double.NaN : (value[0]*w[0]+value[1]*w[1])/(w[0]+w[1]);
-			case 5: return w[1]>0.5d ? value[1] : Double.NaN;
-			case 6: return w[0]>0.5d ? value[0] : Double.NaN;
-			case 7: return Double.NaN;
+			case  0: return 0.25d*(value[0]*(1d-u)*(1d-v) + value[1]*(1d+u)*(1d-v) + value[3]*(1d-u)*(1d+v) + value[2]*(1d+u)*(1d+v));
+			case 15: return Double.NaN;
+			
+//			case  1: return w[0]>0.5d ? Double.NaN : (value[1]*w[1]+value[2]*w[2])/(w[1]+w[2]);
+//			case  2: return w[1]>0.5d ? Double.NaN : (value[0]*w[0]+value[2]*w[2])/(w[0]+w[2]);
+			case  3: return w[1]<0d ? Double.NaN : 0.5d*(value[3]*(1d-w[0])+value[2]*(1d+w[0]));
+//			case  4: return w[2]>0.5d ? Double.NaN : (value[0]*w[0]+value[1]*w[1])/(w[0]+w[1]);
+			case  5: return Math.abs(w[0]+w[1])>1d ? Double.NaN : 0.5d*(value[1]*(2d+w[0]-w[1])+value[2]*(2d-w[0]+w[1]));
+			case  6: return w[0]>0d ? Double.NaN : 0.5d*(value[0]*(1d-w[1])+value[3]*(1d+w[1]));
+			case  7: return w[1]-w[0]<1d ? Double.NaN : value[3];
+//			case  8: 
+			case  9: return w[0]<0d ? Double.NaN : 0.5d*(value[1]*(1d-w[1])+value[2]*(1d+w[1]));
+			case 10: return Math.abs(w[0]-w[1])>1d ? Double.NaN : 0.5d*(value[0]*(2d-w[0]-w[1])+value[2]*(2d+w[0]+w[1]));
+			case 11: return w[0]+w[1]<1d ? Double.NaN : value[2];
+			case 12: return w[1]>0d ? Double.NaN : 0.5d*(value[0]*(1d-w[0])+value[1]*(1d+w[0]));
+			case 13: return w[0]-w[1]<1d ? Double.NaN : value[1];
+			case 14: return w[0]+w[1]>-1d ? Double.NaN : value[0];
 		}
+	}
+	public double[] refineUV(double uf, double vf, double lev) {
+		double u = uf, v = vf;
+		for(int i=0; i<3; i++) {
+			double l = 0.25d*(value[0]*(1-u)*(1-v)+value[1]*(1+u)*(1-v)+value[2]*(1+u)*(1+v)+value[3]*(1-u)*(1+v));
+			double lu = 0.25d*((value[1]-value[0])*(1-v) + (value[2]-value[3])*(1+v));
+			double lv = 0.25d*((value[3]-value[0])*(1-u) + (value[2]-value[1])*(1+u));
+			double lr = 1d/(lu*lu+lv*lv);
+			if(lr>1000000d) break;
+			u += (lev-l)*lu*lr;
+			v += (lev-l)*lv*lr;
+		}
+		return new double[] {u,v};
+	}
+	public JDPoint pointFromUV(double[] uv) {
+		return pointFromUV(uv[0], uv[1]);
+	}
+	public JDPoint pointFromUV(double u, double v) {
+		return new JDPoint(
+				0.25d*(x[0]*(1d-u)*(1d-v)     + x[1]*(1d+u)*(1d-v)     + x[3]*(1d-u)*(1d+v)     + x[2]*(1d+u)*(1d+v)),
+				0.25d*(y[0]*(1d-u)*(1d-v)     + y[1]*(1d+u)*(1d-v)     + y[3]*(1d-u)*(1d+v)     + y[2]*(1d+u)*(1d+v)),
+				0.25d*(value[0]*(1d-u)*(1d-v) + value[1]*(1d+u)*(1d-v) + value[3]*(1d-u)*(1d+v) + value[2]*(1d+u)*(1d+v))
+		);
 	}
 	
 	public double area() {
 		return GeometryTools.area(getCorners());
 	}
+	public boolean isParallelogram() {
+		return parallelogram;
+	}
+	
+	private void calcBarycenterHelper() {
+		/* Quad:
+		         A---B
+		         |   |
+		         D---C
+		 */
+		double a = (x[1]-x[0])*(x[1]-x[0]) + (y[1]-y[0])*(y[1]-y[0]);
+		double b = (x[2]-x[1])*(x[2]-x[1]) + (y[2]-y[1])*(y[2]-y[1]);
+		double c = (x[3]-x[2])*(x[3]-x[2]) + (y[3]-y[2])*(y[3]-y[2]);
+		double d = (x[0]-x[3])*(x[0]-x[3]) + (y[0]-y[3])*(y[0]-y[3]);
+		parallelogram = (Math.abs(a-c)/(a+c)<0.0001d && Math.abs(b-d)/(b+d)<0.0001d);
+		if(parallelogram) {
+			k = JPlotMath.invert(new double[][] {
+				{ 0.5d*(x[1]-x[0]), 0.5d*(x[3]-x[0]), 0.25d*(x[0]+x[1]+x[2]+x[3]) },
+				{ 0.5d*(y[1]-y[0]), 0.5d*(y[3]-y[0]), 0.25d*(y[0]+y[1]+y[2]+y[3]) },
+				{      0d,               0d,                      1d              }
+			});
+		} else {
+			k = new double[][] {
+				{ -x[0]-x[3], x[0]-x[3], x[1]+x[2]-x[0]-x[3], x[2]-x[1]+x[0]-x[3]},
+				{ -y[0]-y[3], y[0]-y[3], y[1]+y[2]-y[0]-y[3], y[2]-y[1]+y[0]-y[3]}
+			};
+		}
+	}
+	
 }

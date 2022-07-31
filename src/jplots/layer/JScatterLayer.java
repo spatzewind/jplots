@@ -85,26 +85,26 @@ public class JScatterLayer extends JPlotsLayer {
 							(float) (y1 + 2 * lw)));
 				}
 				if ("x".equals(ls)) {
-					xyShape.addChild(new JLineShape((float) (x1 - 2 * lw), (float) (y1 - 2 * lw), (float) (x1 + 2 * lw),
+					xyShape.addChild(new JLineShape((float)lw, col, (float) (x1 - 2 * lw), (float) (y1 - 2 * lw), (float) (x1 + 2 * lw),
 							(float) (y1 + 2 * lw)));
-					xyShape.addChild(new JLineShape((float) (x1 - 2 * lw), (float) (y1 + 2 * lw), (float) (x1 + 2 * lw),
+					xyShape.addChild(new JLineShape((float)lw, col, (float) (x1 - 2 * lw), (float) (y1 + 2 * lw), (float) (x1 + 2 * lw),
 							(float) (y1 - 2 * lw)));
 				}
 				if ("+".equals(ls)) {
 					xyShape.addChild(
-							new JLineShape((float) (x1 - 3 * lw), (float) y1, (float) (x1 + 3 * lw), (float) y1));
+							new JLineShape((float)lw, col, (float) (x1 - 3 * lw), (float) y1, (float) (x1 + 3 * lw), (float) y1));
 					xyShape.addChild(
-							new JLineShape((float) x1, (float) (y1 - 3 * lw), (float) x1, (float) (y1 + 3 * lw)));
+							new JLineShape((float)lw, col, (float) x1, (float) (y1 - 3 * lw), (float) x1, (float) (y1 + 3 * lw)));
 				}
 				if ("<>".equals(ls)) {
 					xyShape.addChild(
-							new JLineShape((float) x1, (float) (y1 - 3 * lw), (float) (x1 + 3 * lw), (float) y1));
+							new JLineShape((float)lw, col, (float) x1, (float) (y1 - 3 * lw), (float) (x1 + 3 * lw), (float) y1));
 					xyShape.addChild(
-							new JLineShape((float) (x1 + 3 * lw), (float) y1, (float) x1, (float) (y1 + 3 * lw)));
+							new JLineShape((float)lw, col, (float) (x1 + 3 * lw), (float) y1, (float) x1, (float) (y1 + 3 * lw)));
 					xyShape.addChild(
-							new JLineShape((float) x1, (float) (y1 + 3 * lw), (float) (x1 - 3 * lw), (float) y1));
+							new JLineShape((float)lw, col, (float) x1, (float) (y1 + 3 * lw), (float) (x1 - 3 * lw), (float) y1));
 					xyShape.addChild(
-							new JLineShape((float) (x1 - 3 * lw), (float) y1, (float) x1, (float) (y1 - 3 * lw)));
+							new JLineShape((float)lw, col, (float) (x1 - 3 * lw), (float) y1, (float) x1, (float) (y1 - 3 * lw)));
 				}
 			}
 		s.addChild(xyShape);
