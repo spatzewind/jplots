@@ -1,8 +1,5 @@
 package jplots.maths;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.locationtech.jts.geom.Coordinate;
 
 public class JDPoint implements Comparable<JDPoint> {
@@ -10,27 +7,23 @@ public class JDPoint implements Comparable<JDPoint> {
 	public double x, y, value;
 	public int idx, lev;
 	private Integer hash = null;
-	private List<JDPoint> neighbors;
 
 	public JDPoint(Coordinate c) {
 		x = c.x;
 		y = c.y;
 		value = c.z;
-		neighbors = new ArrayList<>();
 	}
 
 	public JDPoint(double _x, double _y) {
 		x = _x;
 		y = _y;
 		value = Double.NaN;
-		neighbors = new ArrayList<>();
 	}
 
 	public JDPoint(double _x, double _y, double _v) {
 		x = _x;
 		y = _y;
 		value = _v;
-		neighbors = new ArrayList<>();
 	}
 
 	public double x() {
@@ -137,23 +130,29 @@ public class JDPoint implements Comparable<JDPoint> {
 				this.value + fraction * (towards.value - this.value));
 	}
 
+	/**
+	 * calculates the (firs) intersection between a line segment from p1 to p2 and a circle around this point with given radius
+	 * 
+	 * @param p1      start point of the line segment
+	 * @param p2      end point of the line segment
+	 * @param radius  the radius of the circle
+	 * @return        intersection point or null if the intersections is not between p1 and p2 or no intersection exists
+	 */
 	public JDPoint circleCrossBetween(JDPoint p1, JDPoint p2, double radius) {
 		double dx = p2.x - p1.x;
 		double dy = p2.y - p1.y;
-		double dr = dx * dx + dy * dy;
-		double D = (p1.x - this.x) * (p2.y - this.y) - (p2.x - this.x) * (p1.y - this.y);
-		double w = dr * radius * radius - D * D;
-		if (w < 0d)
-			return null;
-		w = Math.sqrt(w) * (dy < 0d ? -1d : 1d);
-		double nx = (D * dy + w * dx) / dr;
-		double ny = (-D * dx + w * dy) / dr;
-		double f = (nx * dx + ny * dy) / dr;
-		if (f < 0d || f > 1d) {
-			nx = (D * dy + w * dx) / dr;
-			ny = (-D * dx + w * dy) / dr;
-		}
-		return new JDPoint(this.x + nx, this.y + ny);
+		double dr2 = dx * dx + dy * dy;
+		double D = (this.x-p1.x)*dy - (this.y-p1.y)*dx;
+		double w = dr2 * radius * radius - D * D;
+		if(w<0d) return null;
+		w = Math.sqrt(w);
+		D = (this.x-p1.x)*dx + (this.y-p1.y)*dy;
+		double f = D-w;
+		if(f<0d) f = D+w;
+		if(f*f>dr2) return null;
+		double nx = f*dx/dr2;
+		double ny = f*dy/dr2;
+		return new JDPoint(p1.x + nx, p1.y + ny);
 	}
 
 //	double dist2(jpoint v) {

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jplots.JAxis;
+import jplots.maths.JDLine;
 import jplots.maths.JDPolygon;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
@@ -40,6 +41,13 @@ public class IdentityJProjection implements JProjection {
 	@Override
 	public double[] tissotFromProj(double x, double y) {
 		return new double[] { 1d, 0d, 0d, 1d };
+	}
+
+	@Override
+	public List<JDLine> splitByMapBorder(JDLine line) {
+		List<JDLine> res = new ArrayList<>();
+		res.add(line);
+		return res;
 	}
 
 	@Override

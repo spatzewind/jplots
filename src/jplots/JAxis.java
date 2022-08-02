@@ -131,78 +131,59 @@ public class JAxis {
 	public void contour(float[] x, float[] y, float[][] z) {
 		this.contour(x, y, z, 10, (Object[]) null);
 	}
-
 	public void contour(float[] x, float[] y, float[][] z, int levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels,
-				JColourtable.pctables.get("default"), 2.0f, true, false, false);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, null);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contour(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, true, false,
-				false);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), 0, levels);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contour(float[][] x, float[][] y, float[][] z) {
 		this.contour(x, y, z, 10, (Object[]) null);
 	}
-
 	public void contour(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels,
-				JColourtable.pctables.get("default"), 2.0f, true, false, false);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, null);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contour(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, true, false,
-				false);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), 0, levels);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contour(double[] x, double[] y, double[][] z) {
 		this.contour(x, y, z, 10, (Object[]) null);
 	}
-
 	public void contour(double[] x, double[] y, double[][] z, int levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels,
-				JColourtable.pctables.get("default"), 2.0d, true, false, false);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, null);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contour(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, true, false,
-				false);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), 0, levels);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contour(double[][] x, double[][] y, double[][] z) {
 		this.contour(x, y, z, 10, (Object[]) null);
 	}
-
 	public void contour(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels,
-				JColourtable.pctables.get("default"), 2.0d, true, false, false);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, null);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contour(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, true, false,
-				false);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), 0, levels);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
@@ -211,7 +192,6 @@ public class JAxis {
 	public void contourf(float[] x, float[] y, float[][] z) {
 		this.contourf(x, y, z, 10, (Object[]) null);
 	}
-
 	public void contourf(float[] x, float[] y, float[][] z, int levels, Object... params) {
 		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels,
 				JColourtable.pctables.get("default"), 2.0f, false, true, false);
@@ -219,7 +199,6 @@ public class JAxis {
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourf(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
 		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, false, true,
 				false);
@@ -227,11 +206,9 @@ public class JAxis {
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourf(float[][] x, float[][] y, float[][] z) {
 		this.contourf(x, y, z, 10, (Object[]) null);
 	}
-
 	public void contourf(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
 		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels,
 				JColourtable.pctables.get("default"), 2.0f, false, true, false);
@@ -239,7 +216,6 @@ public class JAxis {
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourf(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
 		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, false, true,
 				false);
@@ -247,11 +223,9 @@ public class JAxis {
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourf(double[] x, double[] y, double[][] z) {
 		this.contourf(x, y, z, 10, (Object[]) null);
 	}
-
 	public void contourf(double[] x, double[] y, double[][] z, int levels, Object... params) {
 		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels,
 				JColourtable.pctables.get("default"), 2.0d, false, true, false);
@@ -259,7 +233,6 @@ public class JAxis {
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourf(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
 		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, false, true,
 				false);
@@ -267,11 +240,9 @@ public class JAxis {
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourf(double[][] x, double[][] y, double[][] z) {
 		this.contourf(x, y, z, 10, (Object[]) null);
 	}
-
 	public void contourf(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
 		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels,
 				JColourtable.pctables.get("default"), 2.0d, false, true, false);
@@ -279,7 +250,6 @@ public class JAxis {
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourf(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
 		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, false, true,
 				false);
@@ -291,78 +261,75 @@ public class JAxis {
 	public void contourp(float[] x, float[] y, float[][] z) {
 		this.contourf(x, y, z, 10, (Object[]) null);
 	}
-
 	public void contourp(float[] x, float[] y, float[][] z, int levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels,
-				JColourtable.pctables.get("default"), 2.0f, false, true, true);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, null);
+		cnl.setColourtable(JColourtable.pctables.get("default"));
+		cnl.setLineWidth(2.0f); cnl.lines(false); cnl.setFilled(true); cnl.setPixelFilling(true);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourp(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, false, true,
-				true);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.fmin(z),JPlotMath.fmax(z),0, levels);
+		cnl.setColourtable(JColourtable.pctables.get("default"));
+		cnl.setLineWidth(2.0f); cnl.lines(false); cnl.setFilled(true); cnl.setPixelFilling(true);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourp(float[][] x, float[][] y, float[][] z) {
 		this.contourf(x, y, z, 10, (Object[]) null);
 	}
-
 	public void contourp(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels,
-				JColourtable.pctables.get("default"), 2.0f, false, true, true);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.fmin(z), JPlotMath.fmax(z), levels, null);
+		cnl.setColourtable(JColourtable.pctables.get("default"));
+		cnl.setLineWidth(2.0f); cnl.lines(false); cnl.setFilled(true); cnl.setPixelFilling(true);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourp(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0f, false, true,
-				true);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.fmin(z),JPlotMath.fmax(z),0, levels);
+		cnl.setColourtable(JColourtable.pctables.get("default"));
+		cnl.setLineWidth(2.0f); cnl.lines(false); cnl.setFilled(true); cnl.setPixelFilling(true);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourp(double[] x, double[] y, double[][] z) {
 		this.contourp(x, y, z, 10, (Object[]) null);
 	}
-
 	public void contourp(double[] x, double[] y, double[][] z, int levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels,
-				JColourtable.pctables.get("default"), 2.0d, false, true, true);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, null);
+		cnl.setColourtable(JColourtable.pctables.get("default"));
+		cnl.setLineWidth(2.0f); cnl.lines(false); cnl.setFilled(true); cnl.setPixelFilling(true);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourp(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, false, true,
-				true);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.dmin(z),JPlotMath.dmax(z), 0, levels);
+		cnl.setColourtable(JColourtable.pctables.get("default"));
+		cnl.setLineWidth(2.0f); cnl.lines(false); cnl.setFilled(true); cnl.setPixelFilling(true);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourp(double[][] x, double[][] y, double[][] z) {
 		this.contourp(x, y, z, 10, (Object[]) null);
 	}
-
 	public void contourp(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels,
-				JColourtable.pctables.get("default"), 2.0d, false, true, true);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.dmin(z), JPlotMath.dmax(z), levels, null);
+		cnl.setColourtable(JColourtable.pctables.get("default"));
+		cnl.setLineWidth(2.0f); cnl.lines(false); cnl.setFilled(true); cnl.setPixelFilling(true);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
 	public void contourp(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
-		JPlotsLayer cnl = new JContourLayer(x, y, z, levels, JColourtable.pctables.get("default"), 2.0d, false, true,
-				true);
+		JContourLayer2D cnl = new JContourLayer2D(x, y, z, JPlotMath.dmin(z),JPlotMath.dmax(z),0, levels);
+		cnl.setColourtable(JColourtable.pctables.get("default"));
+		cnl.setLineWidth(2.0f); cnl.lines(false); cnl.setFilled(true); cnl.setPixelFilling(true);
 		layers.add(cnl);
 		readParams(cnl, params);
 		updateRange(cnl);
@@ -371,18 +338,15 @@ public class JAxis {
 	public void plot(float[] x, float[] y) {
 		this.plot(x, y, 0xff000000, 3f, "-", (Object) null);
 	}
-
 	public void plot(float[] x, float[] y, int colour, float linewidth, String linestyle, Object... params) {
 		JPlotsLayer xyl = new JXYLayer(x, y, colour, linewidth, linestyle);
 		layers.add(xyl);
 		readParams(xyl, params);
 		updateRange(xyl);
 	}
-
 	public void plot(double[] x, double[] y) {
 		this.plot(x, y, 0xff000000, 3d, "-", (Object) null);
 	}
-
 	public void plot(double[] x, double[] y, int colour, double linewidth, String linestyle, Object... params) {
 		JPlotsLayer xyl = new JXYLayer(x, y, colour, linewidth, linestyle);
 		layers.add(xyl);
@@ -393,18 +357,15 @@ public class JAxis {
 	public void scatter(float[] x, float[] y) {
 		this.scatter(x, y, 0xff000000, 1f, "c", (Object) null);
 	}
-
 	public void scatter(float[] x, float[] y, int colour, float iconsize, String symbol, Object... params) {
 		JPlotsLayer scl = new JScatterLayer(x, y, colour, iconsize, symbol);
 		layers.add(scl);
 		readParams(scl, params);
 		updateRange(scl);
 	}
-
 	public void scatter(double[] x, double[] y) {
 		this.scatter(x, y, 0xff000000, 1d, "c", (Object) null);
 	}
-
 	public void scatter(double[] x, double[] y, int colour, double iconsize, String symbol, Object... params) {
 		JPlotsLayer scl = new JScatterLayer(x, y, colour, iconsize, symbol);
 		layers.add(scl);
@@ -415,40 +376,33 @@ public class JAxis {
 	public void hatch(float[] x, float[] y, float[][] z, float lower, float upper, String pattern) {
 		this.hatch(x,y,z, lower,upper, pattern, (Object)null);
 	}
-	
 	public void hatch(float[] x, float[] y, float[][] z, float lower, float upper, String pattern, Object... params) {
 		JPlotsLayer hl = new JHatchLayer(x, y, null, null, z, 1f, lower, upper, pattern);
 		layers.add(hl);
 		readParams(hl, params);
 		updateRange(hl);
 	}
-	
 	public void hatch(float[][] x, float[][] y, float[][] z, float lower, float upper, String pattern) {
 		this.hatch(x,y,z, lower,upper, pattern, (Object)null);
 	}
-	
 	public void hatch(float[][] x, float[][] y, float[][] z, float lower, float upper, String pattern, Object... params) {
 		JPlotsLayer hl = new JHatchLayer(null, null, x, y, z, 1f, lower, upper, pattern);
 		layers.add(hl);
 		readParams(hl, params);
 		updateRange(hl);
 	}
-	
 	public void hatch(double[] x, double[] y, double[][] z, double lower, double upper, String pattern) {
 		this.hatch(x, y, z, lower, upper, pattern, (Object)null);
 	}
-	
 	public void hatch(double[] x, double[] y, double[][] z, double lower, double upper, String pattern, Object... params) {
 		JPlotsLayer hl = new JHatchLayer(x, y, null, null, z, 1d, lower, upper, pattern);
 		layers.add(hl);
 		readParams(hl, params);
 		updateRange(hl);
 	}
-	
 	public void hatch(double[][] x, double[][] y, double[][] z, double lower, double upper, String pattern) {
 		this.hatch(x, y, z, lower, upper, pattern, (Object)null);
 	}
-	
 	public void hatch(double[][] x, double[][] y, double[][] z, double lower, double upper, String pattern, Object... params) {
 		JPlotsLayer hl = new JHatchLayer(null, null, x, y, z, 1d, lower, upper, pattern);
 		layers.add(hl);
@@ -459,17 +413,14 @@ public class JAxis {
 	public void axhline(double y) {
 		axhline(y, 0xff000000, 3f, "-");
 	}
-
 	public void axhline(double y, int colour, double linewidth, String linestyle) {
 		JPlotsLayer xyl = new JLineLayer(y, 'h', colour, linewidth, linestyle);
 		layers.add(xyl);
 		updateRange(xyl, "y");
 	}
-
 	public void axvline(double x) {
 		axvline(x, 0xff000000, 3f, "-");
 	}
-
 	public void axvline(double x, int colour, double linewidth, String linestyle) {
 		JPlotsLayer xyl = new JLineLayer(x, 'v', colour, linewidth, linestyle);
 		layers.add(xyl);
@@ -480,17 +431,14 @@ public class JAxis {
 		JTextLayer tl = new JTextLayer(text, x, y, 1.0d, 0xff000000, PConstants.LEFT, PConstants.BOTTOM, 0d);
 		layers.add(tl);
 	}
-
 	public void addText(double x, double y, String text, double textsize, int colour) {
 		JTextLayer tl = new JTextLayer(text, x, y, textsize, colour, PConstants.LEFT, PConstants.BOTTOM, 0d);
 		layers.add(tl);
 	}
-
 	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny) {
 		JTextLayer tl = new JTextLayer(text, x, y, textsize, colour, alignx, aligny, 0d);
 		layers.add(tl);
 	}
-
 	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny,
 			double rotation) {
 		JTextLayer tl = new JTextLayer(text, x, y, textsize, colour, alignx, aligny, rotation);
@@ -500,7 +448,6 @@ public class JAxis {
 	public void colourbar() {
 		pplot.colourbar(this, "");
 	}
-
 	public void colourbar(String name) {
 		pplot.colourbar(this, name);
 	}
@@ -509,7 +456,6 @@ public class JAxis {
 		JPlotsLayer lgl = new JLegend(this);
 		layers.add(lgl);
 	}
-
 	public void legend(double rts) {
 		JPlotsLayer lgl = new JLegend(this, rts);
 		layers.add(lgl);
@@ -518,7 +464,6 @@ public class JAxis {
 	public void coastLines() {
 		coastLines(110);
 	}
-
 	public void coastLines(int resolution) {
 		JPlotsLayer shl = new JShapesLayer(
 				FileLoader.loadResourceShapeFile("/data/ne_" + resolution + "m_coastline", coast_crs), "line");
@@ -529,7 +474,6 @@ public class JAxis {
 	public void land() {
 		land(0xff676767, 0xff000000);
 	}
-
 	public void land(int land_colour, int coast_colour) {
 		// JPlotsLayer shl = new
 		// JShapesLayer(FileLoader.loadResourceShapeFile("/data/simplified_land_polygons"),
@@ -543,7 +487,6 @@ public class JAxis {
 	public void showShapefile(String path_to_shapefile, String shapeType) {
 		showShapefile(path_to_shapefile, shapeType, null);
 	}
-
 	public void showShapefile(String path_to_shapefile, String shapeType, CoordinateReferenceSystem user_crs,
 			Object... params) {
 //		int i = path_to_shapefile.lastIndexOf(".");
@@ -553,7 +496,6 @@ public class JAxis {
 		layers.add(shl);
 		readParams(shl, params);
 	}
-
 	public void showShapefile(String path_to_shapefile, String shapeType, int user_epsg_code, Object... params) {
 //		int i = path_to_shapefile.lastIndexOf(".");
 //		if(i<0) i = path_to_shapefile.length();
@@ -612,12 +554,11 @@ public class JAxis {
 			System.out.println("[DEBUG] resize PAxis-object: x/y=" + px + "/" + py + " w/h=" + pw + "/" + ph);
 		return this;
 	}
-
+	
 	public JAxis setXRange(double xmin, double xmax) {
 		setXRange(xmin, xmax, true);
 		return this;
 	}
-
 	private void setXRange(double xmin, double xmax, boolean notify) {
 		minX = xmin;
 		maxX = xmax;
@@ -627,12 +568,10 @@ public class JAxis {
 				if (!a.equals(this))
 					a.setXRange(xmin, xmax, false);
 	}
-
 	public JAxis setYRange(double ymin, double ymax) {
 		setYRange(ymin, ymax, true);
 		return this;
 	}
-
 	private void setYRange(double ymin, double ymax, boolean notify) {
 		minY = ymin;
 		maxY = ymax;
@@ -642,7 +581,6 @@ public class JAxis {
 				if (!a.equals(this))
 					a.setYRange(ymin, ymax, false);
 	}
-
 	public JAxis setRange(double xmin, double xmax, double ymin, double ymax) {
 		setXRange(xmin, xmax);
 		setYRange(ymin, ymax);
@@ -690,11 +628,9 @@ public class JAxis {
 				yTkOn = onoff;
 		}
 	}
-
 	public void setGrid() {
 		setGrid("both", true);
 	}
-
 	public void setGrid(String axis, boolean onoff) {
 		boolean setX = false, setY = false;
 		if ("both".equals(axis.toLowerCase())) {
@@ -728,19 +664,15 @@ public class JAxis {
 	public void setFont(PFont font) {
 		pfont = font;
 	}
-
 	public void setTextSize(double ts) {
 		txtsize = JPlot.dpi * ts / 72d;
 	}
-
 	public void setXTitle(String xtitle) {
 		titleX = xtitle;
 	}
-
 	public void setYTitle(String ytitle) {
 		titleY = ytitle;
 	}
-
 	public void setTitle(String _title) {
 		titleP = _title;
 	}
@@ -764,15 +696,12 @@ public class JAxis {
 			break;
 		}
 	}
-
 	public void setAsTimeAxis(char axis, String unit) {
 		setAsTimeAxis(axis, unit, "gregorian", null);
 	}
-
 	public void setAsTimeAxis(char axis, String unit, String calendar) {
 		setAsTimeAxis(axis, unit, calendar, null);
 	}
-
 	public void setAsTimeAxis(char axis, String unit, String calendar, String format) {
 		switch (axis) {
 		case 'b':

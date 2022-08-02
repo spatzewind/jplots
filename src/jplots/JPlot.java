@@ -480,15 +480,12 @@ public class JPlot {
 	public void hline(float y) {
 		gca().axhline(y);
 	}
-
 	public void hline(float y, int colour, float linewidth, String linestyle) {
 		gca().axhline(y, colour, linewidth, linestyle);
 	}
-
 	public void hline(double y) {
 		gca().axhline(y);
 	}
-
 	public void hline(double y, int colour, double linewidth, String linestyle) {
 		gca().axhline(y, colour, linewidth, linestyle);
 	}
@@ -496,15 +493,12 @@ public class JPlot {
 	public void vline(float x) {
 		gca().axvline(x);
 	}
-
 	public void vline(float x, int colour, float linewidth, String linestyle) {
 		gca().axvline(x, colour, linewidth, linestyle);
 	}
-
 	public void vline(double x) {
 		gca().axvline(x);
 	}
-
 	public void vline(double x, int colour, double linewidth, String linestyle) {
 		gca().axvline(x, colour, linewidth, linestyle);
 	}
@@ -512,15 +506,12 @@ public class JPlot {
 	public void plot(float[] x, float[] y) {
 		gca().plot(x, y);
 	}
-
 	public void plot(float[] x, float[] y, int colour, float linewidth, String linestyle, Object... params) {
 		gca().plot(x, y, colour, linewidth, linestyle, params);
 	}
-
 	public void plot(double[] x, double[] y) {
 		gca().plot(x, y);
 	}
-
 	public void plot(double[] x, double[] y, int colour, double linewidth, String linestyle, Object... params) {
 		gca().plot(x, y, colour, linewidth, linestyle, params);
 	}
@@ -528,15 +519,12 @@ public class JPlot {
 	public void scatter(float[] x, float[] y) {
 		gca().scatter(x, y);
 	}
-
 	public void scatter(float[] x, float[] y, int colour, float iconsize, String symbol, Object... params) {
 		gca().scatter(x, y, colour, iconsize, symbol, params);
 	}
-
 	public void scatter(double[] x, double[] y) {
 		gca().scatter(x, y);
 	}
-
 	public void scatter(double[] x, double[] y, int colour, double iconsize, String symbol, Object... params) {
 		gca().scatter(x, y, colour, iconsize, symbol, params);
 	}
@@ -544,47 +532,36 @@ public class JPlot {
 	public void contour(float[] x, float[] y, float[][] z) {
 		gca().contour(x, y, z);
 	}
-
 	public void contour(float[] x, float[] y, float[][] z, int levels, Object... params) {
 		gca().contour(x, y, z, levels, params);
 	}
-
 	public void contour(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
 		gca().contour(x, y, z, levels, params);
 	}
-
 	public void contour(float[][] x, float[][] y, float[][] z) {
 		gca().contour(x, y, z);
 	}
-
 	public void contour(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
 		gca().contour(x, y, z, levels, params);
 	}
-
 	public void contour(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
 		gca().contour(x, y, z, levels, params);
 	}
-
 	public void contour(double[] x, double[] y, double[][] z) {
 		gca().contour(x, y, z);
 	}
-
 	public void contour(double[] x, double[] y, double[][] z, int levels, Object... params) {
 		gca().contour(x, y, z, levels, params);
 	}
-
 	public void contour(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
 		gca().contour(x, y, z, levels, params);
 	}
-
 	public void contour(double[][] x, double[][] y, double[][] z) {
 		gca().contour(x, y, z);
 	}
-
 	public void contour(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
 		gca().contour(x, y, z, levels, params);
 	}
-
 	public void contour(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
 		gca().contour(x, y, z, levels, params);
 	}
@@ -592,47 +569,36 @@ public class JPlot {
 	public void contourf(float[] x, float[] y, float[][] z) {
 		gca().contourf(x, y, z);
 	}
-
 	public void contourf(float[] x, float[] y, float[][] z, int levels, Object... params) {
 		gca().contourf(x, y, z, levels, params);
 	}
-
 	public void contourf(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
 		gca().contourf(x, y, z, levels, params);
 	}
-
 	public void contourf(float[][] x, float[][] y, float[][] z) {
 		gca().contourf(x, y, z);
 	}
-
 	public void contourf(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
 		gca().contourf(x, y, z, levels, params);
 	}
-
 	public void contourf(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
 		gca().contourf(x, y, z, levels, params);
 	}
-
 	public void contourf(double[] x, double[] y, double[][] z) {
 		gca().contourf(x, y, z);
 	}
-
 	public void contourf(double[] x, double[] y, double[][] z, int levels, Object... params) {
 		gca().contourf(x, y, z, levels, params);
 	}
-
 	public void contourf(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
 		gca().contourf(x, y, z, levels, params);
 	}
-
 	public void contourf(double[][] x, double[][] y, double[][] z) {
 		gca().contourf(x, y, z);
 	}
-
 	public void contourf(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
 		gca().contourf(x, y, z, levels, params);
 	}
-
 	public void contourf(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
 		gca().contourf(x, y, z, levels, params);
 	}
@@ -640,80 +606,61 @@ public class JPlot {
 	public void contourp(float[] x, float[] y, float[][] z) {
 		gca().contourp(x, y, z);
 	}
-
 	public void contourp(float[] x, float[] y, float[][] z, int levels, Object... params) {
 		gca().contourp(x, y, z, levels, params);
 	}
-
 	public void contourp(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
 		gca().contourp(x, y, z, levels, params);
 	}
-
 	public void contourp(float[][] x, float[][] y, float[][] z) {
 		gca().contourp(x, y, z);
 	}
-
 	public void contourp(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
 		gca().contourp(x, y, z, levels, params);
 	}
-
 	public void contourp(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
 		gca().contourp(x, y, z, levels, params);
 	}
-
 	public void contourp(double[] x, double[] y, double[][] z) {
 		gca().contourp(x, y, z);
 	}
-
 	public void contourp(double[] x, double[] y, double[][] z, int levels, Object... params) {
 		gca().contourp(x, y, z, levels, params);
 	}
-
 	public void contourp(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
 		gca().contourp(x, y, z, levels, params);
 	}
-
 	public void contourp(double[][] x, double[][] y, double[][] z) {
 		gca().contourp(x, y, z);
 	}
-
 	public void contourp(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
 		gca().contourp(x, y, z, levels, params);
 	}
-
 	public void contourp(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
 		gca().contourp(x, y, z, levels, params);
 	}
 
-
 	public void hatch(float[] x, float[] y, float[][] z, float lower, float upper, String pattern) {
 		gca().hatch(x,y,z, lower,upper, pattern, (Object)null);
 	}
-	
 	public void hatch(float[] x, float[] y, float[][] z, float lower, float upper, String pattern, Object... params) {
 		gca().hatch(x, y, z, lower, upper, pattern, params);
 	}
-	
 	public void hatch(float[][] x, float[][] y, float[][] z, float lower, float upper, String pattern) {
 		gca().hatch(x,y,z, lower,upper, pattern, (Object)null);
 	}
-	
 	public void hatch(float[][] x, float[][] y, float[][] z, float lower, float upper, String pattern, Object... params) {
 		gca().hatch(x, y, z, lower, upper, pattern, params);
 	}
-	
 	public void hatch(double[] x, double[] y, double[][] z, double lower, double upper, String pattern) {
 		gca().hatch(x, y, z, lower, upper, pattern, (Object)null);
 	}
-	
 	public void hatch(double[] x, double[] y, double[][] z, double lower, double upper, String pattern, Object... params) {
 		gca().hatch(x, y, z, lower, upper, pattern, params);
 	}
-	
 	public void hatch(double[][] x, double[][] y, double[][] z, double lower, double upper, String pattern) {
 		gca().hatch(x, y, z, lower, upper, pattern, (Object)null);
 	}
-	
 	public void hatch(double[][] x, double[][] y, double[][] z, double lower, double upper, String pattern, Object... params) {
 		gca().hatch(x, y, z, lower, upper, pattern, params);
 	}
@@ -721,7 +668,6 @@ public class JPlot {
 	public void coastLines() {
 		gca().coastLines();
 	}
-	
 	public void coastLines(int resolution) {
 		gca().coastLines(resolution);
 	}
@@ -729,7 +675,6 @@ public class JPlot {
 	public void land() {
 		gca().land(0xff676767, 0xff000000);
 	}
-
 	public void land(int land_colour, int coast_colour) {
 		gca().land(land_colour, coast_colour);
 	}
@@ -737,12 +682,10 @@ public class JPlot {
 	public void showShapefile(String path_to_shapefile, String shapeType) {
 		gca().showShapefile(path_to_shapefile, shapeType);
 	}
-
 	public void showShapefile(String path_to_shapefile, String shapeType, CoordinateReferenceSystem user_crs,
 			Object... params) {
 		gca().showShapefile(path_to_shapefile, shapeType, user_crs, params);
 	}
-
 	public void showShapefile(String path_to_shapefile, String shapeType, int user_epsg_code, Object... params) {
 		gca().showShapefile(path_to_shapefile, shapeType, user_epsg_code, params);
 	}
@@ -750,15 +693,12 @@ public class JPlot {
 	public void colourbar() {
 		colourbar(gca(), "");
 	}
-
 	public void colourbar(JAxis axis) {
 		colourbar(axis, "");
 	}
-
 	public void colourbar(String name) {
 		colourbar(gca(), name);
 	}
-
 	public void colourbar(JAxis axis, String name) {
 		addSubplot(new JColourbar(axis, name));
 	}
@@ -771,7 +711,6 @@ public class JPlot {
 	public void legend() {
 		gca().legend();
 	}
-
 	public void legend(double rts) {
 		gca().legend(rts);
 	}
@@ -779,15 +718,12 @@ public class JPlot {
 	public void addText(double x, double y, String text) {
 		gca().addText(x, y, text, 1.0d, 0xff000000, PConstants.LEFT, PConstants.BOTTOM, 0d);
 	}
-
 	public void addText(double x, double y, String text, double textsize, int colour) {
 		gca().addText(x, y, text, textsize, colour, PConstants.LEFT, PConstants.BOTTOM, 0d);
 	}
-
 	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny) {
 		gca().addText(x, y, text, textsize, colour, alignx, aligny, 0d);
 	}
-
 	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny,
 			double rotation) {
 		gca().addText(x, y, text, textsize, colour, alignx, aligny, rotation);
@@ -804,23 +740,18 @@ public class JPlot {
 	public void setXRange(float xmin, float xmax) {
 		gca().setXRange(xmin, xmax);
 	}
-
 	public void setXRange(double xmin, double xmax) {
 		gca().setXRange(xmin, xmax);
 	}
-
 	public void setYRange(float ymin, float ymax) {
 		gca().setYRange(ymin, ymax);
 	}
-
 	public void setYRange(double ymin, double ymax) {
 		gca().setYRange(ymin, ymax);
 	}
-
 	public void setRange(float xmin, float xmax, float ymin, float ymax) {
 		gca().setRange(xmin, xmax, ymin, ymax);
 	}
-
 	public void setRange(double xmin, double xmax, double ymin, double ymax) {
 		gca().setRange(xmin, xmax, ymin, ymax);
 	}
@@ -832,11 +763,9 @@ public class JPlot {
 	public void setXTitle(String xtitle) {
 		gca().setXTitle(xtitle);
 	}
-
 	public void setYTitle(String ytitle) {
 		gca().setYTitle(ytitle);
 	}
-
 	public void setTitle(String _title) {
 		gca().setTitle(_title);
 	}
@@ -844,15 +773,12 @@ public class JPlot {
 	public void setLogarithmicAxis(char axis) {
 		gca().setLogarithmicAxis(axis);
 	}
-
 	public void setAsTimeAxis(char axis, String unit) {
 		gca().setAsTimeAxis(axis, unit);
 	}
-
 	public void setAsTimeAxis(char axis, String unit, String calendar) {
 		gca().setAsTimeAxis(axis, unit, calendar);
 	}
-
 	public void setAsTimeAxis(char axis, String unit, String calendar, String format) {
 		gca().setAsTimeAxis(axis, unit, calendar, format);
 	}

@@ -5,12 +5,12 @@ import java.util.List;
 
 import jplots.JAxis;
 import jplots.helper.GeometryTools;
+import jplots.maths.JDLine;
 import jplots.maths.JDPoint;
 import jplots.maths.JDPolygon;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLineShape;
-import jplots.shapes.JPlotShape;
 
 public class OrthographicJProjection implements JProjection {
 
@@ -152,6 +152,12 @@ public class OrthographicJProjection implements JProjection {
 		double smin = Math.sqrt(1d - w2);
 		double smax = 1d;
 		return new double[] { -smax * j, smax * i, smin * i, smin * j };
+	}
+
+	@Override
+	public List<JDLine> splitByMapBorder(JDLine line) {
+		JDPoint center = new JDPoint(0,0);
+		return line.intersectsCircle(center, EARTH_RADIUS_MEAN);
 	}
 
 	@Override

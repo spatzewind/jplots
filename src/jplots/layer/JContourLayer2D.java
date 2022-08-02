@@ -224,12 +224,6 @@ public class JContourLayer2D extends JPlotsLayer {
 				.translate(invertAxisX ? maxX : -minX, invertAxisY ? -minY : maxY).scale(xs, ys).translate(p[0], p[1]);
 		minZ = Double.POSITIVE_INFINITY;
 		maxZ = Double.NEGATIVE_INFINITY;
-		for(int j=0; j<corners.length; j++)
-			for(int i=0; i<corners[j].length; i++) {
-				cnt2[j][i].affine(affine.getMatrix());
-				if(cnt2[j][i].value<minZ) minZ = cnt2[j][i].value;
-				if(cnt2[j][i].value>maxZ) maxZ = cnt2[j][i].value;
-			}
 		if(contourIntervals[0]<minZ) minZ = contourIntervals[0];
 		if(contourIntervals[contourIntervals.length-1]>maxZ) maxZ = contourIntervals[contourIntervals.length-1];
 		
@@ -238,12 +232,12 @@ public class JContourLayer2D extends JPlotsLayer {
 			if (pixelFilling) {
 				if (ax.getPlot().isDebug())
 					System.out.println("[DEBUG] JContourLayer2D: 1] contour filling pixelwise ...");
-				fillPixelByPixel(p, ax, xs, ys, s, cnt2);
+				fillPixelByPixel(p, ax, xs, ys, s, cnt2, affine.getMatrix());
 			} else {
 				if (ax.getPlot().isDebug())
 					System.out.println("[DEBUG] JContourLayer2D: 1] contour filling vectorwise ...");
 				try {
-					fillVectorByVector(ax.getGeoProjection(), p, ax, xs, ys, s);
+					fillVectorByVector(ax.getGeoProjection(), p, ax, xs, ys, s, cnt2, affine.getMatrix());
 				} catch (Exception e) {
 					e.printStackTrace();
 					throw new RuntimeException(e);
@@ -258,7 +252,7 @@ public class JContourLayer2D extends JPlotsLayer {
 		if (drawLines) {
 			if (ax.getPlot().isDebug())
 				System.out.println("[DEBUG] JContourLayer2D: 2] draw contour line segments with " + lw + "px line width...");
-			drawContourLines(p, ax, xs, ys, s, cnt2);
+			drawContourLines(p, ax, xs, ys, s, cnt2, affine.getMatrix());
 		} else {
 			if (ax.getPlot().isDebug())
 				System.out.println("[DEBUG] JContourLayer2D: 2] contours itself will not be drawn ...");
@@ -346,14 +340,17 @@ public class JContourLayer2D extends JPlotsLayer {
 				if(corners[j][i].y>maxY) maxY = corners[j][i].y;
 			}
 		contourStyle = new String[contourIntervals.length];
+		lw = 2d;
+		lc  = 0xff000000;
 		lcs = new int[contourIntervals.length];
+		ls = "-";
 		for(int i=0; i<contourIntervals.length; i++) {
-			contourStyle[i] = "";
+			contourStyle[i] = "-";
 			lcs[i] = lc;
 		}
 	}
 	
-	private void fillVectorByVector(JProjection outproj, int[] p, JAxis ax, double xs, double ys, JGroupShape s) {
+	private void fillVectorByVector(JProjection outproj, int[] p, JAxis ax, double xs, double ys, JGroupShape s, JDPoint[][] points, double[][] af_trnsf) {
 		List<int[]> openset = new ArrayList<>(),
 					closedset = new ArrayList<>();
 		double[] clev2 = new double[2+contourIntervals.length];
@@ -453,7 +450,7 @@ public class JContourLayer2D extends JPlotsLayer {
 		s.addChild(trianglesh);
 	}
 	
-	private void fillPixelByPixel(int[] p, JAxis ax, double xs, double ys, JGroupShape s, JDPoint[][] points) {
+	private void fillPixelByPixel(int[] p, JAxis ax, double xs, double ys, JGroupShape s, JDPoint[][] input, double[][] affine) {
 		// double us = srcImg.width/(srcExt[2]-srcExt[0]), vs =
 		// srcImg.height/(srcExt[3]-srcExt[1]);
 		if(colourtable==null) {
@@ -465,7 +462,13 @@ public class JContourLayer2D extends JPlotsLayer {
 		} else if (img.width != p[2] || img.height != p[3]) {
 			img = ax.getPlot().getApplet().createImage(p[2], p[3], PConstants.ARGB);
 		}
+		JDPoint[][] points = new JDPoint[input.length][input[0].length];
+		for(int j=0; j<input.length; j++)
+			for(int i=0; i<input[j].length; i++)
+				points[j][i] = input[j][i].copy().affine(affine);
 		img.loadPixels();
+		for(int px=0; px<img.pixels.length; px++)
+			img.pixels[px] = 0x00999999;
 		for(int j=0; j+1<points.length; j++) {
 			for(int i=0; i+1<points[j].length; i++) {
 				JDQuad qu = new JDQuad(points[j+1][i], points[j+1][i+1], points[j][i+1], points[j][i]);
@@ -491,7 +494,7 @@ public class JContourLayer2D extends JPlotsLayer {
 		s.addChild(new JImageShape(img, p[0], p[1], p[2], p[3]));
 	}
 	
-	private void drawContourLines(int[] p, JAxis ax, double xs, double ys, JGroupShape s, JDPoint[][] points) {
+	private void drawContourLines(int[] p, JAxis ax, double xs, double ys, JGroupShape s, JDPoint[][] points, double[][] affine) {
 		int jlen = points.length-1;
 		int ilen = points[0].length-1;
 		int[][] visits = new int[jlen][ilen];
@@ -555,40 +558,36 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    1_/   0
 							//    /      
 							//    0     0
-							addCurve(path, q, -1d, 2*ad-1d, 2*ab-1d, -1d, lev, true); nu = u; nv = v-1; break;
-						case 0x0007: visits[v][u] = 2; break;
+							addCurve(path, q, -1d, 2*ad-1d, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1; break;
+						case 0x0007: break;
 						case 0x0010:
 							//    0   \_1
 							//          \
 							//    0     0
-							addCurve(path, q, 1d-2*ba, -1d, 1d, 2*bc-1d, lev, true); nu = u+1; nv = v; break;
+							addCurve(path, q, 1d-2*ba, -1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v; break;
 						case 0x0011:
 							//    1     1
 							//    -------
 							//    0     0
-							addCurve(path, q, -1d, 2*ad-1d, 1d, 2*bc-1d, lev, true); nu = u+1; nv = v; break;
+							addCurve(path, q, -1d, 2*ad-1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v; break;
 						case 0x0017:
 							//    N __  1
 							//        '--
 							//    0     0
-							JDPoint p0017 = b.fractionTowards((lev-b.value)/(d.value-b.value), d);
-							path.add(p0017.fractionTowards(0.5d, a));
-							path.add(b.fractionTowards((lev-b.value)/(c.value-b.value), c)); nu = u+1; nv = v; break;
+							addCurve(path, q, -bd, bd-1d, 1d, 2*bc-1d, lev, false, true); nu = u+1; nv = v; break;
 						case 0x0070: break;
 						case 0x0071:
 							//    1  __ N
 							//    --'    
 							//    0     0
-							JDPoint p0071 = a.fractionTowards((lev-a.value)/(c.value-a.value), c);
-							if(path.isEmpty()) path.add(a.fractionTowards((lev-a.value)/(d.value-a.value), d));
-							path.add(p0071.fractionTowards(0.5d, b)); break;
+							addCurve(path, q, -1d, 2*ad-1d, ac, ac-1d, lev, true, true); break;
 						case 0x0077: break;
 						case 0x0100:
 							//    0     0
 							//         _/
 							//    0   / 1
 							//show(a,b,c,d);
-							addCurve(path, q, 1d, 1d-2*cb, 1d-2*cd, 1d, lev, true); nu = u; nv = v+1; break;
+							addCurve(path, q, 1d, 1d-2*cb, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1; break;
 						case 0x0101:
 							// du = 0.25d*((value[1]-value[0])*(1-v) + (value[2]-value[3])*(1+v)) = 0
 							// dv = 0.25d*((value[3]-value[0])*(1-u) + (value[2]-value[1])*(1+u)) = 0
@@ -611,10 +610,10 @@ public class JContourLayer2D extends JPlotsLayer {
 								// -- /  0 _/ +
 								//    0   / 1
 								if(takePos01) {
-									addCurve(path, q, 1d, 1d-2*cb, 1d-2*cd, 1d, lev, true); nu = u; nv = v+1;
+									addCurve(path, q, 1d, 1d-2*cb, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1;
 									visits[v][u] = visits[v][u]==0 ? 1 : 2;
 								} else {
-									addCurve(path, q, -1d, 2*ad-1d, 2*ab-1d, -1d, lev, true); nu = u; nv = v-1;
+									addCurve(path, q, -1d, 2*ad-1d, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1;
 									visits[v][u] = visits[v][u]==0 ? -1 : 2;
 								} break;
 							} else {
@@ -622,10 +621,10 @@ public class JContourLayer2D extends JPlotsLayer {
 								// -- \_ 1  \ +
 								//    0 \   1
 								if(takePos01) {
-									addCurve(path, q, 1d, 1d-2*cb, 2*ab-1d, -1d, lev, true); nu = u; nv = v-1;
+									addCurve(path, q, 1d, 1d-2*cb, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1;
 									visits[v][u] = visits[v][u]==0 ? 1 : 2;
 								} else {
-									addCurve(path, q, -1d, 2*ad-1d, 1d-2*cd, 1d, lev, true); nu = u; nv = v+1;
+									addCurve(path, q, -1d, 2*ad-1d, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1;
 									visits[v][u] = visits[v][u]==0 ? -1 : 2;
 								} break;
 							}
@@ -633,99 +632,81 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    N     0
 							//         _/
 							//    0   / 1
-							if(path.isEmpty()) path.add(c.fractionTowards((lev-c.value)/(b.value-c.value), b));
-							path.add(c.fractionTowards((lev-c.value)/(d.value-c.value), d)); nu = u; nv = v+1; break;
+							addCurve(path, q, 1d, 1d-2*cb, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1; break;
 						case 0x0110:
 							//    0  |  1
 							//       |   
 							//    0  |  1
-							addCurve(path, q, 1d-2*ba, -1d, 1d-2*cd, 1d, lev, true); nu = u; nv = v+1; break;
+							addCurve(path, q, 1d-2*ba, -1d, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1; break;
 						case 0x0111:
 							//    1     1
 							//    \_     
 							//    0 \   1
-							addCurve(path, q, -1d, 2*ad-1d, 1d-2*cd, 1d, lev, true); nu = u; nv = v+1; break;
+							addCurve(path, q, -1d, 2*ad-1d, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1; break;
 						case 0x0117:
 							//    N     1
 							//      \    
 							//    0  \  1
-							JDPoint p0117 = b.fractionTowards((lev-b.value)/(d.value-b.value), d);
-							path.add(p0117.fractionTowards(0.5d,a));
-							path.add(c.fractionTowards((lev-c.value)/(d.value-c.value), d)); nu = u; nv = v+1; break;
+							addCurve(path, q, -bd, bd-1d, 1d-2*cd, 1d, lev, false, true); nu = u; nv = v+1; break;
 						case 0x0170:
 							//    0     N
 							//        /  
 							//    0  /  1
-							JDPoint p0170 = c.fractionTowards((lev-c.value)/(a.value-c.value), a);
-							path.add(p0170.fractionTowards(0.5d,b));
-							path.add(c.fractionTowards((lev-c.value)/(d.value-c.value), d)); nu = u; nv = v+1; break;
+							addCurve(path, q, 1d-ca, -ca, 1d-2*cd, 1d, lev, false, true); nu = u; nv = v+1; break;
 						case 0x0171:
 							//    1     N
 							//    \_     
 							//    0 \   1
-							if(path.isEmpty()) path.add(a.fractionTowards((lev-a.value)/(d.value-a.value), d));
-							path.add(c.fractionTowards((lev-c.value)/(d.value-c.value), d)); nu = u; nv = v+1; break;
+							addCurve(path, q, -1d, 2*ad-1d, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1; break;
 						case 0x0177:
 							//    N     N
 							//       |   
 							//    0  |  1
-							JDPoint p0177 = c.fractionTowards((lev-c.value)/(d.value-c.value), d);
-							JDPoint p0177n = b.fractionTowards(0.5d, a);
-							path.add(p0177.fractionTowards(0.5d, p0177n)); path.add(p0177); nu = u; nv = v+1; break;
+							path.add(q.pointFromUV(1d-2*cd,0d)); path.add(q.pointFromUV(1d-2*cd,1d)); nu = u; nv = v+1; break;
 						case 0x0700: break;
 						case 0x0701:
 							//    1_/   0
 							//    /      
 							//    0     N
-							if(path.isEmpty()) path.add(a.fractionTowards((lev-a.value)/(d.value-a.value), d));
-							path.add(a.fractionTowards((lev-a.value)/(b.value-a.value), b)); nu = u; nv = v-1; break;
+							addCurve(path, q, -1d, 2*ad-1d, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1; break;
 						case 0x0707: break;
 						case 0x0710:
 							//    0  \  1
 							//        \  
 							//    0     N
-							JDPoint p0710 = b.fractionTowards((lev-b.value)/(d.value-b.value), d);
-							if(path.isEmpty()) path.add(b.fractionTowards((lev-b.value)/(a.value-b.value), a));
-							path.add(p0710.fractionTowards(0.5d, c)); break;
+							addCurve(path, q, 1d-2*ba, -1d, 1d-bd, bd, lev, true, true); break;
 						case 0x0711:
 							//    1     1
 							//    --.__  
 							//    0     N
-							JDPoint p0711 = b.fractionTowards((lev-b.value)/(d.value-b.value), d);
-							if(path.isEmpty()) path.add(a.fractionTowards((lev-a.value)/(d.value-a.value), d));
-							path.add(p0711.fractionTowards(0.5d, c)); break;
+							addCurve(path, q, -1d, 2*ad-1d, 1d-bd, bd, lev, true, true); break;
 						case 0x0717:
 							//    N _   1
 							//       \_  
 							//    0     N
-							JDPoint p0717 = b.fractionTowards((lev-b.value)/(d.value-b.value), d);
-							path.add(p0717.fractionTowards(0.5d, a)); path.add(p0717.fractionTowards(0.5d, c)); break;
+							addCurve(path, q, -bd, bd-1d, 1d-bd, bd, lev, false, true); break;
 						case 0x0770: break;
 						case 0x0771:
 							//    1     N
 							//    ----   
 							//    0     N
-							JDPoint p0771 = a.fractionTowards((lev-a.value)/(d.value-a.value), d);
-							JDPoint p0771n = b.fractionTowards(0.5d, c);
-							if(path.isEmpty()) path.add(p0771); path.add(p0771.fractionTowards(0.5d, p0771n)); break;
+							if(path.isEmpty()) path.add(q.pointFromUV(-1d,2*ad-1d)); path.add(q.pointFromUV(0d,2*ad-1d)); break;
 						case 0x0777: break;
 						case 0x1000:
 							//    0     0
 							//    \_     
 							//    1 \   0
-							addCurve(path, q, 2*dc-1d, 1d, -1d, 1d-2*da, lev, true); nu = u-1; nv = v; break;
+							addCurve(path, q, 2*dc-1d, 1d, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v; break;
 						case 0x1001:
 							//    1  |  0
 							//       |   
 							//    1  |  0
-							addCurve(path, q, 2*dc-1d, 1d, 2*ab-1d, -1d, lev, true); nu = u; nv = v-1; break;
+							addCurve(path, q, 2*dc-1d, 1d, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1; break;
 						case 0x1007:
 							//    N     0
 							//      \    
 							//    1  \  0
-							JDPoint p1007 = d.fractionTowards((lev-d.value)/(b.value-d.value), b);
-							if(path.isEmpty()) path.add(d.fractionTowards((lev-d.value)/(c.value-d.value), c));
-							path.add(p1007.fractionTowards(0.5d, a)); break;
+							addCurve(path, q, 2*dc-1d, 1d, db-1d, -db, lev, true, true); break;
 						case 0x1010:
 							hit_saddle = true;
 							double u10 = (d.value-a.value+c.value-b.value)/(d.value-a.value-c.value+b.value);
@@ -738,10 +719,10 @@ public class JContourLayer2D extends JPlotsLayer {
 								//    1 \   0
 								if(visits[v][u]==0) takePos10 = (pv<v);
 								if(takePos10) {
-									addCurve(path, q, 1d-2*ba, -1d, 1d, 2*bc-1d, lev, true); nu = u+1; nv = v;
+									addCurve(path, q, 1d-2*ba, -1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v;
 									visits[v][u] = visits[v][u]==0 ? 1 : 2;
 								} else {
-									addCurve(path, q, 2*dc-1d, 1d, -1d, 1d-2*da, lev, true); nu = u-1; nv = v;
+									addCurve(path, q, 2*dc-1d, 1d, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v;
 									visits[v][u] = visits[v][u]==0 ? -1 : 2;
 								} break;
 							} else {
@@ -750,10 +731,10 @@ public class JContourLayer2D extends JPlotsLayer {
 								//    1   / 0
 								if(visits[v][u]==0) takePos10 = (pv>v);
 								if(takePos10) {
-									addCurve(path, q, 2*dc-1d, 1d, 1d, 2*bc-1d, lev, true); nu = u+1; nv = v;
+									addCurve(path, q, 2*dc-1d, 1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v;
 									visits[v][u] = visits[v][u]==0 ? 1 : 2;
 								} else {
-									addCurve(path, q, 1d-2*ba, -1d, -1d, 1d-2*da, lev, true); nu = u-1; nv = v;
+									addCurve(path, q, 1d-2*ba, -1d, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v;
 									visits[v][u] = visits[v][u]==0 ? -1 : 2;
 								} break;
 							}
@@ -761,100 +742,82 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    1     1
 							//         _/
 							//    1   / 0
-							addCurve(path, q, 2*dc-1d, 1d, 1d, 2*bc-1d, lev, true); nu = u+1; nv = v; break;
+							addCurve(path, q, 2*dc-1d, 1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v; break;
 						case 0x1017:
 							//    N     1
 							//         _/
 							//    1   / 0
-							if(path.isEmpty()) path.add(d.fractionTowards((lev-d.value)/(c.value-d.value), c));
-							path.add(b.fractionTowards((lev-b.value)/(c.value-b.value), c)); nu = u+1; nv = v; break;
+							addCurve(path, q, 2*dc-1d, 1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v; break;
 						case 0x1070:
 							//    0     N
 							//    \_     
 							//    1 \   0
-							if(path.isEmpty()) path.add(d.fractionTowards((lev-d.value)/(c.value-d.value), c));
-							path.add(d.fractionTowards((lev-d.value)/(a.value-d.value), a)); nu = u-1; nv = v; break;
+							addCurve(path, q, 2*dc-1d, 1d, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v; break;
 						case 0x1071:
 							//    1     N
 							//        /  
 							//    1  /  0
-							JDPoint p1071 = a.fractionTowards((lev-a.value)/(c.value-a.value), c);
-							if(path.isEmpty()) path.add(d.fractionTowards((lev-d.value)/(c.value-d.value), c));
-							path.add(p1071.fractionTowards(0.5d, b)); break;
+							addCurve(path, q, 2*dc-1d, 1d, ac, ac-1d, lev, true, true); break;
 						case 0x1077:
 							//    N     N
 							//       |   
 							//    1  |  0
-							JDPoint p1077 = d.fractionTowards((lev-d.value)/(c.value-d.value), c);
-							JDPoint p1077n = a.fractionTowards(0.5d, b);
-							if(path.isEmpty()) path.add(p1077); path.add(p1077.fractionTowards(0.5d, p1077n)); break;
+							if(path.isEmpty()) path.add(q.pointFromUV(2*dc-1d,1d)); path.add(q.pointFromUV(2*dc-1d,0d)); break;
 						case 0x1100:
 							//    0     0
 							//    -------
 							//    1     1
-							addCurve(path, q, 1d, 1d-2*cb, -1d, 1d-2*da, lev, true); nu = u-1; nv = v; break;
+							addCurve(path, q, 1d, 1d-2*cb, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v; break;
 						case 0x1101:
 							//    1   \_0
 							//          \
 							//    1     1
-							addCurve(path, q, 1d, 1d-2*cb, 2*ab-1d, -1d, lev, true); nu = u; nv = v-1; break;
+							addCurve(path, q, 1d, 1d-2*cb, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1; break;
 						case 0x1107:
 							//    N __  0
 							//        '--
 							//    1     1
-							JDPoint p1107 = d.fractionTowards((lev-d.value)/(b.value-d.value), b);
-							if(path.isEmpty()) path.add(c.fractionTowards((lev-c.value)/(b.value-c.value), b));
-							path.add(p1107.fractionTowards(0.5d, a)); break;
+							addCurve(path, q, 1d, 1d-2*cb, db-1d, -db, lev, true, true); break;
 						case 0x1110:
 							//    0_/   1
 							//    /      
 							//    1     1
-							addCurve(path, q, 1d-2*ba, -1d, -1d, 1d-2*da, lev, true); nu = u-1; nv = v; break;
+							addCurve(path, q, 1d-2*ba, -1d, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v; break;
 						case 0x1111: break;
 						case 0x1117: break;
 						case 0x1170:
 							//    0  __ N
 							//    --'    
 							//    1     1
-							JDPoint p1170 = c.fractionTowards((lev-c.value)/(a.value-c.value), a);
-							path.add(p1170.fractionTowards(0.5d, b));
-							path.add(d.fractionTowards((lev-d.value)/(a.value-d.value), a)); nu = u-1; nv = v; break;
+							addCurve(path, q, 1d-ca, -ca, -1d, 1d-2*da, lev, false, true); nu = u-1; nv = v; break;
 						case 0x1171: break;
 						case 0x1177: break;
 						case 0x1700:
 							//    0     0
 							//    --.__  
 							//    1     N
-							JDPoint p1700 = d.fractionTowards((lev-d.value)/(b.value-d.value), b);
-							path.add(p1700.fractionTowards(0.5d, c));
-							path.add(d.fractionTowards((lev-d.value)/(a.value-d.value), a)); nu = u-1; nv = v; break;
+							addCurve(path, q, db, 1d-db, -1d, 1d-2*da, lev, false, true); nu = u-1; nv = v; break;
 						case 0x1701:
 							//    1  \  0
 							//        \  
 							//    1     N
-							JDPoint p1701 = d.fractionTowards((lev-d.value)/(b.value-d.value), b);
-							path.add(p1701.fractionTowards(0.5d, c));
-							path.add(a.fractionTowards((lev-a.value)/(b.value-a.value), b)); nu = u; nv = v-1; break;
+							addCurve(path, q, db, 1d-db, 2*ab-1d, -1d, lev, false, true); nu = u; nv = v-1; break;
 						case 0x1707:
 							//    N _   0
 							//       \_  
 							//    1     N
-							JDPoint p1707 = d.fractionTowards((lev-d.value)/(b.value-d.value), b);
-							path.add(p1707.fractionTowards(0.5d, c)); path.add(p1707.fractionTowards(0.5d, a)); break;
+							addCurve(path, q, db, 1d-db, db-1d, -db, lev, false, true); break;
 						case 0x1710:
 							//    0_/   1
 							//    /
 							//    1     N
-							if(path.isEmpty()) path.add(b.fractionTowards((lev-b.value)/(a.value-b.value), a));
-							path.add(d.fractionTowards((lev-d.value)/(a.value-d.value), a)); nu = u-1; nv = v; break;
+							addCurve(path, q, 1d-2*ba, -1d, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v; break;
 						case 0x1711: break;
 						case 0x1770:
 							//    0     N
 							//    ----
 							//    1     N
-							JDPoint p1770 = d.fractionTowards((lev-d.value)/(a.value-d.value), a);
-							JDPoint p1770n = c.fractionTowards(0.5d, b);
-							path.add(p1770.fractionTowards(0.5d, p1770n)); path.add(p1770); nu = u-1; nv = v; break;
+							path.add(q.pointFromUV(0d,1d-2*da)); path.add(q.pointFromUV(-1d,1d-2*da)); nu = u-1; nv = v; break;
 						case 0x1771: break;
 						case 0x1777: break;
 						case 0x7000: break;
@@ -862,73 +825,57 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    1  /  0
 							//      /    
 							//    N     0
-							JDPoint p7001 = a.fractionTowards((lev-a.value)/(c.value-a.value), c);
-							path.add(p7001.fractionTowards(0.5d, d));
-							path.add(a.fractionTowards((lev-a.value)/(b.value-a.value), b)); nu = u; nv = v-1; break;
+							addCurve(path, q, ac-1d, ac, 2*ab-1d, -1d, lev, false, true); nu = u; nv = v-1; break;
 						case 0x7007: break;
 						case 0x7010:
 							//    0   \_1
 							//          \
 							//    N     0
-							if(path.isEmpty()) path.add(b.fractionTowards((lev-b.value)/(a.value-b.value), a));
-							path.add(b.fractionTowards((lev-b.value)/(c.value-b.value), c)); nu = u+1; nv = v; break;
+							addCurve(path, q, 1d-2*ba, -1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v; break;
 						case 0x7011:
 							//    1     1
 							//      __.--
 							//    N     0
-							JDPoint p7011 = a.fractionTowards((lev-a.value)/(c.value-a.value), c);
-							path.add(p7011.fractionTowards(0.5d, d));
-							path.add(b.fractionTowards((lev-b.value)/(c.value-b.value), c)); nu = u+1; nv = v; break;
+							addCurve(path, q, ac-1d, ac, 1d, 2*bc-1d, lev, false, true); nu = u+1; nv = v; break;
 						case 0x7017:
 							//    N     1
 							//       ----
 							//    N     0
-							JDPoint p7017 = b.fractionTowards((lev-b.value)/(c.value-b.value), c);
-							JDPoint p7017n = a.fractionTowards(0.5d, d);
-							path.add(p7017.fractionTowards(0.5d, p7017n)); path.add(p7017); nu = u+1; nv = v; break;
+							path.add(q.pointFromUV(0d,2*bc-1d)); path.add(q.pointFromUV(1d,2*bc-1d)); nu = u+1; nv = v; break;
 						case 0x7070: break;
 						case 0x7071:
 							//    1   _ N
 							//      _/   
 							//    N     0
-							JDPoint p7071 = a.fractionTowards((lev-a.value)/(c.value-a.value), c);
-							path.add(p7071.fractionTowards(0.5d, d)); path.add(p7071.fractionTowards(0.5d, b)); break;
+							addCurve(path, q, ac-1d, ac, ac, ac-1d, lev, false, true); break;
 						case 0x7077: break;
 						case 0x7100:
 							//    0     0
 							//      __.--
 							//    N     1
-							JDPoint p7100 = c.fractionTowards((lev-c.value)/(a.value-c.value), a);
-							if(path.isEmpty()) path.add(c.fractionTowards((lev-c.value)/(b.value-c.value), b));
-							path.add(p7100.fractionTowards(0.5d, d)); break;
+							addCurve(path, q, 1d, 1d-2*cb, -ca, 1d-ca, lev, true, true); break;
 						case 0x7101:
 							//    1   \_0
 							//          \
 							//    N     1
-							if(path.isEmpty()) path.add(c.fractionTowards((lev-c.value)/(b.value-c.value), b));
-							path.add(a.fractionTowards((lev-a.value)/(b.value-a.value), b)); nu = u; nv = v-1; break;
+							addCurve(path, q, 1d, 1d-2*cb, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1; break;
 						case 0x7107:
 							//    N     0
 							//       ----
 							//    N     1
-							JDPoint p7107 = c.fractionTowards((lev-c.value)/(b.value-c.value), b);
-							JDPoint p7107n = d.fractionTowards(0.5d, a);
-							if(path.isEmpty()) path.add(p7107); path.add(p7107.fractionTowards(0.5d, p7107n)); break;
+							if(path.isEmpty()) path.add(q.pointFromUV(1d,1d-2*cb)); path.add(q.pointFromUV(0d,1d-2*cb)); break;
 						case 0x7110:
 							//    0  /  1
 							//      /
 							//    N     1
-							JDPoint p7110 = c.fractionTowards((lev-c.value)/(a.value-c.value), a);
-							if(path.isEmpty()) path.add(b.fractionTowards((lev-b.value)/(a.value-b.value), a));
-							path.add(p7110.fractionTowards(0.5d, d)); break;
+							addCurve(path, q, 1d-2*ba, -1d, -ca, 1d-ca, lev, true, true); break;
 						case 0x7111: break;
 						case 0x7117: break;
 						case 0x7170:
 							//    0   _ N
 							//      _/   
 							//    N     1
-							JDPoint p7170 = c.fractionTowards((lev-c.value)/(a.value-c.value), a);
-							path.add(p7170.fractionTowards(0.5d, b)); path.add(p7170.fractionTowards(0.5d, d)); break;
+							addCurve(path, q, 1d-ca, -ca, -ca, 1d-ca, lev, false, true); break;
 						case 0x7171: break;
 						case 0x7177: break;
 						case 0x7700: break;
@@ -936,17 +883,13 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    1  |  0
 							//       |   
 							//    N     N
-							JDPoint p7701 = a.fractionTowards((lev-a.value)/(b.value-a.value), b);
-							JDPoint p7701n = d.fractionTowards(0.5d, c);
-							path.add(p7701.fractionTowards(0.5d, p7701n)); path.add(p7701); nu = u; nv = v-1; break;
+							path.add(q.pointFromUV(2*ab-1d,0d)); path.add(q.pointFromUV(2*ab-1d,-1d)); nu = u; nv = v-1; break;
 						case 0x7707: break;
 						case 0x7710:
 							//    0  |  1
 							//       |   
 							//    N     N
-							JDPoint p7710 = b.fractionTowards((lev-b.value)/(a.value-b.value), a);
-							JDPoint p7710n = c.fractionTowards(0.5d, d);
-							if(path.isEmpty()) path.add(p7710); path.add(p7710.fractionTowards(0.5d, p7710n)); break;
+							if(path.isEmpty()) path.add(q.pointFromUV(1d-2*ba,-1d)); path.add(q.pointFromUV(1d-2*ba,0d)); break;
 						case 0x7711: break;
 						case 0x7717: break;
 						case 0x7770: break;
@@ -960,24 +903,23 @@ public class JContourLayer2D extends JPlotsLayer {
 					u = nu; v = nv;
 				}
 				if(path.size()>1) {
-//					System.out.println("  -:- try to add path of size "+path.size());
-//					for(JDPoint pt: path) System.out.println("      --> ["+pt.px+", "+pt.py+", "+pt.value+"]");
-					JDLine line = new JDLine(path.toArray(new JDPoint[0]));
-//					contours.addAll(line.intersectsAABB(p[0],p[0]+p[2], p[1],p[1]+p[3]));
-					contours.add(line);
+					contours.add(new JDLine(path.toArray(new JDPoint[0])));
 				}
 				if(hit_saddle) i--;
 			}
 			JDLine[] cntArr = contours.toArray(new JDLine[0]);
 			contours.clear();
-			if(ax.isGeoAxis())
-				for(JDLine line: cntArr) contours.add(line);
-			else
-				for(JDLine line: cntArr) contours.addAll(line.intersectsAABB(p[0], p[0]+p[2], p[1], p[1]+p[3]));
+			if(ax.isGeoAxis()) {
+				for(JDLine line: cntArr) contours.addAll(ax.getGeoProjection().splitByMapBorder(line));
+				cntArr = contours.toArray(new JDLine[0]);
+				contours.clear();
+			}
+			for(int i=0; i<cntArr.length; i++)
+				cntArr[i].affine(affine);
+			for(JDLine line: cntArr) contours.addAll(line.intersectsAABB(p[0], p[0]+p[2], p[1], p[1]+p[3]));
 			
 			//draw those lines:
-//TODO remove
-//			if(ax.getPlot().isDebug())
+			if(ax.getPlot().isDebug())
 				System.out.println("Found "+contours.size()+" lines for cnt-level "+lev);
 			String ls = contourStyle[l];
 			double lln = 1d, llf = 0d, lpn = 0d, lpf = 0d;
@@ -1040,7 +982,7 @@ public class JContourLayer2D extends JPlotsLayer {
 				}
 				float	xf1 = (float) (x1 + lpos * dx), yf1 = (float) (y1 + lpos * dy),
 						xf2 = (float) (x1 + (lpos + ldif) * dx), yf2 = (float) (y1 + (lpos + ldif) * dy);
-				if (li%2 == 0 && ldif > 0d)
+				if (li%2 == 0 && ldif >= 0d)
 					linesh.addChild(new JLineShape(lw, lc, xf1, yf1, xf2, yf2));
 				loff += ldif;
 				switch (li) {
@@ -1068,26 +1010,33 @@ public class JContourLayer2D extends JPlotsLayer {
 	//* ********** STATIC METHODS     ********** *
 	//* **************************************** *
 	
-	public static int getLevel(double value, double[] intervalBorders, int nanLev) {
-		if (Double.isNaN(value))
-			return nanLev;
-		int l = 0;
-		for (int cl = 0; cl < intervalBorders.length; cl++)
-			if (intervalBorders[cl] < value)
-				l = cl + 1;
-		return l;
-	}
-	private static void addCurve(List<JDPoint> path, JDQuad q, double u0, double v0, double u4, double v4, double l, boolean check_emptynes) {
-		JDPoint p0 = q.pointFromUV(u0, v0);
-		double[] m = q.refineUV(0.5d*(u0+u4), 0.5d*(v0+v4), l);
-		double[] mn = q.refineUV(0.5d*(u0+m[0]), 0.5d*(v0+m[1]), l);
-		double[] mp = q.refineUV(0.5d*(u4+m[0]), 0.5d*(v4+m[1]), l);
-		JDPoint p4 = q.pointFromUV(u4, v4);
-		if(path.isEmpty() || !check_emptynes) path.add(p0);
-		path.add(q.pointFromUV(mn));
-		path.add(q.pointFromUV(m));
-		path.add(q.pointFromUV(mp));
-		path.add(p4);
+	private static void addCurve(List<JDPoint> path, JDQuad q, double u0, double v0, double u8, double v8, double l, boolean check_emptynes, boolean refineEndpoints) {
+		double[] m0 = { u0, v0 };
+		double[] m8 = { u8, v8 };
+		if(refineEndpoints) {
+			m0 = q.refineUV(u0, v0, l);
+			m8 = q.refineUV(u8, v8, l);
+		}
+		double[] m4 = q.refineUV(0.5d*(m0[0]+m8[0]), 0.5d*(m0[1]+m8[1]), l);
+		
+		double[] m2 = q.refineUV(0.5d*(m0[0]+m4[0]), 0.5d*(m0[1]+m4[1]), l);
+		double[] m6 = q.refineUV(0.5d*(m4[0]+m8[0]), 0.5d*(m4[1]+m8[1]), l);
+		
+		double[] m1 = q.refineUV(0.5d*(m0[0]+m2[0]), 0.5d*(m0[1]+m2[1]), l);
+		double[] m3 = q.refineUV(0.5d*(m2[0]+m4[0]), 0.5d*(m2[1]+m4[1]), l);
+		double[] m5 = q.refineUV(0.5d*(m4[0]+m6[0]), 0.5d*(m4[1]+m6[1]), l);
+		double[] m7 = q.refineUV(0.5d*(m5[0]+m8[0]), 0.5d*(m6[1]+m8[1]), l);
+		
+		if(path.isEmpty() || !check_emptynes)
+			path.add(q.pointFromUV(m0));
+		path.add(q.pointFromUV(m1));
+		path.add(q.pointFromUV(m2));
+		path.add(q.pointFromUV(m3));
+		path.add(q.pointFromUV(m4));
+		path.add(q.pointFromUV(m5));
+		path.add(q.pointFromUV(m6));
+		path.add(q.pointFromUV(m7));
+		path.add(q.pointFromUV(m8));
 	}
 	
 	
@@ -1510,20 +1459,5 @@ public class JContourLayer2D extends JPlotsLayer {
 			if (failed)
 				list.add(poly.copy());
 		}
-	}
-	
-	private static void show(JDPoint A, JDPoint B, JDPoint C, JDPoint D) {
-		String o = "//    "+nf(A.value)+" -- "+nf(B.value) + "        ";
-		String m = "//    "+  "  |  "  +"    "+  "  |  "   + "   =>   ";
-		String u = "//    "+nf(D.value)+" -- "+nf(C.value) + "        ";
-		o += "("+nf(A.x)+"/"+nf(A.y)+") -- ("+nf(B.x)+"/"+nf(B.y)+")";
-		m += " "+   "     |     "   +"      "+   "     |     "   +" ";
-		u += "("+nf(D.x)+"/"+nf(D.y)+") -- ("+nf(C.x)+"/"+nf(C.y)+")";
-		System.out.println(o+"\n"+m+"\n"+u);
-	}
-	private static String nf(double v) {
-		double a = Math.abs(v)+0.005d;
-		int i = (int)(100d*(a-(int)a));
-		return (v<0d?"-":"+")+(int)a+"."+(i<10?"0":"")+i;
 	}
 }

@@ -32,40 +32,6 @@ public class JDQuad {
 		x = new double[] { a.x, b.x, c.x, d.x };
 		y = new double[] { a.y, b.y, c.y, d.y };
 		value = new double[] { a.value, b.value, c.value, d.value };
-		/*
-		   p.x  =  a.x*(1-u)*(1-v) + b.x*u*(1-v) + d.x*(1-u)*v + c.x*u*v
-		   p.y  =  a.y*(1-u)*(1-v) + b.y*u*(1-v) + d.y*(1-u)*v + c.y*u*v
-		   
-		   u = (1+s)/2    v = (1+t)/2
-		   
-		   4*px  =  ax*(1-s)(1-t) + bx*(1+s)*(1-t) + cx*(1-s)*(1+t) + dx*(1+s)*(1+t)
-		   k1x =  ax+bx+cx+dx
-		   k2x = -ax+bx-cx+dx
-		   k3x = -ax-bx+cx+dx
-		   k4x =  ax-bx-cx+dx
-		   =>
-		   4px - k1x  =  k2x*s + k3x*t + k4x*s*t
-		   4py - k1y  =  k2y*s + k3y*t + k4y*s*t
-		   =>
-		   [4px-k1x-k3x*t] = [k2x+k4x*t]*s
-		   [4py-k1y-k3y*t] = [k2y+k4y*t]*s
-		   
-		   eliminate s:
-		   [4px-k1x-k3x*t]*[k2y+k4y*t] = [4py-k1y-k3y*t]*[k2x+k4x*t]
-		   =>
-		   0.0 = [k3y*k4x-k3x*k4y]*t²
-		        +[(4px-k1x)*k4y-k3x*k2y-(4py-k1y)*k4x+k3y*k2x)]*t
-		        +[(4px-k1x)*k2y-(4py-k1y)*k2x]
-		   q0 = px*4k2y-py*4k2x  -k1x*k2y+k1y*k2x
-		   q1 = px*4k4y-py*4k4x  -k1x*k4y-k3x*k2y+k1y*k4x+k3y*k2x
-		   q2 = k3y*l4x - k3x*k4y
-		   =>
-		   s = (-q1 +/- sqrt(q1*q1-4*q0*q2)) / 2q2
-		   
-		   with s calc t:
-		   t = (4px-k1x-k2x*s) / (k3x+k4x*s)
-		     = (4py-k1y-k2y*s) / (k3y+k4y*s)
-		 */
 		calcBarycenterHelper();
 	}
 
@@ -2058,38 +2024,104 @@ public class JDQuad {
 		double[] w = barycentricCoords(p);
 		double u = w[0];
 		double v = w[1];
-		int nancode =	(Double.isNaN(value[0])?1:0) | (Double.isNaN(value[1])?2:0) | (Double.isNaN(value[2])?4:0) | (Double.isNaN(value[3])?8:0);
+		double vsum = 0d;
+		double wsum = 0d;
+		int nancode = (Double.isNaN(value[0])?1:0) | (Double.isNaN(value[1])?2:0) | (Double.isNaN(value[2])?4:0) | (Double.isNaN(value[3])?8:0);
 		switch(nancode) {
 			default:
-			case  0: return 0.25d*(value[0]*(1d-u)*(1d-v) + value[1]*(1d+u)*(1d-v) + value[3]*(1d-u)*(1d+v) + value[2]*(1d+u)*(1d+v));
+			case  0: break;
+			case  1: if(-u-v>1d) return Double.NaN; break;
+			case  2: if( u-v>1d) return Double.NaN; break;
+			case  3: if(   v<0d) return Double.NaN; break;
+			case  4: if( u+v>1d) return Double.NaN; break;
+			case  5: if(-u-v>1d || u+v>1d) return Double.NaN; break;
+			case  6: if( u  >0d) return Double.NaN; break;
+			case  7: if(-u+v>-1d) return Double.NaN; break;
+			case  8: if(-u+v>1d) return Double.NaN; break;
+			case  9: if( u  <0d) return Double.NaN; break;
+			case 10: if(-u+v>1d || u-v>1d) return Double.NaN; break;
+			case 11: if( u+v>-1d) return Double.NaN; break;
+			case 12: if(   v>0d) return Double.NaN; break;
+			case 13: if( u-v>-1d) return Double.NaN; break;
+			case 14: if(-u-v>-1d) return Double.NaN; break;
 			case 15: return Double.NaN;
-			
-//			case  1: return w[0]>0.5d ? Double.NaN : (value[1]*w[1]+value[2]*w[2])/(w[1]+w[2]);
-//			case  2: return w[1]>0.5d ? Double.NaN : (value[0]*w[0]+value[2]*w[2])/(w[0]+w[2]);
-			case  3: return w[1]<0d ? Double.NaN : 0.5d*(value[3]*(1d-w[0])+value[2]*(1d+w[0]));
-//			case  4: return w[2]>0.5d ? Double.NaN : (value[0]*w[0]+value[1]*w[1])/(w[0]+w[1]);
-			case  5: return Math.abs(w[0]+w[1])>1d ? Double.NaN : 0.5d*(value[1]*(2d+w[0]-w[1])+value[2]*(2d-w[0]+w[1]));
-			case  6: return w[0]>0d ? Double.NaN : 0.5d*(value[0]*(1d-w[1])+value[3]*(1d+w[1]));
-			case  7: return w[1]-w[0]<1d ? Double.NaN : value[3];
-//			case  8: 
-			case  9: return w[0]<0d ? Double.NaN : 0.5d*(value[1]*(1d-w[1])+value[2]*(1d+w[1]));
-			case 10: return Math.abs(w[0]-w[1])>1d ? Double.NaN : 0.5d*(value[0]*(2d-w[0]-w[1])+value[2]*(2d+w[0]+w[1]));
-			case 11: return w[0]+w[1]<1d ? Double.NaN : value[2];
-			case 12: return w[1]>0d ? Double.NaN : 0.5d*(value[0]*(1d-w[0])+value[1]*(1d+w[0]));
-			case 13: return w[0]-w[1]<1d ? Double.NaN : value[1];
-			case 14: return w[0]+w[1]>-1d ? Double.NaN : value[0];
 		}
+		if(!Double.isNaN(value[0])) { vsum += value[0]*(1-u)*(1-v); wsum += (1-u)*(1-v); }
+		if(!Double.isNaN(value[1])) { vsum += value[1]*(1+u)*(1-v); wsum += (1+u)*(1-v); }
+		if(!Double.isNaN(value[2])) { vsum += value[2]*(1+u)*(1+v); wsum += (1+u)*(1+v); }
+		if(!Double.isNaN(value[3])) { vsum += value[3]*(1-u)*(1+v); wsum += (1-u)*(1+v); }
+		if(wsum<0.00000001d) return Double.NaN;
+		return vsum/wsum;
+	}
+	public double[] gradientAt(JDPoint p) {
+		double[] w = barycentricCoords(p);
+		double u = w[0];
+		double v = w[1];
+		double vsum = 0d, wsum = 0d;
+		double gu = 0d, gv = 0d, wu = 0d, wv = 0d;
+		if(!Double.isNaN(value[0])) { vsum += value[0]*(1-u)*(1-v); wsum += (1-u)*(1-v); gu -= value[0]*(1-v); wu -= 1-v; gv -= value[0]*(1-u); wv -= 1-u; }
+		if(!Double.isNaN(value[1])) { vsum += value[1]*(1+u)*(1-v); wsum += (1+u)*(1-v); gu += value[1]*(1-v); wu += 1-v; gv -= value[1]*(1+u); wv -= 1+u; }
+		if(!Double.isNaN(value[2])) { vsum += value[2]*(1+u)*(1+v); wsum += (1+u)*(1+v); gu += value[2]*(1+v); wu += 1+v; gv += value[2]*(1+u); wv += 1+u; }
+		if(!Double.isNaN(value[3])) { vsum += value[3]*(1-u)*(1+v); wsum += (1-u)*(1+v); gu -= value[3]*(1+v); wu -= 1+v; gv += value[3]*(1-u); wv += 1-u; }
+		if(wsum<0.00000001d) return new double[] {Double.NaN, Double.NaN};
+		gu = (gu*wsum-vsum*wu) / (wsum*wsum);
+		gv = (gv*wsum-vsum*wv) / (wsum*wsum);
+		return new double[] {gu, gv};
 	}
 	public double[] refineUV(double uf, double vf, double lev) {
-		double u = uf, v = vf;
-		for(int i=0; i<3; i++) {
-			double l = 0.25d*(value[0]*(1-u)*(1-v)+value[1]*(1+u)*(1-v)+value[2]*(1+u)*(1+v)+value[3]*(1-u)*(1+v));
-			double lu = 0.25d*((value[1]-value[0])*(1-v) + (value[2]-value[3])*(1+v));
-			double lv = 0.25d*((value[3]-value[0])*(1-u) + (value[2]-value[1])*(1+u));
-			double lr = 1d/(lu*lu+lv*lv);
-			if(lr>1000000d) break;
-			u += (lev-l)*lu*lr;
-			v += (lev-l)*lv*lr;
+		int nancode = (Double.isNaN(value[0])?1:0) | (Double.isNaN(value[1])?2:0) | (Double.isNaN(value[2])?4:0) | (Double.isNaN(value[3])?8:0);
+		double u = uf, v = vf, o = 0d;
+		if(nancode == 15) return new double[] {u,v};
+		boolean stickToNaNBorder = false;
+		switch(nancode) {
+			default: break;
+			case  1: stickToNaNBorder = (Math.abs(-u-v-1d)<0.0001d); break;
+			case  2: stickToNaNBorder = (Math.abs( u-v-1d)<0.0001d); break;
+			case  4: stickToNaNBorder = (Math.abs( u+v-1d)<0.0001d); break;
+			case  8: stickToNaNBorder = (Math.abs(-u+v-1d)<0.0001d); break;
+			case  5: stickToNaNBorder = (Math.abs(-u-v-1d)<0.0001d || Math.abs( u+v-1d)<0.0001d); break;
+			case 10: stickToNaNBorder = (Math.abs( u-v-1d)<0.0001d || Math.abs(-u+v-1d)<0.0001d); break;
+			case  3: stickToNaNBorder = (Math.abs(v)<0.0001d); break;
+			case  6: stickToNaNBorder = (Math.abs(u)<0.0001d); break;
+			case  9: stickToNaNBorder = (Math.abs(u)<0.0001d); break;
+			case 12: stickToNaNBorder = (Math.abs(v)<0.0001d); break;
+		}
+		
+		
+		int ii = nancode==0 ? 4 : 10;
+		for(int i=0; i<ii; i++) {
+			double vsum = 0d, wsum = 0d;
+			double gu = 0d, gv = 0d, wu = 0d, wv = 0d;
+			if(!Double.isNaN(value[0])) { vsum += value[0]*(1-u)*(1-v); wsum += (1-u)*(1-v); gu -= value[0]*(1-v); wu -= 1-v; gv -= value[0]*(1-u); wv -= 1-u; }
+			if(!Double.isNaN(value[1])) { vsum += value[1]*(1+u)*(1-v); wsum += (1+u)*(1-v); gu += value[1]*(1-v); wu += 1-v; gv -= value[1]*(1+u); wv -= 1+u; }
+			if(!Double.isNaN(value[2])) { vsum += value[2]*(1+u)*(1+v); wsum += (1+u)*(1+v); gu += value[2]*(1+v); wu += 1+v; gv += value[2]*(1+u); wv += 1+u; }
+			if(!Double.isNaN(value[3])) { vsum += value[3]*(1-u)*(1+v); wsum += (1-u)*(1+v); gu -= value[3]*(1+v); wu -= 1+v; gv += value[3]*(1-u); wv += 1-u; }
+			if(wsum<0.00000001d) return new double[] {Double.NaN, Double.NaN};
+			gu = (gu*wsum-vsum*wu) / (wsum*wsum);
+			gv = (gv*wsum-vsum*wv) / (wsum*wsum);
+			vsum /= wsum;
+			double gr = 0.9d/(gu*gu+gv*gv); //reduve overshooting
+			if(gr>1000000d) break;
+			u += (lev-vsum)*gu*gr;
+			v += (lev-vsum)*gv*gr;
+			switch(nancode) {
+				default:
+				case  0: break;
+				case  1: if(-u-v>1d || stickToNaNBorder) { o=0.5d*(-u-v-1d); u+=o; v+=o; } break;
+				case  2: if( u-v>1d || stickToNaNBorder) { o=0.5d*( u-v-1d); u-=o; v+=o; } break;
+				case  3: if(   v<0d || stickToNaNBorder) { v=0.0d; } break;
+				case  4: if( u+v>1d || stickToNaNBorder) { o=0.5d*( u+v-1d); u-=o; v-=o; } break;
+				case  5:
+					if(-u-v>1d || (stickToNaNBorder && -u-v>0d)) { o=0.5d*(-u-v-1d); u+=o; v+=o; }
+					if( u+v>1d || (stickToNaNBorder && u+v>0d)) { o=0.5d*( u+v-1d); u-=o; v-=o; } break;
+				case  6: if( u  >0d || stickToNaNBorder) { u=0.0d; } break;
+				case  8: if(-u+v>1d || stickToNaNBorder) { o=0.5d*(-u+v-1d); u+=o; v-=o; } break;
+				case  9: if( u  <0d || stickToNaNBorder) { u=0.0d; } break;
+				case 10:
+					if( u-v>1d || (stickToNaNBorder && u-v>0d)) { o=0.5d*( u-v-1d); u-=o; v+=o; }
+					if(-u+v>1d || (stickToNaNBorder && v-u>0d)) { o=0.5d*(-u+v-1d); u+=o; v-=o; } break;
+				case 12: if(   v>0d || stickToNaNBorder) { v=0.0d; } break;
+			}
 		}
 		return new double[] {u,v};
 	}

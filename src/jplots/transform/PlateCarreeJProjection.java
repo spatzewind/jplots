@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jplots.JAxis;
+import jplots.maths.JDLine;
 import jplots.maths.JDPolygon;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
@@ -72,6 +73,11 @@ public class PlateCarreeJProjection implements JProjection {
 	}
 
 	@Override
+	public List<JDLine> splitByMapBorder(JDLine line) {
+		return line.intersectsAABB(-180d, 180d, -90d, 90d);
+	}
+
+	@Override
 	public List<JDPolygon> splitByMapBorder(JDPolygon poly) {
 		List<JDPolygon> res = new ArrayList<>();
 		res.add(poly);
@@ -80,7 +86,7 @@ public class PlateCarreeJProjection implements JProjection {
 
 	@Override
 	public double[] defaultMapExtend() {
-		return new double[] { -180d, 180d, -90d, 90d };
+		return new double[] { -half_circle, half_circle, -quarter_circle, quarter_circle };
 	}
 
 	@Override

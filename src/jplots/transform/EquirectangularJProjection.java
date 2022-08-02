@@ -5,6 +5,7 @@ import java.util.List;
 
 import jplots.JAxis;
 import jplots.helper.GeometryTools;
+import jplots.maths.JDLine;
 import jplots.maths.JDPoint;
 import jplots.maths.JDPolygon;
 import jplots.maths.JPlotMath;
@@ -115,6 +116,11 @@ public class EquirectangularJProjection implements JProjection {
 	public double[] tissotFromProj(double x, double y) {
 		double[] xy = fromPROJtoLATLON(x, y, false);
 		return tissotFromLatLon(xy[0], xy[1], false);
+	}
+
+	@Override
+	public List<JDLine> splitByMapBorder(JDLine line) {
+		return line.intersectsAABB(-radaequ, radaequ, -radpol, radpol);
 	}
 
 	@Override

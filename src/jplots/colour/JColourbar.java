@@ -5,6 +5,7 @@ import java.util.List;
 
 import jplots.JAxis;
 import jplots.layer.JContourLayer;
+import jplots.layer.JContourLayer2D;
 import jplots.layer.JHatchLayer;
 import jplots.layer.JPlotsLayer;
 import jplots.layer.JXYLayer;
@@ -207,6 +208,7 @@ public class JColourbar extends JAxis {
 	
 	private void collectPrimarySource() {
 		JContourLayer contours = null;
+		JContourLayer2D contours2 = null;
 		JXYLayer xys = null;
 		for (JPlotsLayer layer : srcAxis.getLayers()) {
 			if (layer instanceof JContourLayer) {
@@ -214,6 +216,15 @@ public class JColourbar extends JAxis {
 				srcColT = contours.getColourtable();
 				if(srcColT==null) {
 					contours = null;
+				} else {
+					break;
+				}
+			}
+			if (layer instanceof JContourLayer2D) {
+				contours2 = (JContourLayer2D) layer;
+				srcColT = contours2.getColourtable();
+				if(srcColT==null) {
+					contours2 = null;
 				} else {
 					break;
 				}
@@ -235,6 +246,22 @@ public class JColourbar extends JAxis {
 			minV = zr[0];
 			maxV = zr[1];
 			contourLevels = contours.getLevels();
+			if (Double.isNaN(minC))
+				minC = minV;
+			if (Double.isNaN(maxC))
+				maxC = maxV;
+			if (pplot.isDebug())
+				System.out.println("[DEBUG] JColourbar: set vmin/vmax:  " + minV + "/" + maxV);
+			foundPrimary = true;
+			return;
+		}
+		if(contours2!=null) {
+			if (pplot.isDebug())
+				System.out.println("[DEBUG] JColourbar: found JContourLayer: " + contours2);
+			double[] zr = contours2.getZRange();
+			minV = zr[0];
+			maxV = zr[1];
+			contourLevels = contours2.getLevels();
 			if (Double.isNaN(minC))
 				minC = minV;
 			if (Double.isNaN(maxC))

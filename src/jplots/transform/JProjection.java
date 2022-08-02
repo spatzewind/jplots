@@ -3,6 +3,7 @@ package jplots.transform;
 import java.util.List;
 
 import jplots.JAxis;
+import jplots.maths.JDLine;
 import jplots.maths.JDPolygon;
 import jplots.shapes.JGroupShape;
 
@@ -26,6 +27,8 @@ public interface JProjection {
 	double[] tissotFromLatLon(double u, double v, boolean input_in_degree);
 
 	double[] tissotFromProj(double x, double y);
+
+	List<JDLine> splitByMapBorder(JDLine line);
 
 	List<JDPolygon> splitByMapBorder(JDPolygon poly);
 

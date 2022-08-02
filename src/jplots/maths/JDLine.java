@@ -27,6 +27,11 @@ public class JDLine {
 		return coords;
 	}
 	
+	public JDLine affine(double[][] transformationMatrix) {
+		for(JDPoint p: points) p.affine(transformationMatrix);
+		return this;
+	}
+	
 	public boolean join(JDLine other) {
 		return join(other, 0.0001d);
 	}
@@ -62,6 +67,39 @@ public class JDLine {
 		return false;
 	}
 	
+	public List<JDLine> intersectsCircle(JDPoint center, double radius) {
+		List<JDLine> res = new ArrayList<>();
+		double er2 = radius * radius;
+		List<JDPoint> np = new ArrayList<>();
+		double d1 = points[0].x*points[0].x + points[0].y*points[0].y - er2;
+		if(d1<=0d) np.add(points[0].copy());
+		for(int i=1; i<points.length; i++) {
+			double d0 = points[i].x*points[i].x + points[i].y*points[i].y - er2;
+			if(d0<=0d) {
+				if(d1>0d) {
+					JDPoint c = center.circleCrossBetween(points[i], points[i-1], radius);
+					if(c!=null) np.add(c);
+//					np.add(points[i].fractionTowards(d0/(d0-d1), points[i-1]));
+				}
+				np.add(points[i].copy());
+				if(i+1==points.length) {
+					res.add(new JDLine(np.toArray(new JDPoint[0])));
+					np.clear();
+				}
+			} else
+			if(d1<=0d) {
+				JDPoint c = center.circleCrossBetween(points[i-1], points[i], radius);
+				if(c!=null) np.add(c);
+//				np.add(points[i-1].fractionTowards(d1/(d1-d0), points[i]));
+				res.add(new JDLine(np.toArray(new JDPoint[0])));
+				np.clear();
+			}
+			d1 = d0;
+		}
+		
+		// TODO Auto-generated method stub
+		return res;
+	}
 	public List<JDLine> intersectsAABB(double left, double right, double top, double bottom) {
 		double xl = Math.min(left, right);
 		double xr = Math.max(left, right);
