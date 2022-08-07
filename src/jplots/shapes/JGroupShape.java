@@ -1,5 +1,6 @@
 package jplots.shapes;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,5 +36,12 @@ public class JGroupShape extends JPlotShape {
 	public void removeAllChildren() {
 		childs.clear();
 	}
-
+	
+	@Override
+	public void printStack(PrintWriter pw, String off) {
+		pw.println(off+this.getClass().getSimpleName()+" {");
+		for(JPlotShape child: childs)
+			child.printStack(pw, "   "+off);
+		pw.println(off+"}");
+	}
 }

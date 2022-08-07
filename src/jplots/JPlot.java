@@ -1,5 +1,7 @@
 package jplots;
 
+import java.io.PrintWriter;
+
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import jplots.colour.JColourbar;
@@ -36,7 +38,7 @@ public class JPlot {
 
 	private boolean img_is_created, useDebug;
 	private int width, height, lastAxisNum;
-	private int n_cols, n_rows;
+	private int n_cols, n_rows, currAxNum;
 	private JAxis[] axes;
 
 	// ************************************
@@ -56,6 +58,7 @@ public class JPlot {
 		this.height = 0;
 		this.img_is_created = false;
 		this.useDebug = false;
+		this.currAxNum = -1;
 		// this.plotImg = applet.createGraphics(16, 16);
 		if (!hasWelcomed)
 			this.welcome();
@@ -78,7 +81,6 @@ public class JPlot {
 	public JPlot figure() {
 		return subplots(1.7066666667d, 1.7066666667d, 1, 1);
 	}
-
 	/**
 	 * starts the new figure/plot with specified width and height in inch
 	 *
@@ -89,7 +91,7 @@ public class JPlot {
 	public JPlot figure(double width, double height) {
 		return subplots(width, height, 1, 1);
 	}
-
+	
 	/**
 	 * starts the new figure/plot width standard width and height about 1.7067inch x
 	 * 1.7067inch and 300dpi
@@ -101,7 +103,6 @@ public class JPlot {
 	public JPlot subplots(int nrows, int ncols) {
 		return subplots(1.7066666667d, 1.7066666667d, nrows, ncols);
 	}
-
 	/**
 	 * starts the new figure/plot with specified width and height in inch
 	 *
@@ -114,7 +115,6 @@ public class JPlot {
 	public JPlot subplots(double width, double height, int nrows, int ncols) {
 		return subplots(width, height, nrows, ncols, (Object) null);
 	}
-
 	/**
 	 * starts the new figure/plot with specified width and height in inch
 	 *
@@ -162,6 +162,7 @@ public class JPlot {
 					}
 				}
 			}
+		this.currAxNum = nrows*ncols-1;
 		return this;
 	}
 
@@ -184,11 +185,11 @@ public class JPlot {
 		for (int a = 0; a < axes.length; a++)
 			axes[a] = tempa[a];
 		lastAxisNum = axes.length - 1;
+		currAxNum = lastAxisNum;
 		if (useDebug)
 			System.out.println("[DEBUG] addSubplot: " + axes.length + " PAxis-objects");
 		return this;
 	}
-
 	/**
 	 * add new JAxis object as a subplot in the JPlot object
 	 *
@@ -204,6 +205,8 @@ public class JPlot {
 		for (int a = 0; a < axes.length; a++)
 			axes[a] = tempa[a];
 		lastAxisNum = axes.length - 1;
+		if(!(axes[lastAxisNum] instanceof JColourbar))
+			currAxNum = lastAxisNum;
 		if (useDebug)
 			System.out.println("[DEBUG] addSubplot: " + axes.length + " PAxis-objects");
 		return this;
@@ -300,7 +303,7 @@ public class JPlot {
 		ga(axis_num).setGeoProjection(proj);
 		return this;
 	}
-
+	
 	/**
 	 * creates image of the PPlot -- the figure
 	 */
@@ -309,16 +312,22 @@ public class JPlot {
 			System.out.println("[DEBUG] Start image-creation ...");
 		if (plotImg == null) {
 			plotImg = myParent.createGraphics(width, height, PConstants.P2D);
+			plotImg.beginDraw();
+			plotImg.clear();
+			plotImg.endDraw();
 		} else if (plotImg.width != width || plotImg.height != height) {
 			plotImg = myParent.createGraphics(width, height, PConstants.P2D);
+			plotImg.beginDraw();
+			plotImg.clear();
+			plotImg.endDraw();
 		}
 		if (useDebug) {
 			System.out.println("[DEBUG]   - create PGraphics-object " + plotImg.width + "x" + plotImg.height + "px");
 			System.out.println("[DEBUG]   - begin drawing");
 		}
+		onlyPlotAxes();
 		plotImg.beginDraw();
 		plotImg.clear();
-		plotImg.textSize(200);
 		createImage(plotImg);
 		if (useDebug)
 			System.out.println("[DEBUG]   - end drawing");
@@ -327,25 +336,58 @@ public class JPlot {
 		return this;
 	}
 
-	private JPlot createImage(PGraphics g) {
-		if (useDebug)
-			System.out.println("[DEBUG]   - add " + axes.length + " subplots to plotting queue");
+	private void onlyPlotAxes() {
+		boolean tempDebug = isDebug();
+		debug(false);
+		plotImg.beginDraw();
+		plotImg.clear();
+		plotImg.textSize(200);
 		for (JAxis ax : axes) {
 			if (ax instanceof JColourbar)
 				continue;
+			JPlotShape plotShp = ax.createPlotOnlyAxes(myParent, width, height);
+			if (ax.getFont() != null)
+				plotImg.textFont(ax.getFont());
+			plotShp.draw(this, plotImg);
+		}
+		for (JAxis ax : axes) {
+			if (ax instanceof JColourbar) {
+				JPlotShape plotShp = ax.createPlotOnlyAxes(myParent, width, height);
+				if (ax.getFont() != null)
+					plotImg.textFont(ax.getFont());
+				plotShp.draw(this, plotImg);
+			}
+		}
+		plotImg.endDraw();
+		debug(tempDebug);
+	}
+	private JPlot createImage(PGraphics g) {
+		if (useDebug)
+			System.out.println("[DEBUG]   - add " + axes.length + " subplots to plotting queue");
+		g.textSize(200);
+//		PrintWriter pw = myParent.createWriter("./shapestack_"+getDate()+".txt");
+		for (JAxis ax : axes) {
+			if (ax instanceof JColourbar)
+				continue;
+//			pw.println("\nAxes: "+ax);
 			JPlotShape plotShp = ax.createPlot(myParent, width, height);
+//			plotShp.printStack(pw,"");
 			if (ax.getFont() != null)
 				g.textFont(ax.getFont());
 			plotShp.draw(this, g);
 		}
 		for (JAxis ax : axes) {
 			if (ax instanceof JColourbar) {
+//				pw.println("\nAxes: "+ax);
 				JPlotShape plotShp = ax.createPlot(myParent, width, height);
+//				plotShp.printStack(pw,"");
 				if (ax.getFont() != null)
 					g.textFont(ax.getFont());
 				plotShp.draw(this, g);
 			}
 		}
+//		pw.flush();
+//		pw.close();
 		return this;
 	}
 
@@ -446,15 +488,17 @@ public class JPlot {
 	}
 
 	public JAxis gca() {
-		return axes[lastAxisNum];
+		if(currAxNum<0)
+			return null;
+		return axes[currAxNum];
 	}
 
 	public JAxis ga(int a) {
-		if (a < -axes.length || a > axes.length - 1)
+		if (a < -axes.length || a > axes.length-1)
 			throw new IndexOutOfBoundsException(
 					"Number out of range of axis count: " + a + " <> {0..." + axes.length + "}");
-		lastAxisNum = a + (a < 0 ? axes.length : 0);
-		return axes[lastAxisNum];
+		currAxNum = a + (a < 0 ? axes.length : 0);
+		return axes[currAxNum];
 	}
 
 	// ************************************
@@ -465,7 +509,18 @@ public class JPlot {
 		System.out.println("##library.name## ##library.prettyVersion## by ##author##");
 		hasWelcomed = true;
 	}
-
+	private String getDate() {
+		String ds = ""+
+				PApplet.nf(myParent.year(),4)+
+				PApplet.nf(myParent.month(),2)+
+				PApplet.nf(myParent.day(),2)+
+				"-"+
+				PApplet.nf(myParent.hour(),2)+
+				PApplet.nf(myParent.minute(),2)+
+				PApplet.nf(myParent.second(),2);
+		return ds;
+	}
+	
 	public int getNumColumns() {
 		return n_cols;
 	}
@@ -690,17 +745,26 @@ public class JPlot {
 		gca().showShapefile(path_to_shapefile, shapeType, user_epsg_code, params);
 	}
 
-	public void colourbar() {
-		colourbar(gca(), "");
+	public JColourbar colourbar() {
+		return colourbar(gca(), "", "meither");
 	}
-	public void colourbar(JAxis axis) {
-		colourbar(axis, "");
+	public JColourbar colourbar(JAxis axis) {
+		return colourbar(axis, "", "neither");
 	}
-	public void colourbar(String name) {
-		colourbar(gca(), name);
+	public JColourbar colourbar(String name) {
+		return colourbar(gca(), name, "neither");
 	}
-	public void colourbar(JAxis axis, String name) {
-		addSubplot(new JColourbar(axis, name));
+	public JColourbar colourbar(String name, String extent) {
+		return colourbar(gca(), name, extent);
+	}
+	public JColourbar colourbar(JAxis axis, String name) {
+		return colourbar(axis, name, "neither");
+	}
+	public JColourbar colourbar(JAxis axis, String name, String extent) {
+		JColourbar cb = new JColourbar(axis, name);
+		cb.setExtent(extent);
+		addSubplot(cb);
+		return cb;
 	}
 
 	/**

@@ -25,7 +25,7 @@ public class JColourbar extends JAxis {
 
 	private JAxis srcAxis;
 	private JColourtable srcColT;
-	private boolean isHorizontal, borders, foundPrimary;
+	private boolean isHorizontal, borders, foundPrimary, extendLower, extendUpper;
 	private double minC, maxC, minH, maxH, minV, maxV;
 	private double[] contourLevels;
 	private String titleC;
@@ -51,6 +51,8 @@ public class JColourbar extends JAxis {
 		maxC = Double.NaN;
 		contourLevels = new double[0];
 		borders = true;
+		extendLower = false;
+		extendUpper = false;
 	}
 
 	@Override
@@ -58,6 +60,15 @@ public class JColourbar extends JAxis {
 		if (pplot.isDebug()) {
 			System.out.println("[DEBUG] JColourbar: begin colourbar\n"+
 					"                    x/y/width/height: "+px+"/"+py+"/"+pw+"/"+ph);
+		}
+		int trihgt = Math.min(pw,ph);
+		int xs = px, ys = py, xe = px+pw, ye = py+ph;
+		if(isHorizontal) {
+			if(extendLower) xs += trihgt;
+			if(extendUpper) xe -= trihgt;
+		} else {
+			if(extendLower) ye -= trihgt;
+			if(extendUpper) ys += trihgt;
 		}
 		JGroupShape graph = new JGroupShape();
 		if(srcAxis==null)
@@ -93,10 +104,10 @@ public class JColourbar extends JAxis {
 			graph.addChild(createXAxis());
 		if (!isHorizontal)
 			graph.addChild(createYAxis());
-		JDPoint lt = new JDPoint(px,    py);
-		JDPoint rt = new JDPoint(px+pw, py);
-		JDPoint lb = new JDPoint(px,    py+ph);
-		JDPoint rb = new JDPoint(px+pw, py+ph);
+		JDPoint lt = new JDPoint(xs, ys);
+		JDPoint rt = new JDPoint(xe, ys);
+		JDPoint lb = new JDPoint(xs, ye);
+		JDPoint rb = new JDPoint(xe, ye);
 		List<JDTriangle> triangles = new ArrayList<>();
 		if(isHorizontal) {
 			lt.value = minV; rt.value = maxV;
@@ -107,23 +118,67 @@ public class JColourbar extends JAxis {
 		}
 		triangles.add(new JDTriangle(lt,rt,lb));
 		triangles.add(new JDTriangle(lb,rt,rb));
+		if(extendLower) {
+			double low_val = 1.5d*minV - 0.5d*maxV;
+			if(isHorizontal) {
+				triangles.add(new JDTriangle(new JDPoint(px,py+0.5d*ph,low_val), new JDPoint(xs,ys,low_val), new JDPoint(xs,ye,low_val)));
+			} else {
+				triangles.add(new JDTriangle(new JDPoint(px+0.5d*pw,py+ph,low_val), new JDPoint(xs,ye,low_val), new JDPoint(xe,ye,low_val)));
+			}
+		}
+		if(extendUpper) {
+			double upp_val = 1.5d*maxV - 0.5d*minV;
+			if(isHorizontal) {
+				triangles.add(new JDTriangle(new JDPoint(px+pw,py+0.5d*ph,upp_val), new JDPoint(xe,ye,upp_val), new JDPoint(xe,ys,upp_val)));
+			} else {
+				triangles.add(new JDTriangle(new JDPoint(px+0.5d*pw,py,upp_val), new JDPoint(xe,ys,upp_val), new JDPoint(xs,ys,upp_val)));
+			}
+		}
 		//drawPrimarySource(graph);
 		drawPrimarySource(applet, graph, triangles);
 		drawHatchLayers(graph, triangles);
 		
 		if (borders) {
-			graph.addChild(new JLineShape(3f, 0xff000000, px,    py,    px+pw, py));
-			graph.addChild(new JLineShape(3f, 0xff000000, px,    py+ph, px+pw, py+ph));
-			graph.addChild(new JLineShape(3f, 0xff000000, px,    py,    px,    py+ph));
-			graph.addChild(new JLineShape(3f, 0xff000000, px+pw, py,    px+pw, py+ph));
+			graph.addChild(new JLineShape(3f, 0xff000000, xs, ys, xe, ys));
+			graph.addChild(new JLineShape(3f, 0xff000000, xs, ye, xe, ye));
+			graph.addChild(new JLineShape(3f, 0xff000000, xs, ys, xs, ye));
+			graph.addChild(new JLineShape(3f, 0xff000000, xe, ys, xe, ye));
+		}
+		if(extendLower) {
+			if(isHorizontal) {
+				graph.addChild(new JLineShape(3f, 0xff000000, px,py+0.5f*ph, xs,ys));
+				graph.addChild(new JLineShape(3f, 0xff000000, px,py+0.5f*ph, xs,ye));
+			} else {
+				graph.addChild(new JLineShape(3f, 0xff000000, px+0.5f*pw,py+ph, xs,ye));
+				graph.addChild(new JLineShape(3f, 0xff000000, px+0.5f*pw,py+ph, xe,ye));
+			}
+		}
+		if(extendUpper) {
+			if(isHorizontal) {
+				graph.addChild(new JLineShape(3f, 0xff000000, px+pw,py+0.5f*ph, xe,ys));
+				graph.addChild(new JLineShape(3f, 0xff000000, px+pw,py+0.5f*ph, xe,ye));
+			} else {
+				graph.addChild(new JLineShape(3f, 0xff000000, px+0.5f*pw,py, xs,ys));
+				graph.addChild(new JLineShape(3f, 0xff000000, px+0.5f*pw,py, xe,ys));			}
 		}
 		return graph;
 	}
 	
+	public void setExtent(String what) {
+		if(what.equalsIgnoreCase("neither")) { extendLower = false; extendUpper = false; }
+		if(what.equalsIgnoreCase("lower")) { extendLower = true; extendUpper = false; }
+		if(what.equalsIgnoreCase("upper")) { extendLower = false; extendUpper = true; }
+		if(what.equalsIgnoreCase("both")) { extendLower = true; extendUpper = true; }
+	}
+	
 	private JGroupShape createXAxis() {
+		int trihgt = Math.min(pw,ph);
+		int xs = extendLower ? px+trihgt : px;
+		int xe = extendUpper ? px+pw-trihgt : px+pw;
+		int xw = xe-xs;
 		JGroupShape axisgrid = new JGroupShape();
 		double[] ticks = JPlotMath.optimalLinearTicks(minC, maxC);
-		double[] tcpos = JPlotMath.map(ticks, minC, maxC, px, px + pw);
+		double[] tcpos = JPlotMath.map(ticks, minC, maxC, xs, xe);
 		String[] tickmark = new String[ticks.length];
 		double vf = 1d / (ticks[0]);
 		int decimal = (int) (1000d * ticks[1] + 0.5d);
@@ -138,11 +193,11 @@ public class JColourbar extends JAxis {
 			}
 		}
 		tmlen *= this.txtsize / tmlc;
-		int tickcount = Math.max(2, (int) (pw / (1.2d * tmlen) + 0.9999d));
+		int tickcount = Math.max(2, (int) (xw / (1.2d * tmlen) + 0.9999d));
 		if (pplot.isDebug())
 			System.out.println("[DEBUG] JAxis-object: tmlen=" + tmlen + " -> tickcount approx. " + tickcount);
 		ticks = JPlotMath.optimalLinearTicks(minC, maxC, tickcount);
-		tcpos = JPlotMath.map(ticks, minC, maxC, px, px + pw);
+		tcpos = JPlotMath.map(ticks, minC, maxC, xs, xe);
 		tickmark = new String[ticks.length];
 		vf = 1d / (ticks[0]);
 		decimal = (int) (1000d * ticks[1] + 0.5d);
@@ -168,14 +223,18 @@ public class JColourbar extends JAxis {
 						PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
 			}
 		if (titleC.length() > 0)
-			axisgrid.addChild(new JTextShape(titleC, px + 0.5f * pw, py + 1.250f * ph + (float) txtsize,
+			axisgrid.addChild(new JTextShape(titleC, xs + 0.5f * xw, py + 1.250f * ph + (float) txtsize,
 					(float) (1.1d * txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
 		return axisgrid;
 	}
 	private JGroupShape createYAxis() {
+		int trihgt = Math.min(pw,ph);
+		int ys = extendUpper ? py+trihgt : py;
+		int ye = extendLower ? py+ph-trihgt : py+ph;
+		int yh = ye-ys;
 		JGroupShape axisgrid = new JGroupShape();
 		double[] ticks = JPlotMath.optimalLinearTicks(minC, maxC);
-		double[] tcpos = JPlotMath.map(ticks, minC, maxC, py + ph, py);
+		double[] tcpos = JPlotMath.map(ticks, minC, maxC, ye, ys);
 //		for(int t=0; t<tcpos.length; t++)
 //			tcpos[t] = 2*py+ph-tcpos[t];
 		if (pplot.isDebug()) {
@@ -201,7 +260,7 @@ public class JColourbar extends JAxis {
 						PConstants.LEFT, PConstants.CENTER, 0xff000000, 0));
 			}
 		if (titleC.length() > 0)
-			axisgrid.addChild(new JTextShape(titleC, px + 1.500f * pw + tw, py + 0.5f * ph, (float) (1.1d * txtsize),
+			axisgrid.addChild(new JTextShape(titleC, px + 1.500f * pw + tw, ys + 0.5f * yh, (float) (1.1d * txtsize),
 					PConstants.CENTER, PConstants.TOP, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE));
 		return axisgrid;
 	}
@@ -311,6 +370,17 @@ public class JColourbar extends JAxis {
 			}
 	}
 	
+	
+	private int getColor(double value) {
+		if(Double.isNaN(value)) return srcColT.getColour(Double.NaN);
+		if(value<contourLevels[0]) return srcColT.getColour(-1d);
+		int cl = contourLevels.length-1;
+		if(value>contourLevels[cl]) return srcColT.getColour(2d);
+		for(int i=1; i<=cl; i++)
+			if(value<=contourLevels[i])
+				return srcColT.getColour((i-0.5d)/cl);
+		return srcColT.getColour(Double.NaN);
+	}
 	private void drawPrimarySource(PApplet applet, JGroupShape s, List<JDTriangle> triangles) {
 		if (img == null) {
 			img = applet.createImage(pw, ph, PConstants.ARGB);
@@ -319,46 +389,35 @@ public class JColourbar extends JAxis {
 		}
 		img.loadPixels();
 		for(int p=0; p<img.pixels.length; p++)
-			img.pixels[p] = 0xffffffff;
+			img.pixels[p] = 0x00999999;
+		img.updatePixels();
+		
 		if(srcColT==null)
 			return; // new JImageShape(img, px, py, pw, ph);
 		
-		double minCI = Double.NaN, maxCI = Double.NaN;
-		if (contourLevels.length > 0) {
-			minCI = contourLevels[0] < 1d ? contourLevels[0] * 2d : contourLevels[0] - 10d;
-			maxCI = contourLevels[contourLevels.length - 1] > 1d ? contourLevels[contourLevels.length - 1] * 2d
-					: contourLevels[contourLevels.length - 1] + 10d;
-		}
-		
-		if (isHorizontal) {
-			for (int i = 0; i < pw; i++) {
-				double v = JPlotMath.map(i, 0, pw, minC, maxC);
-				if (contourLevels.length > 0) {
-					int l = JContourLayer.getLevel(v, contourLevels, -1);
-					v = l < 1 ? minCI
-							: l > contourLevels.length - 1 ? maxCI : 0.5d * (contourLevels[l - 1] + contourLevels[l]);
+		for(JDTriangle tri: triangles) {
+			double	txi = Math.min(Math.min(tri.x[0],tri.x[1]), tri.x[2]),
+					txa = Math.max(Math.max(tri.x[0],tri.x[1]), tri.x[2]);
+			double	tyi = Math.min(Math.min(tri.y[0],tri.y[1]), tri.y[2]),
+					tya = Math.max(Math.max(tri.y[0],tri.y[1]), tri.y[2]);
+			int ixs =  Math.max((int) txi    - (txi < 0 ? 1 : 0), px),
+				ixe = -Math.max((int) (-txa) - (txa > 0 ? 1 : 0), 1 - px - pw);
+			int iys =  Math.max((int) tyi    - (tyi < 0 ? 1 : 0), py),
+				iye = -Math.max((int) (-tya) - (tya > 0 ? 1 : 0), 1 - py - ph);
+			if ((ixe < ixs) || (iye < iys)) continue;
+			for (int v = iys; v <= iye; v++) {
+				for (int u = ixs; u <= ixe; u++) {
+					JDPoint ij = new JDPoint(u+0.5d,v+0.5d);
+					if(!tri.contains(ij)) continue;
+					img.pixels[(v-py) * pw + u-px] = getColor(tri.valueAt(ij));
 				}
-				int c = srcColT.getColour(v, minV, maxV);
-				for (int j = 0; j < ph; j++)
-					img.pixels[j * pw + i] = c;
-			}
-		} else {
-			for (int j = 0; j < ph; j++) {
-				double v = JPlotMath.map(j, 0, ph, maxC, minC);
-				if (contourLevels.length > 0) {
-					int l = JContourLayer.getLevel(v, contourLevels, -1);
-					v = l < 1 ? minCI
-							: l > contourLevels.length - 1 ? maxCI : 0.5d * (contourLevels[l - 1] + contourLevels[l]);
-				}
-				int c = srcColT.getColour(v, minV, maxV);
-				for (int i = 0; i < pw; i++)
-					img.pixels[j * pw + i] = c;
 			}
 		}
 		img.updatePixels();
 		s.addChild(new JImageShape(img, px, py, pw, ph));
 	}
 	private void drawHatchLayers(JGroupShape s, List<JDTriangle> triangles) {
+		if(foundPrimary) return;
 		for(JHatchLayer layer: hatchPatterns) {
 			int[] codes = JHatchLayer.patternCodes(layer.getPattern());
 			layer.drawPatterns(triangles, s, codes[0], codes[1], this);

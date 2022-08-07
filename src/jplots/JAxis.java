@@ -14,6 +14,7 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import jplots.colour.ColourSequenceJColourtable;
+import jplots.colour.JColourbar;
 import jplots.colour.JColourtable;
 import jplots.colour.LinearSegmentedJColourtable;
 import jplots.helper.FileLoader;
@@ -79,11 +80,11 @@ public class JAxis {
 		pw = width;
 		ph = height;
 		layers = new ArrayList<>();
+		shareXaxis = new JAxis[] {};
+		shareYaxis = new JAxis[] {};
 		if (plot.isDebug())
 			System.out.println("[DEBUG] created PAxis-object: x/y=" + px + "/" + py + " w/h=" + pw + "/" + ph);
 		defaults();
-		shareXaxis = new JAxis[] {};
-		shareYaxis = new JAxis[] {};
 	}
 
 	public JAxis(JAxis src_axis) {
@@ -445,11 +446,14 @@ public class JAxis {
 		layers.add(tl);
 	}
 
-	public void colourbar() {
-		pplot.colourbar(this, "");
+	public JColourbar colourbar() {
+		return pplot.colourbar(this, "", "neither");
 	}
-	public void colourbar(String name) {
-		pplot.colourbar(this, name);
+	public JColourbar colourbar(String name) {
+		return pplot.colourbar(this, name, "neither");
+	}
+	public JColourbar colourbar(String name, String extent) {
+		return pplot.colourbar(this, name, extent);
 	}
 
 	public void legend() {
@@ -560,8 +564,8 @@ public class JAxis {
 		return this;
 	}
 	private void setXRange(double xmin, double xmax, boolean notify) {
-		minX = xmin;
-		maxX = xmax;
+		minX = Math.min(xmin,xmax);
+		maxX = Math.max(xmin,xmax);
 		xRangeFix = true;
 		if (notify)
 			for (JAxis a : shareXaxis)
@@ -573,8 +577,8 @@ public class JAxis {
 		return this;
 	}
 	private void setYRange(double ymin, double ymax, boolean notify) {
-		minY = ymin;
-		maxY = ymax;
+		minY = Math.min(ymin,ymax);
+		maxY = Math.max(ymin,ymax);
 		yRangeFix = true;
 		if (notify)
 			for (JAxis a : shareYaxis)
@@ -646,7 +650,7 @@ public class JAxis {
 		if (setY)
 			yGrdOn = onoff;
 	}
-
+	
 	public JAxis setGeoProjection(JProjection proj) {
 		projection = proj;
 		isGeoAxis = true;
@@ -837,24 +841,6 @@ public class JAxis {
 			System.out.println("[DEBUG] JAxis-object: min/max={x:" + minX + "/" + maxX + ", y:" + minY + "/" + maxY
 					+ "} with " + layers.size() + " layer" + (layers.size() > 1 ? "s" : ""));
 		JGroupShape graph = new JGroupShape();
-		if (isGeoAxis) {
-			projection.drawBorder(this, graph);
-		} else {
-			if (xAxOn || xGrdOn)
-				graph.addChild(createXAxis());
-			if (yAxOn || yGrdOn)
-				graph.addChild(createYAxis());
-			if (xAxOn || yAxOn) {
-				if (xAxOn) {
-					graph.addChild(new JLineShape(3f, 0xff000000, px, (float)py, px + pw, py));
-					graph.addChild(new JLineShape(3f, 0xff000000, px, (float)py + ph, px + pw, py + ph));
-				}
-				if (yAxOn) {
-					graph.addChild(new JLineShape(3f, 0xff000000, px, (float)py, px, py + ph));
-					graph.addChild(new JLineShape(3f, 0xff000000, px + pw, (float)py, px + pw, py + ph));
-				}
-			}
-		}
 		for (int l = 0; l < layers.size(); l++) {
 			JPlotsLayer layer = layers.get(l);
 			if (layer instanceof JLegend)
@@ -875,15 +861,86 @@ public class JAxis {
 		}
 		if (isGeoAxis) {
 			projection.addGrid(this, graph);
+			projection.drawBorder(this, graph);
+		} else {
+			if (xAxOn || xGrdOn)
+				graph.addChild(createXAxis());
+			if (yAxOn || yGrdOn)
+				graph.addChild(createYAxis());
+			if (xAxOn) {
+				graph.addChild(new JLineShape(3f, 0xff000000, px, (float)py, px + pw, py));
+				graph.addChild(new JLineShape(3f, 0xff000000, px, (float)py + ph, px + pw, py + ph));
+			}
+			if (yAxOn) {
+				graph.addChild(new JLineShape(3f, 0xff000000, px, (float)py, px, py + ph));
+				graph.addChild(new JLineShape(3f, 0xff000000, px + pw, (float)py, px + pw, py + ph));
+			}
 		}
 		if (titleP.length() > 0) {
 			if (pplot.isDebug())
 				System.out.println("[DEBUG] JAxis: add title \"" + titleP + "\" to graphic.");
-			graph.addChild(createTitle());
+			//TODO set txtsize back to 1.3d*txtsize
+			graph.addChild(new JTextShape(titleP, px + 0.5f * pw, py - 0.04f * ph, (float) (1.0d * txtsize), PConstants.CENTER,
+					PConstants.BOTTOM, 0xff000000, 0f));
 		}
+		graph.addChild(new JLineShape(0f, 0x00999999, 0f,0f, 1f,1f));
 		return graph;
 	}
-
+	public JPlotShape createPlotOnlyAxes(PApplet applet, int w, int h) {
+		if (isGeoAxis) {
+			double r = 0.5d * Math.max((maxX - minX) / pw, (maxY - minY) / ph);
+			double xm = 0.5d * (minX + maxX);
+			double ym = 0.5d * (minY + maxY);
+			minX = xm - r * pw;
+			maxX = xm + r * pw;
+			minY = ym - r * ph;
+			maxY = ym + r * ph;
+			xLog = false;
+			yLog = false;
+			xTim = false;
+			yTim = false;
+		} else if (xLog || yLog) {
+			if (xLog && (minX < 0d || maxX < 0d)) {
+				xLog = false;
+//				System.err.println("found negative values in X-range [x=" + minX + " ... " + maxX + "]");
+			}
+			if (yLog && (minY < 0d || maxY < 0d)) {
+				yLog = false;
+//				System.err.println("found negative values in Y-range [y=" + minY + " ... " + maxY + "]");
+			}
+		}
+		JGroupShape graph = new JGroupShape();
+		for(JPlotsLayer layer: layers)
+			if(layer instanceof JTextLayer)
+				layer.createVectorImg(this, 0, graph);
+		if (isGeoAxis) {
+			projection.addGrid(this, graph);
+			projection.drawBorder(this, graph);
+		} else {
+			if (xAxOn || xGrdOn)
+				graph.addChild(createXAxis());
+			if (yAxOn || yGrdOn)
+				graph.addChild(createYAxis());
+			if (xAxOn) {
+				graph.addChild(new JLineShape(3f, 0xff000000, px, (float)py, px + pw, py));
+				graph.addChild(new JLineShape(3f, 0xff000000, px, (float)py + ph, px + pw, py + ph));
+			}
+			if (yAxOn) {
+				graph.addChild(new JLineShape(3f, 0xff000000, px, (float)py, px, py + ph));
+				graph.addChild(new JLineShape(3f, 0xff000000, px + pw, (float)py, px + pw, py + ph));
+			}
+		}
+		if (titleP.length() > 0) {
+			if (pplot.isDebug())
+				System.out.println("[DEBUG] JAxis: add title \"" + titleP + "\" to graphic.");
+			//TODO set txtsize back to 1.3d*txtsize
+			graph.addChild(new JTextShape(titleP, px + 0.5f * pw, py - 0.04f * ph, (float) (1.0d * txtsize), PConstants.CENTER,
+					PConstants.BOTTOM, 0xff000000, 0f));
+		}
+		graph.addChild(new JLineShape(0f, 0x00999999, 0f,0f, 1f,1f));
+		return graph;
+	}
+	
 	public JProjection getProjection() {
 		return projection;
 	}
@@ -1214,6 +1271,15 @@ public class JAxis {
 					axisgrid.addChild(new JLineShape(2f, 0xff999999, (float) tcpos[t], py, (float) tcpos[t], py + ph));
 		}
 		if (xAxOn) {
+			if (titleX.length() > 0) {
+				if (pplot.isDebug())
+					System.out.println("[DEBUG] JAxi-object: add x-axis title \"" + titleX + "\" with text size " + txtsize);
+				String txtemp = ""+titleX;
+				if(tickmarkFactor.length()>0) txtemp += " (*"+tickmarkFactor+")";
+				//TODO set txtsize back to 1.1d*txtsize
+				axisgrid.addChild(new JTextShape(txtemp, px + 0.5f * pw, py + 1.04f * ph + (float) txtsize,
+						(float) (1.1d * txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
+			}
 			if (xTkOn) {
 				for (int t = 2; t < ticks.length; t++)
 					if (ticks[t] >= Math.min(Xin, Xax) && ticks[t] <= Math.max(Xin, Xax)) {
@@ -1223,18 +1289,9 @@ public class JAxis {
 						axisgrid.addChild(new JTextShape(tickmark[t], (float) tcpos[t], py + 1.03f * ph,
 								(float) txtsize, PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
 					}
-				if(titleX.length()==0)
+				if(titleX.length()==0 && tickmarkFactor.length()>0)
 					axisgrid.addChild(new JTextShape(tickmarkFactor, px+pw, py+ph, (float) txtsize,
 							PConstants.LEFT, PConstants.CENTER, 0xff000000, 0));
-			}
-			if (titleX.length() > 0) {
-				if (pplot.isDebug())
-					System.out.println(
-							"[DEBUG] JAxi-object: add x-axis title \"" + titleX + "\" with text size " + txtsize);
-				String txtemp = ""+titleX;
-				if(tickmarkFactor.length()>0) txtemp += " (*"+tickmarkFactor+")";
-				axisgrid.addChild(new JTextShape(txtemp, px + 0.5f * pw, py + 1.04f * ph + (float) txtsize,
-						(float) (1.1d * txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
 			}
 		}
 		return axisgrid;
@@ -1305,7 +1362,7 @@ public class JAxis {
 						axisgrid.addChild(new JTextShape(tickmark[t], px - 0.03f * pw, (float) tcpos[t],
 								(float) txtsize, PConstants.RIGHT, PConstants.CENTER, 0xff000000, 0));
 					}
-				if(titleY.length()==0)
+				if(titleY.length()==0 && tickmarkFactor.length()>0)
 					axisgrid.addChild(new JTextShape(tickmarkFactor, px, py, (float) txtsize,
 							PConstants.CENTER, PConstants.BOTTOM, 0xff000000, 0));
 			}
@@ -1321,12 +1378,7 @@ public class JAxis {
 		}
 		return axisgrid;
 	}
-
-	private JTextShape createTitle() {
-		return new JTextShape(titleP, px + 0.5f * pw, py - 0.04f * ph, (float) (1.3d * txtsize), PConstants.CENTER,
-				PConstants.BOTTOM, 0xff000000, 0f);
-	}
-
+	
 	private static PImage loadPreDefImg(PApplet applet, String name) {
 		BufferedImage bimg;
 		try {

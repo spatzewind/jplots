@@ -1,5 +1,7 @@
 package jplots.shapes;
 
+import java.io.PrintWriter;
+
 import jplots.JPlot;
 import processing.core.PApplet;
 import processing.core.PGraphics;
@@ -38,4 +40,8 @@ public abstract class JPlotShape {
 	}
 
 	public abstract void draw(JPlot plot, PGraphics g);
+	
+	public void printStack(PrintWriter pw, String off) {
+		pw.println(off+this.getClass().getSimpleName());
+	}
 }

@@ -1,7 +1,10 @@
 package jplots.shapes;
 
+import java.io.PrintWriter;
+
 import jplots.JPlot;
 import processing.core.PConstants;
+import processing.core.PFont;
 import processing.core.PGraphics;
 
 public class JTextShape extends JPlotShape {
@@ -11,7 +14,8 @@ public class JTextShape extends JPlotShape {
 	private float txtSize, x, y;
 	private float rotation;
 	private String txt;
-
+	private PFont font;
+	
 	public JTextShape(String text) {
 		this(text, 0f, 0f, 12f, PConstants.LEFT, PConstants.TOP, JPlotShape.fillColour, 0);
 	}
@@ -42,34 +46,21 @@ public class JTextShape extends JPlotShape {
 		txtSize = size;
 		txtColour = colour;
 		rotation = rotate;
+		font = null;
 	}
-
+	
 	@Override
 	public void draw(JPlot plot, PGraphics g) {
+		g.pushMatrix();
+		g.translate(x, y);
+		g.rotate(rotation);
 		g.fill(txtColour);
 		g.noStroke();
 		g.textAlign(halign, valign);
+		if(font!=null)
+			g.textFont(font);
 		g.textSize(txtSize);
-		if (rotation == 0f) {
-			switch (valign) {
-			case PConstants.TOP:
-				g.text(txt, x, y + 0.16666667f * txtSize);
-				break;
-			case PConstants.CENTER:
-				g.text(txt, x, y - 0.10000000f * txtSize);
-				break;
-			case PConstants.BOTTOM:
-				g.text(txt, x, y - 0.16666667f * txtSize);
-				break;
-			default:
-				g.text(txt, x, y);
-				break;
-			}
-		} else {
-			g.pushMatrix();
-			g.translate(x, y);
-			g.rotate(rotation);
-			switch (valign) {
+		switch (valign) {
 			case PConstants.TOP:
 				g.text(txt, 0f, 0.16666667f * txtSize);
 				break;
@@ -79,8 +70,12 @@ public class JTextShape extends JPlotShape {
 			case PConstants.BOTTOM:
 				g.text(txt, 0f, -0.16666667f * txtSize);
 				break;
-			}
-			g.popMatrix();
 		}
+		g.popMatrix();
+	}
+	
+	@Override
+	public void printStack(PrintWriter pw, String off) {
+		pw.println(off+this.getClass().getSimpleName()+" { text=\""+txt+"\" }");
 	}
 }
