@@ -1,12 +1,11 @@
 package jplots;
 
-import java.io.PrintWriter;
-
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import jplots.colour.JColourbar;
 import jplots.shapes.JPlotShape;
 import jplots.transform.JProjection;
+import latex.PTeX;
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PFont;
@@ -29,10 +28,20 @@ public class JPlot {
 
 	/** the version of the Library. */
 	public final static String VERSION = "##library.prettyVersion##";
-
-	private static boolean hasWelcomed = false;
+	
 	public static double dpi = 300d;
-
+	public static boolean supportLatex = false;
+	
+	static {
+		System.out.println("##library.name## ##library.prettyVersion## by ##author##");
+		try {
+			Class.forName("latex.PTeX");
+			supportLatex = true;
+		} catch (ClassNotFoundException cnfe) {
+			supportLatex = false;
+		}
+	}
+	
 	private PApplet myParent;
 	private PGraphics plotImg;
 
@@ -60,14 +69,28 @@ public class JPlot {
 		this.useDebug = false;
 		this.currAxNum = -1;
 		// this.plotImg = applet.createGraphics(16, 16);
-		if (!hasWelcomed)
-			this.welcome();
+		System.out.println("Support LATEX: "+supportLatex);
 	}
 
 	// ************************************
 	// **** STATIC ************************
 	// ************************************
-
+	
+	public void activateLatex(boolean b) {
+		if(b) {
+			try {
+				Class.forName("latex.PTeX");
+				supportLatex = true;
+				System.out.println("Now all titles and anotation are rendered with Latex.");
+			} catch (ClassNotFoundException cnfe) {
+				supportLatex = false;
+			}
+		} else {
+			supportLatex = false;
+			System.out.println("Rendering with LaTex is deactivated.");
+		}
+	}
+	
 	// ************************************
 	// **** PURE PPLOT ********************
 	// ************************************
@@ -399,9 +422,9 @@ public class JPlot {
 	 */
 	public PImage show() {
 		if (!img_is_created) {
-			createImage();
 			if (useDebug)
 				System.out.println("[DEBUG] start image creation, because it ws not done before or changes happend.");
+			createImage();
 		}
 //		if(useDebug)
 //			System.out.println("[DEBUG] check: \"plotImg\"="+plotImg);
@@ -415,7 +438,7 @@ public class JPlot {
 	public PGraphics getGraphic() {
 		return plotImg;
 	}
-
+	
 	public JPlot redraw(boolean redraw) {
 		img_is_created = redraw ? false : img_is_created;
 		return this;
@@ -504,11 +527,7 @@ public class JPlot {
 	// ************************************
 	// **** PRIVATE ***********************
 	// ************************************
-
-	private void welcome() {
-		System.out.println("##library.name## ##library.prettyVersion## by ##author##");
-		hasWelcomed = true;
-	}
+	
 	private String getDate() {
 		String ds = ""+
 				PApplet.nf(myParent.year(),4)+
@@ -557,7 +576,7 @@ public class JPlot {
 	public void vline(double x, int colour, double linewidth, String linestyle) {
 		gca().axvline(x, colour, linewidth, linestyle);
 	}
-
+	
 	public void plot(float[] x, float[] y) {
 		gca().plot(x, y);
 	}
@@ -570,7 +589,7 @@ public class JPlot {
 	public void plot(double[] x, double[] y, int colour, double linewidth, String linestyle, Object... params) {
 		gca().plot(x, y, colour, linewidth, linestyle, params);
 	}
-
+	
 	public void scatter(float[] x, float[] y) {
 		gca().scatter(x, y);
 	}
@@ -583,7 +602,7 @@ public class JPlot {
 	public void scatter(double[] x, double[] y, int colour, double iconsize, String symbol, Object... params) {
 		gca().scatter(x, y, colour, iconsize, symbol, params);
 	}
-
+	
 	public void contour(float[] x, float[] y, float[][] z) {
 		gca().contour(x, y, z);
 	}
@@ -620,7 +639,7 @@ public class JPlot {
 	public void contour(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
 		gca().contour(x, y, z, levels, params);
 	}
-
+	
 	public void contourf(float[] x, float[] y, float[][] z) {
 		gca().contourf(x, y, z);
 	}
@@ -657,7 +676,7 @@ public class JPlot {
 	public void contourf(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
 		gca().contourf(x, y, z, levels, params);
 	}
-
+	
 	public void contourp(float[] x, float[] y, float[][] z) {
 		gca().contourp(x, y, z);
 	}
@@ -694,7 +713,7 @@ public class JPlot {
 	public void contourp(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
 		gca().contourp(x, y, z, levels, params);
 	}
-
+	
 	public void hatch(float[] x, float[] y, float[][] z, float lower, float upper, String pattern) {
 		gca().hatch(x,y,z, lower,upper, pattern, (Object)null);
 	}
@@ -726,14 +745,14 @@ public class JPlot {
 	public void coastLines(int resolution) {
 		gca().coastLines(resolution);
 	}
-
+	
 	public void land() {
 		gca().land(0xff676767, 0xff000000);
 	}
 	public void land(int land_colour, int coast_colour) {
 		gca().land(land_colour, coast_colour);
 	}
-
+	
 	public void showShapefile(String path_to_shapefile, String shapeType) {
 		gca().showShapefile(path_to_shapefile, shapeType);
 	}
@@ -744,7 +763,7 @@ public class JPlot {
 	public void showShapefile(String path_to_shapefile, String shapeType, int user_epsg_code, Object... params) {
 		gca().showShapefile(path_to_shapefile, shapeType, user_epsg_code, params);
 	}
-
+	
 	public JColourbar colourbar() {
 		return colourbar(gca(), "", "meither");
 	}
@@ -819,11 +838,11 @@ public class JPlot {
 	public void setRange(double xmin, double xmax, double ymin, double ymax) {
 		gca().setRange(xmin, xmax, ymin, ymax);
 	}
-
+	
 	public void setFont(PFont font) {
 		gca().setFont(font);
 	}
-
+	
 	public void setXTitle(String xtitle) {
 		gca().setXTitle(xtitle);
 	}
@@ -833,7 +852,7 @@ public class JPlot {
 	public void setTitle(String _title) {
 		gca().setTitle(_title);
 	}
-
+	
 	public void setLogarithmicAxis(char axis) {
 		gca().setLogarithmicAxis(axis);
 	}

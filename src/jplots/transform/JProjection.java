@@ -20,9 +20,9 @@ public interface JProjection {
 
 	void setCentralLongitude(double longitude, boolean in_degree);
 
-	double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree);
+	double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree, boolean cut_outside);
 
-	double[] fromLATLONtoPROJ(double u, double v, boolean input_in_degree);
+	double[] fromLATLONtoPROJ(double u, double v, boolean input_in_degree, boolean cut_outside);
 
 	double[] tissotFromLatLon(double u, double v, boolean input_in_degree);
 

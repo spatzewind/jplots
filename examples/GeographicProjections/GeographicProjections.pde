@@ -2,7 +2,6 @@ import jplots.*;
 import jplots.transform.*;
 
 JPlot plt;
-PImage img;
 
 void setup() {
   size(1440,720, P2D);
@@ -22,7 +21,6 @@ void setup() {
   
   //create plot
   plt = new JPlot(this);
-  plt.debug(true);
   plt.subplots(4d,2d, 1,2);     //create figure twice big than high with 2 subplots
   JAxis[] ax = plt.ga();        //access JAxis objects
   //set first subplot to ortographic projection with center at 0°N, 0°E
@@ -43,10 +41,9 @@ void setup() {
     ax[i].plot(longitude,curve2,color(255,0,0),3.0,",",params);
     ax[i].scatter(longitude,curve3,color(0,127,255),3.0,"<>",params);
   }
-  img = plt.show();
 }
 
 void draw() {
   background(255);
-  image(img,0,0,width,height);
+  image(plt.show(),0,0,width,height);
 }

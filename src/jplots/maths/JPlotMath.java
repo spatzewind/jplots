@@ -185,6 +185,18 @@ public class JPlotMath {
 		return res;
 	}
 
+	public static int colorLerp(int colorA, int colorB, double amount) {
+		double a = ((colorA>>24)&255)*(1d-amount) + ((colorB>>24)&255)*amount;
+		double r = ((colorA>>16)&255)*(1d-amount) + ((colorB>>16)&255)*amount;
+		double g = ((colorA>>8)&255)*(1d-amount) + ((colorB>>8)&255)*amount;
+		double b = (colorA&255)*(1d-amount) + (colorB&255)*amount;
+		int ai = Math.max(0, Math.min(255, (int)(a+0.5d)));
+		int ri = Math.max(0, Math.min(255, (int)(r+0.5d)));
+		int gi = Math.max(0, Math.min(255, (int)(g+0.5d)));
+		int bi = Math.max(0, Math.min(255, (int)(b+0.5d)));
+		return (ai<<24) | (ri<<16) | (gi<<8) | bi;
+	}
+
 	public static double[] log10(double[] arr) {
 		double[] res = new double[arr.length];
 		for (int a = 0; a < arr.length; a++)

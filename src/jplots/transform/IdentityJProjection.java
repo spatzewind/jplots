@@ -24,12 +24,12 @@ public class IdentityJProjection implements JProjection {
 	}
 
 	@Override
-	public double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree) {
+	public double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree, boolean cut_outside) {
 		return new double[] { x, y };
 	}
 
 	@Override
-	public double[] fromLATLONtoPROJ(double u, double v, boolean input_in_degree) {
+	public double[] fromLATLONtoPROJ(double u, double v, boolean input_in_degree, boolean cut_outside) {
 		return new double[] { u, v };
 	}
 

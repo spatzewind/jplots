@@ -78,7 +78,7 @@ public class StereographicJProjection implements JProjection {
 	}
 
 	@Override
-	public double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree) {
+	public double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree, boolean cut_outside) {
 		if (!(Double.isFinite(x) && Double.isFinite(y)))
 			return new double[] { Double.NaN, Double.NaN };
 		double fac = output_in_degree ? JPlotMath.RAD_TO_DEG : 1d;
@@ -96,7 +96,7 @@ public class StereographicJProjection implements JProjection {
 	}
 
 	@Override
-	public double[] fromLATLONtoPROJ(double longitude, double latitude, boolean input_in_degree) {
+	public double[] fromLATLONtoPROJ(double longitude, double latitude, boolean input_in_degree, boolean cut_outside) {
 		if (!(Double.isFinite(longitude) && Double.isFinite(latitude)))
 			return new double[] { Double.NaN, Double.NaN };
 		double fac = input_in_degree ? JPlotMath.DEG_TO_RAD : 1d;
@@ -113,7 +113,7 @@ public class StereographicJProjection implements JProjection {
 
 	@Override
 	public double[] tissotFromLatLon(double u, double v, boolean input_in_degree) {
-		double[] xy = fromLATLONtoPROJ(u, v, input_in_degree);
+		double[] xy = fromLATLONtoPROJ(u, v, input_in_degree, false);
 		return tissotFromProj(xy[0], xy[1]);
 	}
 
@@ -148,13 +148,11 @@ public class StereographicJProjection implements JProjection {
 
 	@Override
 	public void drawBorder(JAxis ax, JGroupShape s) {
-		JPlotShape.stroke(0xff000000);
-		JPlotShape.strokeWeight(3f);
 		int[] p = ax.getSize();
-		s.addChild(new JLineShape(p[0], p[1], p[0] + p[2], p[1]));
-		s.addChild(new JLineShape(p[0], p[1] + p[3], p[0] + p[2], p[1] + p[3]));
-		s.addChild(new JLineShape(p[0], p[1], p[0], p[1] + p[3]));
-		s.addChild(new JLineShape(p[0] + p[2], p[1], p[0] + p[2], p[1] + p[3]));
+		s.addChild(new JLineShape(3f, 0xff000000, p[0], p[1], p[0] + p[2], p[1]));
+		s.addChild(new JLineShape(3f, 0xff000000, p[0], p[1] + p[3], p[0] + p[2], p[1] + p[3]));
+		s.addChild(new JLineShape(3f, 0xff000000, p[0], p[1], p[0], p[1] + p[3]));
+		s.addChild(new JLineShape(3f, 0xff000000, p[0] + p[2], p[1], p[0] + p[2], p[1] + p[3]));
 	}
 
 	@Override
@@ -170,10 +168,10 @@ public class StereographicJProjection implements JProjection {
 		for (int k = 0; k <= 50; k++) {
 			double kx = extent[0] + 0.02d * k * (extent[1] - extent[0]);
 			double ky = extent[2] + 0.02d * k * (extent[3] - extent[2]);
-			double[] xy1 = fromPROJtoLATLON(kx, extent[2], true);
-			double[] xy2 = fromPROJtoLATLON(kx, extent[3], true);
-			double[] xy3 = fromPROJtoLATLON(extent[0], ky, true);
-			double[] xy4 = fromPROJtoLATLON(extent[1], ky, true);
+			double[] xy1 = fromPROJtoLATLON(kx, extent[2], true, false);
+			double[] xy2 = fromPROJtoLATLON(kx, extent[3], true, false);
+			double[] xy3 = fromPROJtoLATLON(extent[0], ky, true, false);
+			double[] xy4 = fromPROJtoLATLON(extent[1], ky, true, false);
 			double latI = Math.min(Math.min(xy1[1], xy2[1]), Math.min(xy3[1], xy4[1]));
 			double latA = Math.max(Math.max(xy1[1], xy2[1]), Math.max(xy3[1], xy4[1]));
 			if (latI < minLat)
@@ -224,19 +222,19 @@ public class StereographicJProjection implements JProjection {
 					+ "}  lat={" + minLat + " ... " + maxLat + "}");
 		// longitude range spanes more than 180 degrees, one of the poles is inside the
 		// view
-		double[] ce = fromPROJtoLATLON(0.5d * (extent[0] + extent[1]), 0.5d * (extent[2] + extent[3]), true);
+		double[] ce = fromPROJtoLATLON(0.5d * (extent[0] + extent[1]), 0.5d * (extent[2] + extent[3]), true, false);
 		if (ce[0] < -90d || ce[0] > 90d) {
 			minLon = minLn3;
 			maxLon = maxLn3;
 		}
 		if (maxLon - minLon > 180.1d) {
-			double[] uv = fromLATLONtoPROJ(0d, 90d, true);
+			double[] uv = fromLATLONtoPROJ(0d, 90d, true, false);
 			if (extent[0] <= uv[0] && uv[0] <= extent[1] && extent[2] <= uv[1] && uv[1] <= extent[3]) {
 				maxLat = 90d;
 				minLon = -180d;
 				maxLon = 180d;
 			}
-			uv = fromLATLONtoPROJ(0d, -90d, true);
+			uv = fromLATLONtoPROJ(0d, -90d, true, false);
 			if (extent[0] <= uv[0] && uv[0] <= extent[1] && extent[2] <= uv[1] && uv[1] <= extent[3]) {
 				minLat = -90d;
 				minLon = -180d;
@@ -282,10 +280,10 @@ public class StereographicJProjection implements JProjection {
 				double miA = minLat, maA = maxLat;
 				if(minLat<-89.9999d && o%3!=0) miA += spcA;
 				if(maxLat>89.9999d && o%3!=0)  maA -= spcA;
-				double[] uv0 = fromLATLONtoPROJ(glon, miA, true);
+				double[] uv0 = fromLATLONtoPROJ(glon, miA, true, false);
 				for (int a = 1; a <= 90; a++) {
 					double glat = miA + a * (maA - miA) / 90d;
-					double[] uv1 = fromLATLONtoPROJ(glon, glat, true);
+					double[] uv1 = fromLATLONtoPROJ(glon, glat, true, false);
 					drawLine(ax, s, uv0, uv1, extent);
 					uv0[0] = uv1[0];
 					uv0[1] = uv1[1];
@@ -295,10 +293,10 @@ public class StereographicJProjection implements JProjection {
 		if (ax.isYGridVisible()) { //latitudes
 			for (int a = minA; a <= maxA; a++) {
 				double glat = a * spcA;
-				double[] uv0 = fromLATLONtoPROJ(minLon, glat, true);
+				double[] uv0 = fromLATLONtoPROJ(minLon, glat, true, false);
 				for (int o = 1; o <= 36; o++) {
 					double glon = minLon + o * (maxLon - minLon) / 36d;
-					double[] uv1 = fromLATLONtoPROJ(glon, glat, true);
+					double[] uv1 = fromLATLONtoPROJ(glon, glat, true, false);
 					drawLine(ax, s, uv0, uv1, extent);
 					uv0[0] = uv1[0];
 					uv0[1] = uv1[1];
@@ -306,7 +304,7 @@ public class StereographicJProjection implements JProjection {
 			}
 		}
 	}
-
+	
 	private void drawLine(JAxis ax, JGroupShape s, double[] st, double[] en, double[] ext) {
 		// for first result, go without cutting
 		int[] p = ax.getSize();

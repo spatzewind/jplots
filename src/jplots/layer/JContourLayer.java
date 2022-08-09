@@ -343,12 +343,12 @@ public class JContourLayer extends JPlotsLayer {
 			for (int i = 0; i < nx; i++) {
 				if (input2d) {
 					xy = inputProj.fromPROJtoLATLON(xLog ? Math.log10(xarrayx2[j][i]) : xarrayx2[j][i],
-							yLog ? Math.log10(yarrayy2[j][i]) : yarrayy2[j][i], false);
+							yLog ? Math.log10(yarrayy2[j][i]) : yarrayy2[j][i], false, false);
 				} else {
 					xy = inputProj.fromPROJtoLATLON(xLog ? Math.log10(xarrayx[i]) : xarrayx[i],
-							yLog ? Math.log10(yarrayy[j]) : yarrayy[j], false);
+							yLog ? Math.log10(yarrayy[j]) : yarrayy[j], false, false);
 				}
-				xy = outproj.fromLATLONtoPROJ(xy[0], xy[1], false);
+				xy = outproj.fromLATLONtoPROJ(xy[0], xy[1], false, false);
 				if (Double.isFinite(xy[0]) && Double.isFinite(xy[1]))
 					corners.add(new JDPoint(xy[0], xy[1], zarrayz[j][i]));
 			}

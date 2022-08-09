@@ -207,8 +207,8 @@ public class JContourLayer2D extends JPlotsLayer {
 		if(ax.isGeoAxis() && inputProj!=null) {
 			for(int j=0; j<corners.length; j++)
 				for(int i=0; i<corners[j].length; i++) {
-					double[] xy = inputProj.fromPROJtoLATLON(cnt2[j][i].x, cnt2[j][i].y, false);
-					xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[0], xy[1], false);
+					double[] xy = inputProj.fromPROJtoLATLON(cnt2[j][i].x, cnt2[j][i].y, false, false);
+					xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[0], xy[1], false, false);
 					cnt2[j][i].x = xy[0];
 					cnt2[j][i].y = xy[1];
 				}
@@ -221,7 +221,7 @@ public class JContourLayer2D extends JPlotsLayer {
 		double xs = p[2] / (Xax - Xin), ys = p[3] / (Yax - Yin);
 		// double tol = Math.max(Math.abs(maxX-minX), Math.abs(maxY-minY)) * 1.0e-12d;
 		AffineBuilder affine = new AffineBuilder().scale(invertAxisX ? -1d : 1d, invertAxisY ? 1d : -1d)
-				.translate(invertAxisX ? maxX : -minX, invertAxisY ? -minY : maxY).scale(xs, ys).translate(p[0], p[1]);
+				.translate(invertAxisX ? Xax : -Xin, invertAxisY ? -Yin : Yax).scale(xs, ys).translate(p[0], p[1]);
 		minZ = Double.POSITIVE_INFINITY;
 		maxZ = Double.NEGATIVE_INFINITY;
 		if(contourIntervals[0]<minZ) minZ = contourIntervals[0];

@@ -30,7 +30,7 @@ public class RectangleJProjection implements JProjection {
 	}
 
 	@Override
-	public double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree) {
+	public double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree, boolean cut_outside) {
 		if (Double.isNaN(x) || Double.isNaN(y) || x < xs || x > xe)
 			return new double[] { Double.NaN, Double.NaN };
 		if (y < ys || y > ye)
@@ -39,7 +39,7 @@ public class RectangleJProjection implements JProjection {
 	}
 
 	@Override
-	public double[] fromLATLONtoPROJ(double u, double v, boolean input_in_degree) {
+	public double[] fromLATLONtoPROJ(double u, double v, boolean input_in_degree, boolean cut_outside) {
 		if (Double.isNaN(u) || Double.isNaN(v) || u < 0d || u > 1d)
 			return new double[] { Double.NaN, Double.NaN };
 		if (v < 0d || v > 1d)

@@ -32,6 +32,7 @@ import jplots.layer.JXYLayer;
 import jplots.maths.JPlotMath;
 import jplots.maths.JPlotMath.DateTime;
 import jplots.shapes.JGroupShape;
+import jplots.shapes.JLatexShape;
 import jplots.shapes.JLineShape;
 import jplots.shapes.JPlotShape;
 import jplots.shapes.JTextShape;
@@ -879,8 +880,7 @@ public class JAxis {
 		if (titleP.length() > 0) {
 			if (pplot.isDebug())
 				System.out.println("[DEBUG] JAxis: add title \"" + titleP + "\" to graphic.");
-			//TODO set txtsize back to 1.3d*txtsize
-			graph.addChild(new JTextShape(titleP, px + 0.5f * pw, py - 0.04f * ph, (float) (1.0d * txtsize), PConstants.CENTER,
+			graph.addChild(new JTextShape(titleP, px + 0.5f * pw, py - 0.04f * ph, (float) (1.3d * txtsize), PConstants.CENTER,
 					PConstants.BOTTOM, 0xff000000, 0f));
 		}
 		graph.addChild(new JLineShape(0f, 0x00999999, 0f,0f, 1f,1f));
@@ -910,9 +910,10 @@ public class JAxis {
 			}
 		}
 		JGroupShape graph = new JGroupShape();
-		for(JPlotsLayer layer: layers)
-			if(layer instanceof JTextLayer)
-				layer.createVectorImg(this, 0, graph);
+		for(JPlotsLayer layer: layers) {
+			if(layer instanceof JLegend) layer.createVectorImg(this, 0, graph);
+			if(layer instanceof JTextLayer) layer.createVectorImg(this, 0, graph);
+		}
 		if (isGeoAxis) {
 			projection.addGrid(this, graph);
 			projection.drawBorder(this, graph);
@@ -933,9 +934,13 @@ public class JAxis {
 		if (titleP.length() > 0) {
 			if (pplot.isDebug())
 				System.out.println("[DEBUG] JAxis: add title \"" + titleP + "\" to graphic.");
-			//TODO set txtsize back to 1.3d*txtsize
-			graph.addChild(new JTextShape(titleP, px + 0.5f * pw, py - 0.04f * ph, (float) (1.0d * txtsize), PConstants.CENTER,
-					PConstants.BOTTOM, 0xff000000, 0f));
+			if(JPlot.supportLatex) {
+				graph.addChild(new JLatexShape(titleP, px + 0.5f * pw, py - 0.04f * ph, (float) (1.3d * txtsize), PConstants.CENTER,
+						PConstants.BOTTOM, 0xff000000, 0f));				
+			} else {
+				graph.addChild(new JTextShape(titleP, px + 0.5f * pw, py - 0.04f * ph, (float) (1.3d * txtsize), PConstants.CENTER,
+						PConstants.BOTTOM, 0xff000000, 0f));
+			}
 		}
 		graph.addChild(new JLineShape(0f, 0x00999999, 0f,0f, 1f,1f));
 		return graph;
@@ -1246,7 +1251,7 @@ public class JAxis {
 			double lvf = Math.log10(ticks[0]);
 			if(Math.abs(lvf)>2.9d) {
 				int ivf = (int) (lvf+0.5d) - (lvf<0d ? -1 : 0);
-				tickmarkFactor = "10^"+ivf;
+				tickmarkFactor = JPlot.supportLatex ? "10$^{"+ivf+"}$" : "10^"+ivf;
 			}
 		}
 		tickmark[0] = "";
@@ -1277,8 +1282,13 @@ public class JAxis {
 				String txtemp = ""+titleX;
 				if(tickmarkFactor.length()>0) txtemp += " (*"+tickmarkFactor+")";
 				//TODO set txtsize back to 1.1d*txtsize
-				axisgrid.addChild(new JTextShape(txtemp, px + 0.5f * pw, py + 1.04f * ph + (float) txtsize,
-						(float) (1.1d * txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
+				if(JPlot.supportLatex) {
+					axisgrid.addChild(new JLatexShape(txtemp, px + 0.5f * pw, py + 1.04f * ph + (float) txtsize,
+							(float) (1.1d * txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
+				} else {
+					axisgrid.addChild(new JTextShape(txtemp, px + 0.5f * pw, py + 1.04f * ph + (float) txtsize,
+							(float) (1.1d * txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
+				}
 			}
 			if (xTkOn) {
 				for (int t = 2; t < ticks.length; t++)
@@ -1289,9 +1299,15 @@ public class JAxis {
 						axisgrid.addChild(new JTextShape(tickmark[t], (float) tcpos[t], py + 1.03f * ph,
 								(float) txtsize, PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
 					}
-				if(titleX.length()==0 && tickmarkFactor.length()>0)
-					axisgrid.addChild(new JTextShape(tickmarkFactor, px+pw, py+ph, (float) txtsize,
-							PConstants.LEFT, PConstants.CENTER, 0xff000000, 0));
+				if(titleX.length()==0 && tickmarkFactor.length()>0) {
+					if(JPlot.supportLatex) {
+						axisgrid.addChild(new JLatexShape(tickmarkFactor, px+pw, py+ph, (float) txtsize,
+								PConstants.LEFT, PConstants.CENTER, 0xff000000, 0));
+					} else {
+						axisgrid.addChild(new JTextShape(tickmarkFactor, px+pw, py+ph, (float) txtsize,
+								PConstants.LEFT, PConstants.CENTER, 0xff000000, 0));
+					}
+				}
 			}
 		}
 		return axisgrid;
@@ -1329,7 +1345,7 @@ public class JAxis {
 			double lvf = Math.log10(ticks[0]);
 			if(Math.abs(lvf)>2.9d) {
 				int ivf = (int) lvf - (lvf<0d ? 1 : 0);
-				tickmarkFactor = "10^"+ivf;
+				tickmarkFactor = JPlot.supportLatex ? "10$^{"+ivf+"}$" : "10^"+ivf;
 			}
 		}
 		double[] tcpos = JPlotMath.map(ticks, Yin, Yax, py + ph, py);
@@ -1362,9 +1378,15 @@ public class JAxis {
 						axisgrid.addChild(new JTextShape(tickmark[t], px - 0.03f * pw, (float) tcpos[t],
 								(float) txtsize, PConstants.RIGHT, PConstants.CENTER, 0xff000000, 0));
 					}
-				if(titleY.length()==0 && tickmarkFactor.length()>0)
-					axisgrid.addChild(new JTextShape(tickmarkFactor, px, py, (float) txtsize,
-							PConstants.CENTER, PConstants.BOTTOM, 0xff000000, 0));
+				if(titleY.length()==0 && tickmarkFactor.length()>0) {
+					if(JPlot.supportLatex) {
+						axisgrid.addChild(new JLatexShape(tickmarkFactor, px, py, (float) txtsize,
+								PConstants.CENTER, PConstants.BOTTOM, 0xff000000, 0));
+					} else {
+						axisgrid.addChild(new JTextShape(tickmarkFactor, px, py, (float) txtsize,
+								PConstants.CENTER, PConstants.BOTTOM, 0xff000000, 0));
+					}
+				}
 			}
 			if (titleY.length() > 0) {
 				if (pplot.isDebug())
@@ -1372,8 +1394,13 @@ public class JAxis {
 							"[DEBUG] JAxi-object: add y-axis title \"" + titleY + "\" with text size " + txtsize);
 				String tytemp = ""+titleY;
 				if(tickmarkFactor.length() > 0) tytemp += " (*"+tickmarkFactor+")";
-				axisgrid.addChild(new JTextShape(tytemp, px - 0.03f * pw - tw, py + 0.5f * ph, (float) (1.1d * txtsize),
-						PConstants.CENTER, PConstants.BOTTOM, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE));
+				if(JPlot.supportLatex) {
+					axisgrid.addChild(new JLatexShape(tytemp, px - 0.03f * pw - tw, py + 0.5f * ph, (float) (1.1d * txtsize),
+							PConstants.CENTER, PConstants.BOTTOM, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE));
+				} else {
+					axisgrid.addChild(new JTextShape(tytemp, px - 0.03f * pw - tw, py + 0.5f * ph, (float) (1.1d * txtsize),
+							PConstants.CENTER, PConstants.BOTTOM, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE));
+				}
 			}
 		}
 		return axisgrid;

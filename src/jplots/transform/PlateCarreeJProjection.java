@@ -29,7 +29,7 @@ public class PlateCarreeJProjection implements JProjection {
 	}
 
 	@Override
-	public double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree) {
+	public double[] fromPROJtoLATLON(double x, double y, boolean output_in_degree, boolean cut_outside) {
 		if (!(Double.isFinite(x) && Double.isFinite(y)))
 			return new double[] { Double.NaN, Double.NaN };
 		double xc = x;
@@ -43,7 +43,7 @@ public class PlateCarreeJProjection implements JProjection {
 	}
 
 	@Override
-	public double[] fromLATLONtoPROJ(double u, double v, boolean input_in_degree) {
+	public double[] fromLATLONtoPROJ(double u, double v, boolean input_in_degree, boolean cut_outside) {
 		if (!(Double.isFinite(u) && Double.isFinite(v)))
 			return new double[] { Double.NaN, Double.NaN };
 		double f = half_circle / (input_in_degree ? 180d : Math.PI);
@@ -68,7 +68,7 @@ public class PlateCarreeJProjection implements JProjection {
 
 	@Override
 	public double[] tissotFromProj(double x, double y) {
-		double[] xy = fromPROJtoLATLON(x, y, false);
+		double[] xy = fromPROJtoLATLON(x, y, false, false);
 		return tissotFromLatLon(xy[0], xy[1], false);
 	}
 

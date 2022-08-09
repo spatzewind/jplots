@@ -120,7 +120,8 @@ public class GeometryTools {
 	}
 
 	private static void insert_edgepoints(List<JDPoint> sub_polygon, double[] normal, double crit, double eps,
-			List<JDPoint> inserts) {
+			double step) {
+		double delta = step * Math.sqrt(normal[0]*normal[0]+normal[1]*normal[1]);
 		for (int s = sub_polygon.size() - 1, e = 0; s >= 0; e = s--) {
 			JDPoint ps = sub_polygon.get(s), pe = sub_polygon.get(e);
 			double us = ps.x * normal[0] + ps.y * normal[1], ue = pe.x * normal[0] + pe.y * normal[1];
@@ -128,27 +129,32 @@ public class GeometryTools {
 				int idx = 0;
 				double vs = ps.x * normal[1] - ps.y * normal[0];
 				double ve = pe.x * normal[1] - pe.y * normal[0];
-				while (idx >= 0) {
-					idx = -1;
-					double maxf = 0d;
-					double vc = Double.NaN;
-					for (int i = inserts.size() - 1; i >= 0; i--) {
-						JDPoint pi = inserts.get(i);
-						double vi = pi.x * normal[1] - pi.y * normal[0];
-						double f = (vi - vs) / (ve - vs);
-						if (maxf < f && f < 1d) {
-							maxf = f;
-							idx = i;
-							vc = vi;
-						}
-					}
-					if (idx >= 0) {
-//						System.out.println("[GEOTOOLS] insert point "+inserts.get(idx)+" with s="+s+"/"+sub_polygon.size()+
-//								" v="+vs+"|"+ve+" f="+maxf);
-						sub_polygon.add(s + 1, inserts.get(idx));
-						ve = vc;// +(vs<ve?-1.0e-8d:-1.0e-8d);
-					}
+				int cnt_insertes = (int) (Math.abs(ve-vs)/delta+0.0001d);
+				if(cnt_insertes>0) {
+					for(int i=0; i<cnt_insertes; i++)
+						sub_polygon.add(s + 1, pe.fractionTowards((i+1d)/(cnt_insertes+1d), ps));
 				}
+//				while (idx >= 0) {
+//					idx = -1;
+//					double maxf = 0d;
+//					double vc = Double.NaN;
+//					for (int i = inserts.size() - 1; i >= 0; i--) {
+//						JDPoint pi = inserts.get(i);
+//						double vi = pi.x * normal[1] - pi.y * normal[0];
+//						double f = (vi - vs) / (ve - vs);
+//						if (maxf < f && f < 1d) {
+//							maxf = f;
+//							idx = i;
+//							vc = vi;
+//						}
+//					}
+//					if (idx >= 0) {
+////						System.out.println("[GEOTOOLS] insert point "+inserts.get(idx)+" with s="+s+"/"+sub_polygon.size()+
+////								" v="+vs+"|"+ve+" f="+maxf);
+//						sub_polygon.add(s + 1, inserts.get(idx));
+//						ve = vc;// +(vs<ve?-1.0e-8d:-1.0e-8d);
+//					}
+//				}
 			}
 		}
 	}
@@ -225,14 +231,13 @@ public class GeometryTools {
 
 	public static List<JDPoint[]> SutherlandHodgmanAlgorithm(JDPoint[] points, double[] normal, double crit,
 			double eps) {
-		return SutherlandHodgmanAlgorithm(points, normal, crit, eps, null);
+		return SutherlandHodgmanAlgorithm(points, normal, crit, eps, -1d);
 	}
 
 	public static List<JDPoint[]> SutherlandHodgmanAlgorithm(JDPoint[] points, double[] normal, double crit, double eps,
-			List<JDPoint> inserts) {
+			double fillstep) {
 		List<JDPoint[]> res = new ArrayList<>();
-		if (points == null)
-			return res;
+		if (points == null) return res;
 		List<JDPoint> new_points = new ArrayList<>();
 		List<Double> cutids = new ArrayList<>();
 		for (int s = points.length - 1, e = 0; e < points.length; s = e++) {
@@ -260,8 +265,7 @@ public class GeometryTools {
 		int pn = new_points.size();
 		for (int c = cutids.size() - 1; c >= 0; c--) {
 			Double ci = cutids.get(c);
-			if (ci < 0d)
-				continue;
+			if (ci < 0d) continue;
 			int e = (int) (ci - 0.5d) % pn;
 			int s = (e + pn - 1) % pn;
 			double vs = new_points.get(s).x * normal[1] - new_points.get(s).y * normal[0];
@@ -290,8 +294,7 @@ public class GeometryTools {
 		}
 
 		if (cutids.size() == 0) {
-			if (inserts != null && inserts.size() > 0)
-				insert_edgepoints(new_points, normal, crit, eps, inserts);
+			if (fillstep > 0d) insert_edgepoints(new_points, normal, crit, eps, fillstep);
 			res.add(new_points.toArray(new JDPoint[0]));
 			return res;
 		}
@@ -306,8 +309,8 @@ public class GeometryTools {
 			int l = (e - s + 2 * pn) % pn;
 			for (int n = 0; n < l; n++)
 				subpoly.add(new_points.get((n + s) % pn));
-			if (inserts != null && inserts.size() > 0)
-				insert_edgepoints(subpoly, normal, crit, eps, inserts);
+			if (fillstep > 0d)
+				insert_edgepoints(subpoly, normal, crit, eps, fillstep);
 			res.add(subpoly.toArray(new JDPoint[0]));
 			ci0 = ci1;
 		}
@@ -317,8 +320,8 @@ public class GeometryTools {
 		int l = (e - s + 2 * pn) % pn;
 		for (int n = 0; n < l; n++)
 			subpoly.add(new_points.get((n + s) % pn));
-		if (inserts != null && inserts.size() > 0)
-			insert_edgepoints(subpoly, normal, crit, eps, inserts);
+		if (fillstep > 0d)
+			insert_edgepoints(subpoly, normal, crit, eps, fillstep);
 		res.add(subpoly.toArray(new JDPoint[0]));
 
 		return res;

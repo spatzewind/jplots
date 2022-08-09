@@ -116,7 +116,7 @@ public class JPolygonShape extends JPlotShape {
 	public void draw(JPlot plot, PGraphics g) {
 		float a = GeometryTools.area(xx, yy);
 		if (Float.isNaN(a) || a < 0.0001d) {
-			System.out.println(a);
+//			System.err.println(a);
 			return;
 		}
 //		System.out.println("[JPolyg.Shape] draw polygon shape ("+

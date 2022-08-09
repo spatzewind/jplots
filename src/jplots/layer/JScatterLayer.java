@@ -70,9 +70,9 @@ public class JScatterLayer extends JPlotsLayer {
 		for (int i = 0; i < xarrayx.length; i++)
 			if (Double.isFinite(xarrayx[i]) && Double.isFinite(yarrayy[i])) {
 				double[] xy = inputProj.fromPROJtoLATLON(ax.isXlogAxis() ? Math.log10(xarrayx[i]) : xarrayx[i],
-						ax.isYlogAxis() ? Math.log10(yarrayy[i]) : yarrayy[i], false);
+						ax.isYlogAxis() ? Math.log10(yarrayy[i]) : yarrayy[i], false, true);
 				if (ax.isGeoAxis())
-					xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[0], xy[1], false);
+					xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[0], xy[1], false, true);
 				double x1 = p[0] + xs * (invertAxisX ? Xax - xy[0] : xy[0] - Xin);
 				double y1 = p[1] + ys * (invertAxisY ? xy[1] - Yin : Yax - xy[1]);
 				if (x1 < p[0] || x1 > p[0] + p[2] || y1 < p[1] || y1 > p[1] + p[3])

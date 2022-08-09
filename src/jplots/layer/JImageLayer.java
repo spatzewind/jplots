@@ -57,8 +57,8 @@ public class JImageLayer extends JPlotsLayer {
 					xy[0] = Math.pow(10d, xy[0]);
 				if (ax.isYlogAxis())
 					xy[1] = Math.pow(10d, xy[1]);
-				xy = ax.getGeoProjection().fromPROJtoLATLON(xy[0], xy[1], false);
-				xy = srcProj.fromLATLONtoPROJ(xy[0], xy[1], false);
+				xy = ax.getGeoProjection().fromPROJtoLATLON(xy[0], xy[1], false, true);
+				xy = srcProj.fromLATLONtoPROJ(xy[0], xy[1], false, true);
 				if (Double.isNaN(xy[0]) || Double.isNaN(xy[1])) {
 					img.pixels[idx] = 0x00ffffff;
 					continue;

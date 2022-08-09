@@ -3,6 +3,7 @@ package jplots.layer;
 import jplots.JAxis;
 import jplots.JPlot;
 import jplots.shapes.JGroupShape;
+import jplots.shapes.JLatexShape;
 import jplots.shapes.JTextShape;
 import processing.core.PGraphics;
 
@@ -11,7 +12,7 @@ public class JTextLayer extends JPlotsLayer {
 	private double x, y;
 	private int x_align, y_align;
 	private double rot;
-
+	
 	public JTextLayer(String message, double pos_x, double pos_y, double size, int textcolour, int x_align, int y_align,
 			double rot) {
 		this.label = message;
@@ -68,8 +69,11 @@ public class JTextLayer extends JPlotsLayer {
 //				(float)(toplefX-0.5d*ax.getTextSize()), (float)(toplefY-0.5d*ax.getTextSize()),
 //				(float)(toplefX+labelWidth+0.5d*ax.getTextSize()), (float)(toplefY+(0.5d+1.5d*entries.size())*ax.getTextSize()),
 //				(float)Math.min(labelWidth, 1.5d*entries.size())*0.1f, 0x3fffffff, 0x3f999999, 2f, true));
-		lggs.addChild(new JTextShape(label, (float) x, (float) y, (float) (ax.getTextSize() * lw), x_align, y_align, lc,
-				(float) rot));
+		if(JPlot.supportLatex) {
+			lggs.addChild(new JLatexShape(label, (float) x, (float) y, (float) (ax.getTextSize() * lw), x_align, y_align, lc, (float) rot));
+		} else {
+			lggs.addChild(new JTextShape(label, (float) x, (float) y, (float) (ax.getTextSize() * lw), x_align, y_align, lc, (float) rot));
+		}
 		s.addChild(lggs);
 	}
 }

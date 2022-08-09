@@ -11,5 +11,4 @@ void setup() {
     
     background(255);
     image(plt.show(),0,0,width,height);
-    noLoop();
 }
