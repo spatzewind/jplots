@@ -5,7 +5,6 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import jplots.colour.JColourbar;
 import jplots.shapes.JPlotShape;
 import jplots.transform.JProjection;
-import latex.PTeX;
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PFont;
@@ -528,15 +527,15 @@ public class JPlot {
 	// **** PRIVATE ***********************
 	// ************************************
 	
-	private String getDate() {
+	public static String getDate() {
 		String ds = ""+
-				PApplet.nf(myParent.year(),4)+
-				PApplet.nf(myParent.month(),2)+
-				PApplet.nf(myParent.day(),2)+
+				PApplet.nf(PApplet.year(),4)+
+				PApplet.nf(PApplet.month(),2)+
+				PApplet.nf(PApplet.day(),2)+
 				"-"+
-				PApplet.nf(myParent.hour(),2)+
-				PApplet.nf(myParent.minute(),2)+
-				PApplet.nf(myParent.second(),2);
+				PApplet.nf(PApplet.hour(),2)+
+				PApplet.nf(PApplet.minute(),2)+
+				PApplet.nf(PApplet.second(),2);
 		return ds;
 	}
 	
@@ -738,6 +737,13 @@ public class JPlot {
 	public void hatch(double[][] x, double[][] y, double[][] z, double lower, double upper, String pattern, Object... params) {
 		gca().hatch(x, y, z, lower, upper, pattern, params);
 	}
+
+	public void annotate(double x, double y, String text) {
+		gca().annotate(x, y, text, new Object[0]);
+	}
+	public void annotate(double x, double y, String text, Object... params) {
+		gca().annotate(x, y, text, params);
+	}
 	
 	public void coastLines() {
 		gca().coastLines();
@@ -799,17 +805,16 @@ public class JPlot {
 	}
 
 	public void addText(double x, double y, String text) {
-		gca().addText(x, y, text, 1.0d, 0xff000000, PConstants.LEFT, PConstants.BOTTOM, 0d);
+		gca().addText(x, y, text, 1.0d, 0xff000000, PConstants.LEFT, PConstants.BOTTOM, 0d, null);
 	}
-	public void addText(double x, double y, String text, double textsize, int colour) {
-		gca().addText(x, y, text, textsize, colour, PConstants.LEFT, PConstants.BOTTOM, 0d);
+	public void addText(double x, double y, String text, double textsize, int colour, String style) {
+		gca().addText(x, y, text, textsize, colour, PConstants.LEFT, PConstants.BOTTOM, 0d, style);
 	}
-	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny) {
-		gca().addText(x, y, text, textsize, colour, alignx, aligny, 0d);
+	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny, String style) {
+		gca().addText(x, y, text, textsize, colour, alignx, aligny, 0d, style);
 	}
-	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny,
-			double rotation) {
-		gca().addText(x, y, text, textsize, colour, alignx, aligny, rotation);
+	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny, double rotation, String style) {
+		gca().addText(x, y, text, textsize, colour, alignx, aligny, rotation, style);
 	}
 
 	public void predefImgShow(String predefined_images) {

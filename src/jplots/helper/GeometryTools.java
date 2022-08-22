@@ -23,7 +23,6 @@ public class GeometryTools {
 			a += (x[e] - x[s]) * (y[e] + y[s]);
 		return 0.5f * a;
 	}
-	
 	/**
 	 * calculates the signed area from a polygon defined by the series of x,y coordinates
 	 * @param x array of all x-coordinates
@@ -40,7 +39,6 @@ public class GeometryTools {
 			a += (x[e] - x[s]) * (y[e] + y[s]);
 		return 0.5d * a;
 	}
-	
 	/**
 	 * calculates the signed area of a polygon
 	 * 
@@ -57,11 +55,11 @@ public class GeometryTools {
 			a += (points[e].x - points[s].x) * (points[e].y + points[s].y);
 		return 0.5d * a;
 	}
-
+	
+	
 	public static double atan(JDPoint p1, JDPoint p2) {
 		return atan(p1, p2, new double[] { 1d, 0d });
 	}
-
 	public static double atan(JDPoint p1, JDPoint p2, double[] null_dir) {
 		double u = p2.x - p1.x, v = p2.y - p1.y;
 		double x = u * null_dir[0] + v * null_dir[1];
@@ -72,7 +70,25 @@ public class GeometryTools {
 			c = 2 * Math.PI - c;
 		return c;
 	}
-
+	
+	
+	public static JDPoint segmentIntersection(JDPoint as, JDPoint ae, JDPoint bs, JDPoint be, double tol) {
+		// as + u*(ae-as)  =  bs + v*(be-bs)
+		// 
+		// as.x + u*(ae.x-as.x) = bs.x + v*(be.x-bs.x)
+		// as.y + u*(ae.y-as.y) = bs.y + v*(be.y-bs.y)
+		// 
+		// u*(ae.x-as.x) + v*(bs.x-be.x) = bs.x-as.x
+		// u*(ae.y-as.y) + v*(bs.y-be.y) = bs.y-as.y
+		double den = (as.x-ae.x)*(bs.y-be.y) - (as.y-ae.y)*(bs.x-be.x);
+		double u = ((as.x-bs.x)*(bs.y-be.y) - (as.y-bs.y)*(bs.x-be.x)) / den;
+		if( u < -tol || u > 1d+tol ) return null;
+		double v = ((as.x-bs.x)*(as.y-ae.y) - (as.y-bs.y)*(as.x-ae.x)) / den;
+		v = Math.max(0d, Math.min(1d, v));
+		return bs.fractionTowards(v, be);
+	}
+	
+	
 	public static void checkCut(List<JDPoint> p, List<Double> c, double[] normal, double crit, double eps) {
 		if (p.size() < 2)
 			return;

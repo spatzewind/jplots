@@ -2,7 +2,6 @@ package jplots.maths;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.locationtech.jts.geom.Coordinate;
@@ -114,14 +113,14 @@ public class JDPolygon {
 
 	public List<JDTriangle> toTriangles() {
 		List<JDTriangle> triangles = new ArrayList<>();
-		List<JDPoint> points = new LinkedList<>(Arrays.asList(c));
+		List<JDPoint> points = new ArrayList<>(Arrays.asList(c));
 //		int failCount = 0, maxFails = points.size();
 		double sign = area() < 0d ? -1d : 1d;
 		while (points.size() > 3) {
 			int smallestIdx = -1;
 			double smallestArea = Double.POSITIVE_INFINITY;
 			int slen = points.size();
-			for (int s0 = 0; s0 < slen - 1; s0++) {
+			for (int s0 = 0; s0 < slen; s0++) {
 				int s1 = (s0 + 1) % slen;
 				int s2 = (s0 + 2) % slen;
 				double a = sign * GeometryTools.area(points.get(s0), points.get(s1), points.get(s2));
@@ -139,8 +138,9 @@ public class JDPolygon {
 //				points.add(points.get(0));
 //				points.remove(0);
 //				continue;
-				System.out.println("[POLY] failed to triangulate: [" + c.length + " points, " + area() + " area]");
-				break;
+//				System.out.println("[POLY] failed to triangulate: [" + c.length + " points, " + area() + " area]");
+				triangles.clear();
+				return triangles;
 //				throw new RuntimeException("Triangulation of polygon failed!");
 			}
 			int next0 = (smallestIdx + 1) % slen;
@@ -190,6 +190,7 @@ public class JDPolygon {
 
 	public boolean union(JDPolygon other, double tolerance) {
 		List<JDTriangle> triangles = other.toTriangles();
+		if(triangles.isEmpty()) return false;
 //		System.out.println("polygon "+other+"\nis separated in:");
 //		for(JDTriangle tri: triangles)
 //			System.out.println("    "+tri);
@@ -286,7 +287,19 @@ public class JDPolygon {
 		}
 		return coords;
 	}
-
+	
+	public double[] getBounds() {
+		double xmin = Double.POSITIVE_INFINITY, xmax = Double.NEGATIVE_INFINITY;
+		double ymin = Double.POSITIVE_INFINITY, ymax = Double.NEGATIVE_INFINITY;
+		for(JDPoint p: c) {
+			if(p.x<xmin) xmin = p.x;
+			if(p.x>xmax) xmax = p.x;
+			if(p.y<ymin) ymin = p.y;
+			if(p.y>ymax) ymax = p.y;
+		}
+		return new double[] {xmin,xmax, ymin,ymax};
+	}
+	
 	public double getDefaultTolerance() {
 		double minX = Double.POSITIVE_INFINITY;
 		double maxX = Double.NEGATIVE_INFINITY;
@@ -339,8 +352,10 @@ public class JDPolygon {
 
 	public List<JDPolygon> splitByMapBorder(JAxis ax) {
 		List<JDPolygon> res = new ArrayList<>();
-		if (!ax.isGeoAxis())
+		if (!ax.isGeoAxis()) {
+			res.add(this);
 			return res;
+		}
 		return ax.getGeoProjection().splitByMapBorder(this);
 	}
 
@@ -349,6 +364,7 @@ public class JDPolygon {
 		for(int i=0; i<c.length; i++) {
 			double x = c[i].x-center.x, y = c[i].y-center.y;
 			double f = Math.sqrt(x*x+y*y) / Math.max(Math.abs(x),Math.abs(y));
+			if(Double.isNaN(f)) f = 1d;
 			temppoints[i] = new JDPoint(f*x,f*y,c[i].value);
 		}
 		List<JDPolygon> sres = new JDPolygon(temppoints).intersectsAABB(-radius, radius, -radius, radius, 0.02d*radius);

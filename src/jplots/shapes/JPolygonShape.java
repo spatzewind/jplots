@@ -9,6 +9,7 @@ import jplots.maths.JDPoint;
 import jplots.maths.JDPolygon;
 import processing.core.PConstants;
 import processing.core.PGraphics;
+import processing.core.PShape;
 
 public class JPolygonShape extends JPlotShape {
 
@@ -116,7 +117,7 @@ public class JPolygonShape extends JPlotShape {
 	public void draw(JPlot plot, PGraphics g) {
 		float a = GeometryTools.area(xx, yy);
 		if (Float.isNaN(a) || a < 0.0001d) {
-//			System.err.println(a);
+			System.err.println(a);
 			return;
 		}
 //		System.out.println("[JPolyg.Shape] draw polygon shape ("+
@@ -128,13 +129,19 @@ public class JPolygonShape extends JPlotShape {
 //		if(xx.length>10)
 //			System.out.println("[JPolyg.Shape]     ... (and "+(xx.length-10)+" more)");
 		if (isFilled) {
-			g.fill(inCol);
-			g.stroke(inCol);
-			g.strokeWeight(1f);
-			g.beginShape();
-			for (int c = 0; c < xx.length; c++)
-				g.vertex(xx[c], yy[c]);
-			g.endShape(PConstants.CLOSE);
+			PShape p = g.createShape();
+			p.beginShape();
+			if(isFilled) p.fill(inCol);
+			else p.noFill();
+			p.stroke(inCol); p.strokeWeight(1f);
+//			String coords = "";
+			for(int c=0; c<xx.length; c++) {
+				p.vertex(xx[c], yy[c]);
+//				coords += ", ["+xx[c]+","+yy[c]+"]";
+			}
+			p.endShape(PConstants.CLOSE);
+//			System.out.println("draw polygon: {"+coords.substring(2)+"}");
+			g.shape(p);
 		}
 		if (isStroked) {
 			g.noFill();

@@ -17,27 +17,27 @@ public class JTextShape extends JPlotShape {
 	private PFont font;
 	
 	public JTextShape(String text) {
-		this(text, 0f, 0f, 12f, PConstants.LEFT, PConstants.TOP, JPlotShape.fillColour, 0);
+		this(text, 0f, 0f, 12f, PConstants.LEFT, PConstants.TOP, JPlotShape.fillColour, 0, null);
 	}
 
 	public JTextShape(String text, int colour) {
-		this(text, 0f, 0f, 12f, PConstants.LEFT, PConstants.TOP, colour, 0);
+		this(text, 0f, 0f, 12f, PConstants.LEFT, PConstants.TOP, colour, 0, null);
 	}
 
 	public JTextShape(String text, float x_pos, float y_pos) {
-		this(text, x_pos, y_pos, 12f, PConstants.LEFT, PConstants.TOP, JPlotShape.fillColour, 0);
+		this(text, x_pos, y_pos, 12f, PConstants.LEFT, PConstants.TOP, JPlotShape.fillColour, 0, null);
 	}
 
 	public JTextShape(String text, float x_pos, float y_pos, int colour) {
-		this(text, x_pos, y_pos, 12f, PConstants.LEFT, PConstants.TOP, colour, 0);
+		this(text, x_pos, y_pos, 12f, PConstants.LEFT, PConstants.TOP, colour, 0, null);
 	}
 
 	public JTextShape(String text, float x_pos, float y_pos, float size, int colour) {
-		this(text, x_pos, y_pos, size, PConstants.LEFT, PConstants.TOP, colour, 0);
+		this(text, x_pos, y_pos, size, PConstants.LEFT, PConstants.TOP, colour, 0, null);
 	}
 
 	public JTextShape(String text, float x_pos, float y_pos, float size, int horizontal_alignement,
-			int vertical_alignement, int colour, float rotate) {
+			int vertical_alignement, int colour, float rotate, String style) {
 		txt = text;
 		x = x_pos;
 		y = y_pos;

@@ -21,6 +21,7 @@ import jplots.helper.FileLoader;
 import jplots.layer.JContourLayer;
 import jplots.layer.JContourLayer2D;
 import jplots.layer.JHatchLayer;
+import jplots.layer.JHatchLayer2D;
 import jplots.layer.JImageLayer;
 import jplots.layer.JLegend;
 import jplots.layer.JLineLayer;
@@ -430,23 +431,30 @@ public class JAxis {
 	}
 
 	public void addText(double x, double y, String text) {
-		JTextLayer tl = new JTextLayer(text, x, y, 1.0d, 0xff000000, PConstants.LEFT, PConstants.BOTTOM, 0d);
+		JTextLayer tl = new JTextLayer(false, text, x, y, 1.0d, 0xff000000, PConstants.LEFT, PConstants.BOTTOM, 0d, null);
 		layers.add(tl);
 	}
-	public void addText(double x, double y, String text, double textsize, int colour) {
-		JTextLayer tl = new JTextLayer(text, x, y, textsize, colour, PConstants.LEFT, PConstants.BOTTOM, 0d);
+	public void addText(double x, double y, String text, double textsize, int colour, String style) {
+		JTextLayer tl = new JTextLayer(false, text, x, y, textsize, colour, PConstants.LEFT, PConstants.BOTTOM, 0d, style);
 		layers.add(tl);
 	}
-	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny) {
-		JTextLayer tl = new JTextLayer(text, x, y, textsize, colour, alignx, aligny, 0d);
+	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny, String style) {
+		JTextLayer tl = new JTextLayer(false, text, x, y, textsize, colour, alignx, aligny, 0d, style);
 		layers.add(tl);
 	}
-	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny,
-			double rotation) {
-		JTextLayer tl = new JTextLayer(text, x, y, textsize, colour, alignx, aligny, rotation);
+	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny, double rotation, String style) {
+		JTextLayer tl = new JTextLayer(false, text, x, y, textsize, colour, alignx, aligny, rotation, style);
 		layers.add(tl);
 	}
-
+	
+	public void annotate(double x, double y, String text) {
+		annotate(x, y, text, new Object[0]);
+	}
+	public void annotate(double x, double y, String text, Object... params) {
+		JTextLayer tl = new JTextLayer(true, text, x, y, 1d, 0xff000000, PConstants.LEFT, PConstants.BOTTOM, 0d, null);
+		layers.add(tl); readParams(tl, params);
+	}
+	
 	public JColourbar colourbar() {
 		return pplot.colourbar(this, "", "neither");
 	}
@@ -880,8 +888,10 @@ public class JAxis {
 		if (titleP.length() > 0) {
 			if (pplot.isDebug())
 				System.out.println("[DEBUG] JAxis: add title \"" + titleP + "\" to graphic.");
-			graph.addChild(new JTextShape(titleP, px + 0.5f * pw, py - 0.04f * ph, (float) (1.3d * txtsize), PConstants.CENTER,
-					PConstants.BOTTOM, 0xff000000, 0f));
+			if(JPlot.supportLatex)
+				graph.addChild(new JLatexShape(titleP, px+0.5f*pw, py-0.04f*ph, (float)(1.3d*txtsize), PConstants.CENTER, PConstants.BOTTOM, 0xff000000, 0f, null));
+			else
+				graph.addChild(new JTextShape(titleP, px+0.5f*pw, py-0.04f*ph, (float)(1.3d*txtsize), PConstants.CENTER, PConstants.BOTTOM, 0xff000000, 0f, null));
 		}
 		graph.addChild(new JLineShape(0f, 0x00999999, 0f,0f, 1f,1f));
 		return graph;
@@ -936,10 +946,10 @@ public class JAxis {
 				System.out.println("[DEBUG] JAxis: add title \"" + titleP + "\" to graphic.");
 			if(JPlot.supportLatex) {
 				graph.addChild(new JLatexShape(titleP, px + 0.5f * pw, py - 0.04f * ph, (float) (1.3d * txtsize), PConstants.CENTER,
-						PConstants.BOTTOM, 0xff000000, 0f));				
+						PConstants.BOTTOM, 0xff000000, 0f, null));
 			} else {
 				graph.addChild(new JTextShape(titleP, px + 0.5f * pw, py - 0.04f * ph, (float) (1.3d * txtsize), PConstants.CENTER,
-						PConstants.BOTTOM, 0xff000000, 0f));
+						PConstants.BOTTOM, 0xff000000, 0f, null));
 			}
 		}
 		graph.addChild(new JLineShape(0f, 0x00999999, 0f,0f, 1f,1f));
@@ -1048,6 +1058,12 @@ public class JAxis {
 						isunread = false;
 					}
 				}
+				if (isunread && ("fs".equals(p) || "ts".equals(p) || "fontsize".equals(p) || "textsize".equals(p))
+						&& o + 1 < params.length) {
+					layer.setLineWidth((double) params[o + 1]);
+					o++;
+					isunread = false;
+				}
 				if (isunread && ("lb".equals(p) || "label".equals(p))) {
 					if (params[o + 1] instanceof String) {
 						layer.setLabel((String) params[o + 1]);
@@ -1079,6 +1095,12 @@ public class JAxis {
 				if (isunread && ("zrange".equals(p)) && o + 2 < params.length) {
 					layer.setZRange((double)params[o+1], (double)params[o+2]);
 					o+=2;
+					isunread = false;
+				}
+				if (isunread && ("density".equals(p) || "pd".equals(p)) && o + 1 < params.length) {
+					if(layer instanceof JHatchLayer2D)
+						((JHatchLayer2D) layer).setDensity((double)params[o+1]);
+					o+=1;
 					isunread = false;
 				}
 				if (isunread && "invertxaxis".equals(p)) {
@@ -1284,10 +1306,10 @@ public class JAxis {
 				//TODO set txtsize back to 1.1d*txtsize
 				if(JPlot.supportLatex) {
 					axisgrid.addChild(new JLatexShape(txtemp, px + 0.5f * pw, py + 1.04f * ph + (float) txtsize,
-							(float) (1.1d * txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
+							(float) (1.1d * txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0, null));
 				} else {
 					axisgrid.addChild(new JTextShape(txtemp, px + 0.5f * pw, py + 1.04f * ph + (float) txtsize,
-							(float) (1.1d * txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
+							(float) (1.1d * txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0, null));
 				}
 			}
 			if (xTkOn) {
@@ -1297,15 +1319,15 @@ public class JAxis {
 						// axisgrid.addChild(ap.createShape(PShape.TEXT, "H",
 						// (float)tcpos[t],py-0.1f*ph,(float)tcpos[t],py));
 						axisgrid.addChild(new JTextShape(tickmark[t], (float) tcpos[t], py + 1.03f * ph,
-								(float) txtsize, PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
+								(float) txtsize, PConstants.CENTER, PConstants.TOP, 0xff000000, 0, null));
 					}
 				if(titleX.length()==0 && tickmarkFactor.length()>0) {
 					if(JPlot.supportLatex) {
 						axisgrid.addChild(new JLatexShape(tickmarkFactor, px+pw, py+ph, (float) txtsize,
-								PConstants.LEFT, PConstants.CENTER, 0xff000000, 0));
+								PConstants.LEFT, PConstants.CENTER, 0xff000000, 0, null));
 					} else {
 						axisgrid.addChild(new JTextShape(tickmarkFactor, px+pw, py+ph, (float) txtsize,
-								PConstants.LEFT, PConstants.CENTER, 0xff000000, 0));
+								PConstants.LEFT, PConstants.CENTER, 0xff000000, 0, null));
 					}
 				}
 			}
@@ -1376,15 +1398,15 @@ public class JAxis {
 						tw = Math.max(tw, (float) txtsize * pplot.getGraphic().textWidth(tickmark[t])
 								/ pplot.getGraphic().textSize);
 						axisgrid.addChild(new JTextShape(tickmark[t], px - 0.03f * pw, (float) tcpos[t],
-								(float) txtsize, PConstants.RIGHT, PConstants.CENTER, 0xff000000, 0));
+								(float) txtsize, PConstants.RIGHT, PConstants.CENTER, 0xff000000, 0, null));
 					}
 				if(titleY.length()==0 && tickmarkFactor.length()>0) {
 					if(JPlot.supportLatex) {
 						axisgrid.addChild(new JLatexShape(tickmarkFactor, px, py, (float) txtsize,
-								PConstants.CENTER, PConstants.BOTTOM, 0xff000000, 0));
+								PConstants.CENTER, PConstants.BOTTOM, 0xff000000, 0, null));
 					} else {
 						axisgrid.addChild(new JTextShape(tickmarkFactor, px, py, (float) txtsize,
-								PConstants.CENTER, PConstants.BOTTOM, 0xff000000, 0));
+								PConstants.CENTER, PConstants.BOTTOM, 0xff000000, 0, null));
 					}
 				}
 			}
@@ -1396,10 +1418,10 @@ public class JAxis {
 				if(tickmarkFactor.length() > 0) tytemp += " (*"+tickmarkFactor+")";
 				if(JPlot.supportLatex) {
 					axisgrid.addChild(new JLatexShape(tytemp, px - 0.03f * pw - tw, py + 0.5f * ph, (float) (1.1d * txtsize),
-							PConstants.CENTER, PConstants.BOTTOM, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE));
+							PConstants.CENTER, PConstants.BOTTOM, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE, null));
 				} else {
 					axisgrid.addChild(new JTextShape(tytemp, px - 0.03f * pw - tw, py + 0.5f * ph, (float) (1.1d * txtsize),
-							PConstants.CENTER, PConstants.BOTTOM, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE));
+							PConstants.CENTER, PConstants.BOTTOM, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE, null));
 				}
 			}
 		}

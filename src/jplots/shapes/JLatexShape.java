@@ -42,6 +42,7 @@ public class JLatexShape extends JPlotShape {
 	static {
 		DefaultTeXFont.registerAlphabet(new CyrillicRegistration());
 		DefaultTeXFont.registerAlphabet(new GreekRegistration());
+//		TeXFormula.registerExternalFont(UnicodeBlock.BASIC_LATIN, "Computer modern");
 		TeXFormula.registerExternalFont(UnicodeBlock.BASIC_LATIN, "Computer modern");
 	}
 
@@ -49,30 +50,30 @@ public class JLatexShape extends JPlotShape {
 	private int txtColour;
 	private float txtSize, x, y;
 	private float rotation;
-	private String txt;
+	private String txt, txtstyle;
 	
 	public JLatexShape(String text) {
-		this(text, 0f, 0f, 12f, PConstants.LEFT, PConstants.TOP, JPlotShape.fillColour, 0);
+		this(text, 0f, 0f, 12f, PConstants.LEFT, PConstants.TOP, JPlotShape.fillColour, 0, null);
 	}
 
 	public JLatexShape(String text, int colour) {
-		this(text, 0f, 0f, 12f, PConstants.LEFT, PConstants.TOP, colour, 0);
+		this(text, 0f, 0f, 12f, PConstants.LEFT, PConstants.TOP, colour, 0, null);
 	}
 
 	public JLatexShape(String text, float x_pos, float y_pos) {
-		this(text, x_pos, y_pos, 12f, PConstants.LEFT, PConstants.TOP, JPlotShape.fillColour, 0);
+		this(text, x_pos, y_pos, 12f, PConstants.LEFT, PConstants.TOP, JPlotShape.fillColour, 0, null);
 	}
 
 	public JLatexShape(String text, float x_pos, float y_pos, int colour) {
-		this(text, x_pos, y_pos, 12f, PConstants.LEFT, PConstants.TOP, colour, 0);
+		this(text, x_pos, y_pos, 12f, PConstants.LEFT, PConstants.TOP, colour, 0, null);
 	}
 
 	public JLatexShape(String text, float x_pos, float y_pos, float size, int colour) {
-		this(text, x_pos, y_pos, size, PConstants.LEFT, PConstants.TOP, colour, 0);
+		this(text, x_pos, y_pos, size, PConstants.LEFT, PConstants.TOP, colour, 0, null);
 	}
 
 	public JLatexShape(String text, float x_pos, float y_pos, float size, int horizontal_alignement,
-			int vertical_alignement, int colour, float rotate) {
+			int vertical_alignement, int colour, float rotate, String style) {
 		txt = text;
 		x = x_pos;
 		y = y_pos;
@@ -81,11 +82,14 @@ public class JLatexShape extends JPlotShape {
 		txtSize = size;
 		txtColour = colour;
 		rotation = rotate;
+		txtstyle = "\\text";
+		if(style!=null)
+			txtstyle = style;
 	}
 	
 	@Override
 	public void draw(JPlot plot, PGraphics g) {
-		PShape sp = toPShape(txt, (int) (txtSize+0.5d), txtColour);
+		PShape sp = toPShape(txt, (int) (txtSize+0.5d), txtColour, txtstyle);
 //		System.out.println("\""+txt+"\" --> "+sp+"    {w/h: "+sp.width+"/"+sp.height+"}");
 		g.pushMatrix();
 		g.translate(x, y);
@@ -111,9 +115,9 @@ public class JLatexShape extends JPlotShape {
 		pw.println(off+this.getClass().getSimpleName()+" { text=\""+txt+"\" }");
 	}
 	
-	private PShape toPShape(String content, int tsize, int tcolor) {
+	public static PShape toPShape(String content, int tsize, int tcolor, String txtstyle) {
 		
-		TeXFormula formula = new TeXFormula("\\text{"+content+"}");
+		TeXFormula formula = new TeXFormula(txtstyle+"{"+content+"}");
 		
 		TeXIcon icon = formula.createTeXIcon(TeXConstants.STYLE_DISPLAY, tsize);
 		svgGenerator.setSVGCanvasSize(new Dimension(icon.getIconWidth(), icon.getIconHeight()));

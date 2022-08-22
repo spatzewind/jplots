@@ -122,6 +122,7 @@ public class JDPoint implements Comparable<JDPoint> {
 	}
 
 	public JDPoint fractionTowards(double fraction, JDPoint towards) {
+		if(towards==null) return null;
 		return new JDPoint(
 				this.x + fraction * (towards.x - this.x),
 				this.y + fraction * (towards.y - this.y),
@@ -154,25 +155,5 @@ public class JDPoint implements Comparable<JDPoint> {
 		double ny = f*dy/dr2;
 		return new JDPoint(p1.x + nx, p1.y + ny);
 	}
-
-//	double dist2(jpoint v) {
-//		return (v.x-this.x)*(v.x-this.x) + (v.y-this.y)*(v.y-this.y);
-//	}
-//	double[] dir_n(jpoint v) {
-//		double dx = this.x - v.x;
-//		double dy = this.y - v.y;
-//		double dr = Math.sqrt(dx*dx+dy*dy);
-//		return new double[] {dx/dr, dy/dr};
-//	}
-//	void calcCntLevel(double[] contourIntervals) {
-//		if(Double.isNaN(value))
-//			return;
-//		lev = 0;
-//		for(int k=0; k<contourIntervals.length; k++)
-//			if(contourIntervals[k]<=value)
-//				lev++;
-//		if(contourIntervals[contourIntervals.length-1]<value)
-//			lev++;
-//	}
-
+	
 }

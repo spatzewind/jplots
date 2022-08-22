@@ -37,6 +37,10 @@ public class JGroupShape extends JPlotShape {
 		childs.clear();
 	}
 	
+	public int childCount() {
+		return childs.size();
+	}
+	
 	@Override
 	public void printStack(PrintWriter pw, String off) {
 		pw.println(off+this.getClass().getSimpleName()+" {");

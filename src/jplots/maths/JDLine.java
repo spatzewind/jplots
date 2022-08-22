@@ -65,6 +65,12 @@ public class JDLine {
 			res[i] = colors[2*i];
 		return res;
 	}
+	public List<JDEdge> toEdges() {
+		List<JDEdge> edges = new ArrayList<JDEdge>();
+		for(int i=1; i<points.length; i++)
+			edges.add(new JDEdge(points[i-1].copy(),points[i].copy()));
+		return edges;
+	}
 	
 	public JDLine affine(double[][] transformationMatrix) {
 		for(JDPoint p: points) p.affine(transformationMatrix);

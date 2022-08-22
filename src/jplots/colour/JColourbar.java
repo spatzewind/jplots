@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jplots.JAxis;
+import jplots.JPlot;
 import jplots.layer.JContourLayer;
 import jplots.layer.JContourLayer2D;
 import jplots.layer.JHatchLayer;
@@ -14,6 +15,7 @@ import jplots.maths.JDTriangle;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JImageShape;
+import jplots.shapes.JLatexShape;
 import jplots.shapes.JLineShape;
 import jplots.shapes.JPlotShape;
 import jplots.shapes.JTextShape;
@@ -53,6 +55,7 @@ public class JColourbar extends JAxis {
 		borders = true;
 		extendLower = false;
 		extendUpper = false;
+		hatchPatterns = new ArrayList<>();
 	}
 
 	@Override
@@ -76,7 +79,6 @@ public class JColourbar extends JAxis {
 		minV = Double.NaN;
 		maxV = Double.NaN;
 		foundPrimary = false;
-		hatchPatterns = new ArrayList<JHatchLayer>();
 		minH = Double.POSITIVE_INFINITY;
 		maxH = Double.NEGATIVE_INFINITY;
 		if (pplot.isDebug())
@@ -95,6 +97,9 @@ public class JColourbar extends JAxis {
 			System.err.println("[ERR] JColourbar: no source for colourbar found!");
 			return graph;
 		}
+
+//		System.out.println("Reloaded datarange: [ z={"+minV+" ... "+maxV+"}");
+		
 		if (pplot.isDebug())
 			System.out.println("[DEBUG] JColourbar: use\n"+
 					"                    cmin/cmax = "+minC+"/"+maxC+"\n"+
@@ -139,10 +144,13 @@ public class JColourbar extends JAxis {
 		drawHatchLayers(graph, triangles);
 		
 		if (borders) {
-			graph.addChild(new JLineShape(3f, 0xff000000, xs, ys, xe, ys));
-			graph.addChild(new JLineShape(3f, 0xff000000, xs, ye, xe, ye));
-			graph.addChild(new JLineShape(3f, 0xff000000, xs, ys, xs, ye));
-			graph.addChild(new JLineShape(3f, 0xff000000, xe, ys, xe, ye));
+			if(isHorizontal) {
+				graph.addChild(new JLineShape(3f, 0xff000000, xs, ys, xe, ys));
+				graph.addChild(new JLineShape(3f, 0xff000000, xs, ye, xe, ye));
+			} else {
+				graph.addChild(new JLineShape(3f, 0xff000000, xs, ys, xs, ye));
+				graph.addChild(new JLineShape(3f, 0xff000000, xe, ys, xe, ye));
+			}
 		}
 		if(extendLower) {
 			if(isHorizontal) {
@@ -152,6 +160,11 @@ public class JColourbar extends JAxis {
 				graph.addChild(new JLineShape(3f, 0xff000000, px+0.5f*pw,py+ph, xs,ye));
 				graph.addChild(new JLineShape(3f, 0xff000000, px+0.5f*pw,py+ph, xe,ye));
 			}
+		} else {
+			if(isHorizontal)
+				graph.addChild(new JLineShape(3f, 0xff000000, xs, ys, xs, ye));
+			else
+				graph.addChild(new JLineShape(3f, 0xff000000, xs, ye, xe, ye));
 		}
 		if(extendUpper) {
 			if(isHorizontal) {
@@ -160,7 +173,59 @@ public class JColourbar extends JAxis {
 			} else {
 				graph.addChild(new JLineShape(3f, 0xff000000, px+0.5f*pw,py, xs,ys));
 				graph.addChild(new JLineShape(3f, 0xff000000, px+0.5f*pw,py, xe,ys));			}
+		} else {
+			if(isHorizontal)
+				graph.addChild(new JLineShape(3f, 0xff000000, xe, ys, xe, ye));
+			else
+				graph.addChild(new JLineShape(3f, 0xff000000, xs, ys, xe, ys));
 		}
+		return graph;
+	}
+	@Override
+	public JPlotShape createPlotOnlyAxes(PApplet applet, int w, int h) {
+//		System.out.println("[JCOLOURBAR] crearePlotOnlyAxes(...) called.");
+//		if (pplot.isDebug()) {
+//			System.out.println("[DEBUG] JColourbar: begin colourbar\n"+
+//					"                    x/y/width/height: "+px+"/"+py+"/"+pw+"/"+ph);
+//		}
+//		int trihgt = Math.min(pw,ph);
+//		int xs = px, ys = py, xe = px+pw, ye = py+ph;
+//		if(isHorizontal) {
+//			if(extendLower) xs += trihgt;
+//			if(extendUpper) xe -= trihgt;
+//		} else {
+//			if(extendLower) ye -= trihgt;
+//			if(extendUpper) ys += trihgt;
+//		}
+		JGroupShape graph = new JGroupShape();
+//		if(srcAxis==null)
+//			return graph;
+//		minV = Double.NaN;
+//		maxV = Double.NaN;
+//		foundPrimary = false;
+//		minH = Double.POSITIVE_INFINITY;
+//		maxH = Double.NEGATIVE_INFINITY;
+//		if (pplot.isDebug())
+//			System.out.println("[DEBUG] JColourbar: source axis exist.");
+		collectHatchPatterns();
+		collectPrimarySource();
+//		if(!foundPrimary && hatchPatterns.isEmpty()) {
+//			System.err.println("[ERR] JColourbar: Could not find source to create JColourbar.");
+//			return graph;
+//		}
+//		if(!foundPrimary) {
+//			minV = minH;
+//			maxV = maxH;
+//		}
+//		if (Double.isNaN(minV) || Double.isNaN(maxV)) {
+//			System.err.println("[ERR] JColourbar: no source for colourbar found!");
+//			return graph;
+//		}
+//		System.out.println("Preloaded datarange: [ z={"+minV+" ... "+maxV+"}");
+		if (isHorizontal)
+			graph.addChild(createXAxis());
+		if (!isHorizontal)
+			graph.addChild(createYAxis());
 		return graph;
 	}
 	
@@ -220,11 +285,14 @@ public class JColourbar extends JAxis {
 				// axisgrid.addChild(ap.createShape(PShape.TEXT, "H",
 				// (float)tcpos[t],py-0.1f*ph,(float)tcpos[t],py));
 				axisgrid.addChild(new JTextShape(tickmark[t], (float) tcpos[t], py + 1.188f * ph, (float) txtsize,
-						PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
+						PConstants.CENTER, PConstants.TOP, 0xff000000, 0, null));
 			}
-		if (titleC.length() > 0)
-			axisgrid.addChild(new JTextShape(titleC, xs + 0.5f * xw, py + 1.250f * ph + (float) txtsize,
-					(float) (1.1d * txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0));
+		if (titleC.length() > 0) {
+			if(JPlot.supportLatex)
+				axisgrid.addChild(new JLatexShape(titleC, xs+0.5f*xw, py+1.250f*ph+(float)txtsize, (float)(1.1d*txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0f, null));
+			else
+				axisgrid.addChild(new JTextShape(titleC, xs+0.5f*xw, py+1.250f*ph+(float)txtsize, (float)(1.1d*txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0, null));
+		}
 		return axisgrid;
 	}
 	private JGroupShape createYAxis() {
@@ -233,7 +301,8 @@ public class JColourbar extends JAxis {
 		int ye = extendLower ? py+ph-trihgt : py+ph;
 		int yh = ye-ys;
 		JGroupShape axisgrid = new JGroupShape();
-		double[] ticks = JPlotMath.optimalLinearTicks(minC, maxC);
+		int nticks = (int)((ye-ys) / txtsize + 0.5d);
+		double[] ticks = JPlotMath.optimalLinearTicks(minC, maxC, nticks);
 		double[] tcpos = JPlotMath.map(ticks, minC, maxC, ye, ys);
 //		for(int t=0; t<tcpos.length; t++)
 //			tcpos[t] = 2*py+ph-tcpos[t];
@@ -257,11 +326,14 @@ public class JColourbar extends JAxis {
 				String tmstr = PApplet.nf((float) (ticks[t] * vf), 0, decimal);
 				tw = Math.max(tw, (float) txtsize * pplot.getGraphic().textWidth(tmstr) / pplot.getGraphic().textSize);
 				axisgrid.addChild(new JTextShape(tmstr, px + 1.375f * pw, (float) tcpos[t], (float) txtsize,
-						PConstants.LEFT, PConstants.CENTER, 0xff000000, 0));
+						PConstants.LEFT, PConstants.CENTER, 0xff000000, 0, null));
 			}
-		if (titleC.length() > 0)
-			axisgrid.addChild(new JTextShape(titleC, px + 1.500f * pw + tw, ys + 0.5f * yh, (float) (1.1d * txtsize),
-					PConstants.CENTER, PConstants.TOP, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE));
+		if (titleC.length() > 0) {
+			if(JPlot.supportLatex)
+				axisgrid.addChild(new JLatexShape(titleC, px+1.500f*pw+tw, ys+0.5f*yh, (float)(1.1d*txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE, null));
+			else
+				axisgrid.addChild(new JTextShape(titleC, px+1.500f*pw+tw, ys+0.5f*yh, (float)(1.1d*txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE, null));
+		}
 		return axisgrid;
 	}
 	
@@ -305,6 +377,10 @@ public class JColourbar extends JAxis {
 			minV = zr[0];
 			maxV = zr[1];
 			contourLevels = contours.getLevels();
+			minC= JPlotMath.dmin(contourLevels);
+			maxC= JPlotMath.dmax(contourLevels);
+			if(minC<minV) minV = minC;
+			if(maxC>maxV) maxV = maxC;
 			if (Double.isNaN(minC))
 				minC = minV;
 			if (Double.isNaN(maxC))
@@ -321,6 +397,10 @@ public class JColourbar extends JAxis {
 			minV = zr[0];
 			maxV = zr[1];
 			contourLevels = contours2.getLevels();
+			minC= JPlotMath.dmin(contourLevels);
+			maxC= JPlotMath.dmax(contourLevels);
+			if(minC<minV) minV = minC;
+			if(maxC>maxV) maxV = maxC;
 			if (Double.isNaN(minC))
 				minC = minV;
 			if (Double.isNaN(maxC))

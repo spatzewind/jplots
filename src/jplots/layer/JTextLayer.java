@@ -2,6 +2,7 @@ package jplots.layer;
 
 import jplots.JAxis;
 import jplots.JPlot;
+import jplots.maths.AffineBuilder;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLatexShape;
 import jplots.shapes.JTextShape;
@@ -12,17 +13,26 @@ public class JTextLayer extends JPlotsLayer {
 	private double x, y;
 	private int x_align, y_align;
 	private double rot;
+	private String t_style;
+	private boolean useAxis;
 	
-	public JTextLayer(String message, double pos_x, double pos_y, double size, int textcolour, int x_align, int y_align,
-			double rot) {
+	public JTextLayer(boolean relative_to_this_axis, String message, double pos_x, double pos_y, double size, int textcolour, int x_align, int y_align,
+			double rot, String style) {
 		this.label = message;
 		this.x = pos_x;
 		this.y = pos_y;
+		this.useAxis = relative_to_this_axis;
 		this.lw = size;
-		this.lc = textcolour;
+		this.pc = textcolour;
 		this.x_align = x_align;
 		this.y_align = y_align;
 		this.rot = rot;
+		this.t_style = "\\text";
+		if(style!=null) {
+			if(style.equalsIgnoreCase("math")) this.t_style = "";
+			if(style.equalsIgnoreCase("bb")) this.t_style = "\\mathbb";
+			if(style.equalsIgnoreCase("fraktur")) this.t_style = "\\mathfrak";
+		}
 	}
 
 	@Override
@@ -31,49 +41,37 @@ public class JTextLayer extends JPlotsLayer {
 
 	@Override
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
-
-//		entries.clear();
-//		for(JPlotsLayer layer: ax.getLayers()) {
-//			if(layer instanceof JContourLayer) {
-//				//maybe do something with contourlayers -> hatching? -> CONTOURHATCHING_LABEL
-//			}
-//			//no JImageLayer
-//			//no other JLegend
-//			if(layer instanceof JLineLayer)
-//				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getColour(), layer.getStyle()));
-//			//ignore JPlotsLayer, because it is abstract
-//			if(layer instanceof JScatterLayer)
-//				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.SCATTERPLOT_LABEL, layer.getColour(), layer.getStyle()));
-//			if(layer instanceof JShapesLayer)
-//				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getColour(), layer.getStyle()));
-//			if(layer instanceof JXYLayer)
-//				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getColour(), layer.getStyle()));
-//		}
-//		for(int le=entries.size()-1; le>=0; le--)
-//			if(entries.get(le).getName().length()==0)
-//				entries.remove(le);
-//
-//		int[] p = ax.getSize();
-//		double labelWidth = 0d;
-//		JPlot plot = ax.getPlot();
-//		plot.getGraphic().textSize(200f);
-//		for(LegendEntry le: entries) {
-//			labelWidth = Math.max(labelWidth, plot.getGraphic().textWidth(le.getName())/200d);
-//		}
-//		labelWidth += 3d;
-//		labelWidth *= ax.getTextSize();
-//		double toplefX = (p[0]+p[2]-labelWidth-0.5d*ax.getTextSize()), toplefY=p[1]+0.5d*ax.getTextSize();
-
-		JGroupShape lggs = new JGroupShape();
-//		lggs.addChild(new JRectShape(
-//				(float)(toplefX-0.5d*ax.getTextSize()), (float)(toplefY-0.5d*ax.getTextSize()),
-//				(float)(toplefX+labelWidth+0.5d*ax.getTextSize()), (float)(toplefY+(0.5d+1.5d*entries.size())*ax.getTextSize()),
-//				(float)Math.min(labelWidth, 1.5d*entries.size())*0.1f, 0x3fffffff, 0x3f999999, 2f, true));
-		if(JPlot.supportLatex) {
-			lggs.addChild(new JLatexShape(label, (float) x, (float) y, (float) (ax.getTextSize() * lw), x_align, y_align, lc, (float) rot));
+		double qx = this.x;
+		double qy = this.y;
+		if(useAxis) {
+			int[] p = ax.getSize();
+			double Xin = ax.isXlogAxis() ? Math.log10(minX) : minX;
+			double Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
+			double Yin = ax.isYlogAxis() ? Math.log10(minY) : minY;
+			double Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
+			double xs = p[2] / (Xax - Xin), ys = p[3] / (Yax - Yin);
+			double[] xy = {
+					ax.isXlogAxis() ? Math.log10(this.x) : this.x,
+					ax.isYlogAxis() ? Math.log10(this.y) : this.y
+			};
+			if(ax.isGeoAxis()) {
+				xy = inputProj.fromPROJtoLATLON(xy[0], xy[1], false, false);
+				xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[0], xy[1], false, false);
+			}
+			AffineBuilder affine = new AffineBuilder().scale(invertAxisX ? -1d : 1d, invertAxisY ? 1d : -1d)
+					.translate(invertAxisX ? Xax : -Xin, invertAxisY ? -Yin : Yax).scale(xs, ys).translate(p[0], p[1]);
+			double[][] affmat = affine.getMatrix();
+			qx = affmat[0][0]*xy[0] + affmat[0][1]*xy[1] + affmat[0][2];
+			qy = affmat[1][0]*xy[0] + affmat[1][1]*xy[1] + affmat[1][2];
 		} else {
-			lggs.addChild(new JTextShape(label, (float) x, (float) y, (float) (ax.getTextSize() * lw), x_align, y_align, lc, (float) rot));
+			int[] p = ax.getPlot().getSize();
+			qx *= p[0];
+			qy *= p[1];
 		}
-		s.addChild(lggs);
+		if(JPlot.supportLatex) {
+			s.addChild(new JLatexShape(label, (float) qx, (float) qy, (float) (ax.getTextSize() * lw), x_align, y_align, pc, (float) rot, t_style));
+		} else {
+			s.addChild(new JTextShape(label, (float) qx, (float) qy, (float) (ax.getTextSize() * lw), x_align, y_align, pc, (float) rot, t_style));
+		}
 	}
 }

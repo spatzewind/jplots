@@ -13,7 +13,6 @@ import jplots.maths.JDPolygon;
 import jplots.maths.JDQuad;
 import jplots.maths.JDTriangle;
 import jplots.maths.JPlotMath;
-import jplots.shapes.JDGeometry;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JImageShape;
 import jplots.shapes.JLineShape;
@@ -31,8 +30,6 @@ public class JContourLayer2D extends JPlotsLayer {
 	private double[] contourIntervals;
 	private String[] contourStyle;
 	private JDPoint[][] corners;
-	private JDTriangle[] triangles;
-	private JDGeometry[] fillings;
 	
 	public JContourLayer2D(float[] x, float[] y, float[][] z, float zmin, float zmax, int nIntervals, float[] zIntervals) {
 		boolean is_valid = (x!=null && y!=null && z!=null);
@@ -236,12 +233,7 @@ public class JContourLayer2D extends JPlotsLayer {
 			} else {
 				if (ax.getPlot().isDebug())
 					System.out.println("[DEBUG] JContourLayer2D: 1] contour filling vectorwise ...");
-				try {
-					fillVectorByVector(ax.getGeoProjection(), p, ax, xs, ys, s, cnt2, affine.getMatrix());
-				} catch (Exception e) {
-					e.printStackTrace();
-					throw new RuntimeException(e);
-				}
+				fillVectorByVector(p, ax, xs, ys, s, cnt2, affine.getMatrix());
 			}
 		} else {
 			if (ax.getPlot().isDebug())
@@ -350,104 +342,55 @@ public class JContourLayer2D extends JPlotsLayer {
 		}
 	}
 	
-	private void fillVectorByVector(JProjection outproj, int[] p, JAxis ax, double xs, double ys, JGroupShape s, JDPoint[][] points, double[][] af_trnsf) {
-		List<int[]> openset = new ArrayList<>(),
-					closedset = new ArrayList<>();
+	private void fillVectorByVector(int[] p, JAxis ax, double xs, double ys, JGroupShape s, JDPoint[][] input, double[][] affine) {
+		JDPoint[][] points = new JDPoint[input.length][input[0].length];
+		int jlen = input.length;
+		int ilen = input[0].length;
+		for(int j=0; j<jlen; j++)
+			for(int i=0; i<ilen; i++)
+				points[j][i] = input[j][i].copy();
 		double[] clev2 = new double[2+contourIntervals.length];
 		clev2[0] = Double.NEGATIVE_INFINITY;
-		for(int i=0; i<contourIntervals.length; i++) clev2[i+1] = contourIntervals[i];
+		for(int l=0; l<contourIntervals.length; l++) clev2[l+1] = contourIntervals[l];
 		clev2[contourIntervals.length+1] = Double.POSITIVE_INFINITY;
-		for(int i=1; i<clev2.length; i++) {
-			double lower = clev2[i-1];
-			double upper = clev2[i];
-			
-		}
-		
-		
-		
-		if (ax.getPlot().isDebug())
-			System.out.println("[DEBUG] JContourLayer: 4] fill contours ...");
-		double eps = Math.min(p[2], p[3]) * 1.0e-9d;
-		double eps2 = eps * 0.0001d;
-		List<JDTriangle> visibleTriangles = new ArrayList<>();
-		for (JDTriangle t : triangles) {
-//    		if(t.area()<0d)
-//    			t.reverse_orientation();
-			JDPolygon poly = t.copy().intersectsAABB(p[0], p[1], p[0] + p[2], p[1] + p[2]);
-			if (poly == null)
-				continue;
-//    		if(poly.area()<0d)
-//    			poly.reverse_orientation();
-			visibleTriangles.addAll(poly.toTriangles());
-		}
-		fillings = null;
-		fillings = new JDGeometry[contourIntervals.length + 1];
-		for (int lev = -1; lev < contourIntervals.length; lev++) {
-			List<JDPolygon> pl = new ArrayList<>();
-			double levmin = -100000000d;
-			double levmax = 100000000d;
-			if (lev >= 0)
-				levmin = contourIntervals[lev];
-			if (lev + 1 < contourIntervals.length)
-				levmax = contourIntervals[lev + 1];
-			if (ax.getPlot().isDebug())
-				System.out.println(
-						"[DEBUG]                   ... collect geometry for range [" + levmin + " ... " + levmax + "]");
-			for (JDTriangle t : visibleTriangles) {
-				Object res = cutoutLevelrange(t, levmin, levmax);
-				if (res == null)
-					continue;
-				if (res instanceof JDTriangle) {
-					JDTriangle rt = (JDTriangle) res;
-					// System.out.println(" ... add "+rt+" with area "+rt.area()+"<>"+eps2);
-					if (Math.abs(rt.area()) > eps2)
-						addTriangle2polygonList(pl, rt, eps);
+		for(int l=1; l<clev2.length; l++) {
+			double lower = clev2[l-1];
+			double upper = clev2[l];
+			//find all polygons
+			List<JDPolygon> polys1 = getIntBasedPolygons(input, lower, upper, 0,points.length-1, 0,points[0].length-1);
+			if(polys1==null) continue;
+			List<JDPolygon> polys2 = new ArrayList<JDPolygon>();
+			for(JDPolygon poly: polys1) {
+				JDPoint[] pnts = poly.c;
+				//recalc position for all polygons
+				for(int n=0; n<pnts.length; n++) {
+					double x = pnts[n].x(); int xi = Math.min((int)x, ilen-2);
+					double y = pnts[n].y(); int yj = Math.min((int)y, jlen-2);
+					x -= xi; y -= yj;
+					double xt=points[ yj ][xi].x*(1d-x)+points[ yj ][xi+1].x*x;
+					double yt=points[ yj ][xi].y*(1d-x)+points[ yj ][xi+1].y*x;
+					double xb=points[yj+1][xi].x*(1d-x)+points[yj+1][xi+1].x*x;
+					double yb=points[yj+1][xi].y*(1d-x)+points[yj+1][xi+1].y*x;
+					pnts[n].x = xt*(1d-y)+xb*y;
+					pnts[n].y = yt*(1d-y)+yb*y;
 				}
-				if (res instanceof JDPolygon) {
-					JDPolygon rp = (JDPolygon) res;
-					// System.out.println(" ... add "+rp+" with area "+rp.area()+"<>"+eps2);
-					if (rp.area() > eps2)
-						addPolygon2polygonList(pl, rp, eps);
-				}
+				poly.c = pnts;
+				//cutoff what is beyond allowed mapping range
+				polys2.addAll(poly.splitByMapBorder(ax));
 			}
-			fillings[lev + 1] = new JDGeometry();
-			for (JDPolygon jdp : pl) {
-				if (ax.getPlot().isDebug())
-					System.out.println("[DEBUG]                       ... use polygon " + jdp);
-				fillings[lev + 1].add(jdp);
+			int cct = colourtable.getColour((l-1.5d)/(clev2.length-3d));
+//			System.out.println("current polygon color: "+Integer.toHexString(cct));
+			JGroupShape cnt_polys = new JGroupShape();
+			for(JDPolygon poly: polys2) {
+				poly.affine(affine);
+//				double[] bnds = poly.getBounds();
+//				System.out.println("polygon: x={"+bnds[0]+" ... "+bnds[1]+"}  y={"+bnds[2]+" ... "+bnds[3]+"}  [v]="+poly.c.length);
+//				for(JDPolygon subpoly: poly.affine(affine).intersectsAABB(p[0], p[0]+p[2], p[1], p[1]+p[3]))
+				cnt_polys.addChild(new JPolygonShape(poly.getCoords(), cct, true, true));
 			}
-			if (ax.getPlot().isDebug() && pl.isEmpty())
-				System.out.println("[DEBUG]                       ... no polygon created");
+//			System.out.println("Should be added "+cnt_polys.childCount()+" shapes...");
+			s.addChild(cnt_polys);
 		}
-
-		JGroupShape trianglesh = new JGroupShape();
-		for (int lev = -1; lev < contourIntervals.length; lev++) {
-			double levmin = Double.NEGATIVE_INFINITY;
-			double levmax = Double.POSITIVE_INFINITY;
-			if (lev >= 0)
-				levmin = contourIntervals[lev];
-			if (lev + 1 < contourIntervals.length)
-				levmax = contourIntervals[lev + 1];
-			if (ax.getPlot().isDebug())
-				System.out.println(
-						"[DEBUG]                   ... draw geometry for range [" + levmin + " ... " + levmax + "]");
-			if (fillings[lev + 1] == null)
-				continue;
-			double pct = minZ - 10d;
-			if (lev >= 0 && lev + 1 < contourIntervals.length)
-				pct = 0.5d * (contourIntervals[lev] + contourIntervals[lev + 1]);
-			if (lev + 1 == contourIntervals.length)
-				pct = maxZ + 10d;
-			int cct = colourtable.getColour(pct, contourIntervals[0], contourIntervals[contourIntervals.length - 1]);
-//			JPlotShape.fill(cct);
-//			JPlotShape.noStroke();
-//			if(ax.getPlot().isDebug()) {
-//				JPlotShape.stroke(0xff999999); JPlotShape.strokeWeight(2f); }
-			for (JDPolygon ppp : fillings[lev + 1].getPolygons()) {
-				trianglesh.addChild(new JPolygonShape(ppp, cct, cct, 1f, true, true));
-			}
-		}
-		s.addChild(trianglesh);
 	}
 	
 	private void fillPixelByPixel(int[] p, JAxis ax, double xs, double ys, JGroupShape s, JDPoint[][] input, double[][] affine) {
@@ -558,36 +501,36 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    1_/   0
 							//    /      
 							//    0     0
-							addCurve(path, q, -1d, 2*ad-1d, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1; break;
+							q.addCurve(path, -1d, 2*ad-1d, 2*ab-1d, -1d, lev, true); nu = u; nv = v-1; break;
 						case 0x0007: break;
 						case 0x0010:
 							//    0   \_1
 							//          \
 							//    0     0
-							addCurve(path, q, 1d-2*ba, -1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v; break;
+							q.addCurve(path, 1d-2*ba, -1d, 1d, 2*bc-1d, lev, true); nu = u+1; nv = v; break;
 						case 0x0011:
 							//    1     1
 							//    -------
 							//    0     0
-							addCurve(path, q, -1d, 2*ad-1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v; break;
+							q.addCurve(path, -1d, 2*ad-1d, 1d, 2*bc-1d, lev, true); nu = u+1; nv = v; break;
 						case 0x0017:
 							//    N __  1
 							//        '--
 							//    0     0
-							addCurve(path, q, -bd, bd-1d, 1d, 2*bc-1d, lev, false, true); nu = u+1; nv = v; break;
+							q.addCurve(path, -bd, bd-1d, 1d, 2*bc-1d, lev, false); nu = u+1; nv = v; break;
 						case 0x0070: break;
 						case 0x0071:
 							//    1  __ N
 							//    --'    
 							//    0     0
-							addCurve(path, q, -1d, 2*ad-1d, ac, ac-1d, lev, true, true); break;
+							q.addCurve(path, -1d, 2*ad-1d, ac, ac-1d, lev, true); break;
 						case 0x0077: break;
 						case 0x0100:
 							//    0     0
 							//         _/
 							//    0   / 1
 							//show(a,b,c,d);
-							addCurve(path, q, 1d, 1d-2*cb, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1; break;
+							q.addCurve(path, 1d, 1d-2*cb, 1d-2*cd, 1d, lev, true); nu = u; nv = v+1; break;
 						case 0x0101:
 							// du = 0.25d*((value[1]-value[0])*(1-v) + (value[2]-value[3])*(1+v)) = 0
 							// dv = 0.25d*((value[3]-value[0])*(1-u) + (value[2]-value[1])*(1+u)) = 0
@@ -610,10 +553,10 @@ public class JContourLayer2D extends JPlotsLayer {
 								// -- /  0 _/ +
 								//    0   / 1
 								if(takePos01) {
-									addCurve(path, q, 1d, 1d-2*cb, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1;
+									q.addCurve(path, 1d, 1d-2*cb, 1d-2*cd, 1d, lev, true); nu = u; nv = v+1;
 									visits[v][u] = visits[v][u]==0 ? 1 : 2;
 								} else {
-									addCurve(path, q, -1d, 2*ad-1d, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1;
+									q.addCurve(path, -1d, 2*ad-1d, 2*ab-1d, -1d, lev, true); nu = u; nv = v-1;
 									visits[v][u] = visits[v][u]==0 ? -1 : 2;
 								} break;
 							} else {
@@ -621,10 +564,10 @@ public class JContourLayer2D extends JPlotsLayer {
 								// -- \_ 1  \ +
 								//    0 \   1
 								if(takePos01) {
-									addCurve(path, q, 1d, 1d-2*cb, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1;
+									q.addCurve(path, 1d, 1d-2*cb, 2*ab-1d, -1d, lev, true); nu = u; nv = v-1;
 									visits[v][u] = visits[v][u]==0 ? 1 : 2;
 								} else {
-									addCurve(path, q, -1d, 2*ad-1d, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1;
+									q.addCurve(path, -1d, 2*ad-1d, 1d-2*cd, 1d, lev, true); nu = u; nv = v+1;
 									visits[v][u] = visits[v][u]==0 ? -1 : 2;
 								} break;
 							}
@@ -632,32 +575,32 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    N     0
 							//         _/
 							//    0   / 1
-							addCurve(path, q, 1d, 1d-2*cb, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1; break;
+							q.addCurve(path, 1d, 1d-2*cb, 1d-2*cd, 1d, lev, true); nu = u; nv = v+1; break;
 						case 0x0110:
 							//    0  |  1
 							//       |   
 							//    0  |  1
-							addCurve(path, q, 1d-2*ba, -1d, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1; break;
+							q.addCurve(path, 1d-2*ba, -1d, 1d-2*cd, 1d, lev, true); nu = u; nv = v+1; break;
 						case 0x0111:
 							//    1     1
 							//    \_     
 							//    0 \   1
-							addCurve(path, q, -1d, 2*ad-1d, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1; break;
+							q.addCurve(path, -1d, 2*ad-1d, 1d-2*cd, 1d, lev, true); nu = u; nv = v+1; break;
 						case 0x0117:
 							//    N     1
 							//      \    
 							//    0  \  1
-							addCurve(path, q, -bd, bd-1d, 1d-2*cd, 1d, lev, false, true); nu = u; nv = v+1; break;
+							q.addCurve(path, -bd, bd-1d, 1d-2*cd, 1d, lev, false); nu = u; nv = v+1; break;
 						case 0x0170:
 							//    0     N
 							//        /  
 							//    0  /  1
-							addCurve(path, q, 1d-ca, -ca, 1d-2*cd, 1d, lev, false, true); nu = u; nv = v+1; break;
+							q.addCurve(path, 1d-ca, -ca, 1d-2*cd, 1d, lev, false); nu = u; nv = v+1; break;
 						case 0x0171:
 							//    1     N
 							//    \_     
 							//    0 \   1
-							addCurve(path, q, -1d, 2*ad-1d, 1d-2*cd, 1d, lev, true, false); nu = u; nv = v+1; break;
+							q.addCurve(path, -1d, 2*ad-1d, 1d-2*cd, 1d, lev, true); nu = u; nv = v+1; break;
 						case 0x0177:
 							//    N     N
 							//       |   
@@ -668,23 +611,23 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    1_/   0
 							//    /      
 							//    0     N
-							addCurve(path, q, -1d, 2*ad-1d, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1; break;
+							q.addCurve(path, -1d, 2*ad-1d, 2*ab-1d, -1d, lev, true); nu = u; nv = v-1; break;
 						case 0x0707: break;
 						case 0x0710:
 							//    0  \  1
 							//        \  
 							//    0     N
-							addCurve(path, q, 1d-2*ba, -1d, 1d-bd, bd, lev, true, true); break;
+							q.addCurve(path, 1d-2*ba, -1d, 1d-bd, bd, lev, true); break;
 						case 0x0711:
 							//    1     1
 							//    --.__  
 							//    0     N
-							addCurve(path, q, -1d, 2*ad-1d, 1d-bd, bd, lev, true, true); break;
+							q.addCurve(path, -1d, 2*ad-1d, 1d-bd, bd, lev, true); break;
 						case 0x0717:
 							//    N _   1
 							//       \_  
 							//    0     N
-							addCurve(path, q, -bd, bd-1d, 1d-bd, bd, lev, false, true); break;
+							q.addCurve(path, -bd, bd-1d, 1d-bd, bd, lev, false); break;
 						case 0x0770: break;
 						case 0x0771:
 							//    1     N
@@ -696,17 +639,17 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    0     0
 							//    \_     
 							//    1 \   0
-							addCurve(path, q, 2*dc-1d, 1d, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v; break;
+							q.addCurve(path, 2*dc-1d, 1d, -1d, 1d-2*da, lev, true); nu = u-1; nv = v; break;
 						case 0x1001:
 							//    1  |  0
 							//       |   
 							//    1  |  0
-							addCurve(path, q, 2*dc-1d, 1d, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1; break;
+							q.addCurve(path, 2*dc-1d, 1d, 2*ab-1d, -1d, lev, true); nu = u; nv = v-1; break;
 						case 0x1007:
 							//    N     0
 							//      \    
 							//    1  \  0
-							addCurve(path, q, 2*dc-1d, 1d, db-1d, -db, lev, true, true); break;
+							q.addCurve(path, 2*dc-1d, 1d, db-1d, -db, lev, true); break;
 						case 0x1010:
 							hit_saddle = true;
 							double u10 = (d.value-a.value+c.value-b.value)/(d.value-a.value-c.value+b.value);
@@ -719,10 +662,10 @@ public class JContourLayer2D extends JPlotsLayer {
 								//    1 \   0
 								if(visits[v][u]==0) takePos10 = (pv<v);
 								if(takePos10) {
-									addCurve(path, q, 1d-2*ba, -1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v;
+									q.addCurve(path, 1d-2*ba, -1d, 1d, 2*bc-1d, lev, true); nu = u+1; nv = v;
 									visits[v][u] = visits[v][u]==0 ? 1 : 2;
 								} else {
-									addCurve(path, q, 2*dc-1d, 1d, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v;
+									q.addCurve(path, 2*dc-1d, 1d, -1d, 1d-2*da, lev, true); nu = u-1; nv = v;
 									visits[v][u] = visits[v][u]==0 ? -1 : 2;
 								} break;
 							} else {
@@ -731,10 +674,10 @@ public class JContourLayer2D extends JPlotsLayer {
 								//    1   / 0
 								if(visits[v][u]==0) takePos10 = (pv>v);
 								if(takePos10) {
-									addCurve(path, q, 2*dc-1d, 1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v;
+									q.addCurve(path, 2*dc-1d, 1d, 1d, 2*bc-1d, lev, true); nu = u+1; nv = v;
 									visits[v][u] = visits[v][u]==0 ? 1 : 2;
 								} else {
-									addCurve(path, q, 1d-2*ba, -1d, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v;
+									q.addCurve(path, 1d-2*ba, -1d, -1d, 1d-2*da, lev, true); nu = u-1; nv = v;
 									visits[v][u] = visits[v][u]==0 ? -1 : 2;
 								} break;
 							}
@@ -742,22 +685,22 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    1     1
 							//         _/
 							//    1   / 0
-							addCurve(path, q, 2*dc-1d, 1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v; break;
+							q.addCurve(path, 2*dc-1d, 1d, 1d, 2*bc-1d, lev, true); nu = u+1; nv = v; break;
 						case 0x1017:
 							//    N     1
 							//         _/
 							//    1   / 0
-							addCurve(path, q, 2*dc-1d, 1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v; break;
+							q.addCurve(path, 2*dc-1d, 1d, 1d, 2*bc-1d, lev, true); nu = u+1; nv = v; break;
 						case 0x1070:
 							//    0     N
 							//    \_     
 							//    1 \   0
-							addCurve(path, q, 2*dc-1d, 1d, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v; break;
+							q.addCurve(path, 2*dc-1d, 1d, -1d, 1d-2*da, lev, true); nu = u-1; nv = v; break;
 						case 0x1071:
 							//    1     N
 							//        /  
 							//    1  /  0
-							addCurve(path, q, 2*dc-1d, 1d, ac, ac-1d, lev, true, true); break;
+							q.addCurve(path, 2*dc-1d, 1d, ac, ac-1d, lev, true); break;
 						case 0x1077:
 							//    N     N
 							//       |   
@@ -767,51 +710,51 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    0     0
 							//    -------
 							//    1     1
-							addCurve(path, q, 1d, 1d-2*cb, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v; break;
+							q.addCurve(path, 1d, 1d-2*cb, -1d, 1d-2*da, lev, true); nu = u-1; nv = v; break;
 						case 0x1101:
 							//    1   \_0
 							//          \
 							//    1     1
-							addCurve(path, q, 1d, 1d-2*cb, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1; break;
+							q.addCurve(path, 1d, 1d-2*cb, 2*ab-1d, -1d, lev, true); nu = u; nv = v-1; break;
 						case 0x1107:
 							//    N __  0
 							//        '--
 							//    1     1
-							addCurve(path, q, 1d, 1d-2*cb, db-1d, -db, lev, true, true); break;
+							q.addCurve(path, 1d, 1d-2*cb, db-1d, -db, lev, true); break;
 						case 0x1110:
 							//    0_/   1
 							//    /      
 							//    1     1
-							addCurve(path, q, 1d-2*ba, -1d, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v; break;
+							q.addCurve(path, 1d-2*ba, -1d, -1d, 1d-2*da, lev, true); nu = u-1; nv = v; break;
 						case 0x1111: break;
 						case 0x1117: break;
 						case 0x1170:
 							//    0  __ N
 							//    --'    
 							//    1     1
-							addCurve(path, q, 1d-ca, -ca, -1d, 1d-2*da, lev, false, true); nu = u-1; nv = v; break;
+							q.addCurve(path, 1d-ca, -ca, -1d, 1d-2*da, lev, false); nu = u-1; nv = v; break;
 						case 0x1171: break;
 						case 0x1177: break;
 						case 0x1700:
 							//    0     0
 							//    --.__  
 							//    1     N
-							addCurve(path, q, db, 1d-db, -1d, 1d-2*da, lev, false, true); nu = u-1; nv = v; break;
+							q.addCurve(path, db, 1d-db, -1d, 1d-2*da, lev, false); nu = u-1; nv = v; break;
 						case 0x1701:
 							//    1  \  0
 							//        \  
 							//    1     N
-							addCurve(path, q, db, 1d-db, 2*ab-1d, -1d, lev, false, true); nu = u; nv = v-1; break;
+							q.addCurve(path, db, 1d-db, 2*ab-1d, -1d, lev, false); nu = u; nv = v-1; break;
 						case 0x1707:
 							//    N _   0
 							//       \_  
 							//    1     N
-							addCurve(path, q, db, 1d-db, db-1d, -db, lev, false, true); break;
+							q.addCurve(path, db, 1d-db, db-1d, -db, lev, false); break;
 						case 0x1710:
 							//    0_/   1
 							//    /
 							//    1     N
-							addCurve(path, q, 1d-2*ba, -1d, -1d, 1d-2*da, lev, true, false); nu = u-1; nv = v; break;
+							q.addCurve(path, 1d-2*ba, -1d, -1d, 1d-2*da, lev, true); nu = u-1; nv = v; break;
 						case 0x1711: break;
 						case 0x1770:
 							//    0     N
@@ -825,18 +768,18 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    1  /  0
 							//      /    
 							//    N     0
-							addCurve(path, q, ac-1d, ac, 2*ab-1d, -1d, lev, false, true); nu = u; nv = v-1; break;
+							q.addCurve(path, ac-1d, ac, 2*ab-1d, -1d, lev, false); nu = u; nv = v-1; break;
 						case 0x7007: break;
 						case 0x7010:
 							//    0   \_1
 							//          \
 							//    N     0
-							addCurve(path, q, 1d-2*ba, -1d, 1d, 2*bc-1d, lev, true, false); nu = u+1; nv = v; break;
+							q.addCurve(path, 1d-2*ba, -1d, 1d, 2*bc-1d, lev, true); nu = u+1; nv = v; break;
 						case 0x7011:
 							//    1     1
 							//      __.--
 							//    N     0
-							addCurve(path, q, ac-1d, ac, 1d, 2*bc-1d, lev, false, true); nu = u+1; nv = v; break;
+							q.addCurve(path, ac-1d, ac, 1d, 2*bc-1d, lev, false); nu = u+1; nv = v; break;
 						case 0x7017:
 							//    N     1
 							//       ----
@@ -847,18 +790,18 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    1   _ N
 							//      _/   
 							//    N     0
-							addCurve(path, q, ac-1d, ac, ac, ac-1d, lev, false, true); break;
+							q.addCurve(path, ac-1d, ac, ac, ac-1d, lev, false); break;
 						case 0x7077: break;
 						case 0x7100:
 							//    0     0
 							//      __.--
 							//    N     1
-							addCurve(path, q, 1d, 1d-2*cb, -ca, 1d-ca, lev, true, true); break;
+							q.addCurve(path, 1d, 1d-2*cb, -ca, 1d-ca, lev, true); break;
 						case 0x7101:
 							//    1   \_0
 							//          \
 							//    N     1
-							addCurve(path, q, 1d, 1d-2*cb, 2*ab-1d, -1d, lev, true, false); nu = u; nv = v-1; break;
+							q.addCurve(path, 1d, 1d-2*cb, 2*ab-1d, -1d, lev, true); nu = u; nv = v-1; break;
 						case 0x7107:
 							//    N     0
 							//       ----
@@ -868,14 +811,14 @@ public class JContourLayer2D extends JPlotsLayer {
 							//    0  /  1
 							//      /
 							//    N     1
-							addCurve(path, q, 1d-2*ba, -1d, -ca, 1d-ca, lev, true, true); break;
+							q.addCurve(path, 1d-2*ba, -1d, -ca, 1d-ca, lev, true); break;
 						case 0x7111: break;
 						case 0x7117: break;
 						case 0x7170:
 							//    0   _ N
 							//      _/   
 							//    N     1
-							addCurve(path, q, 1d-ca, -ca, -ca, 1d-ca, lev, false, true); break;
+							q.addCurve(path, 1d-ca, -ca, -ca, 1d-ca, lev, false); break;
 						case 0x7171: break;
 						case 0x7177: break;
 						case 0x7700: break;
@@ -1010,35 +953,59 @@ public class JContourLayer2D extends JPlotsLayer {
 	//* ********** STATIC METHODS     ********** *
 	//* **************************************** *
 	
-	private static void addCurve(List<JDPoint> path, JDQuad q, double u0, double v0, double u8, double v8, double l, boolean check_emptynes, boolean refineEndpoints) {
-		double[] m0 = { u0, v0 };
-		double[] m8 = { u8, v8 };
-		if(refineEndpoints) {
-			m0 = q.refineUV(u0, v0, l);
-			m8 = q.refineUV(u8, v8, l);
+	private static List<JDPolygon> getIntBasedPolygons(JDPoint[][] data, double lower, double upper, int i0, int i1, int j0, int j1) {
+		List<JDPolygon> res = new ArrayList<JDPolygon>();
+		if(i0==i1 || j0==j1)
+			return res;
+		if(i1-i0 > j1-j0) {
+			int im = (i1+1-i0) / 2 + i0;
+			for(JDPolygon poly: getIntBasedPolygons(data, lower, upper, i0, im, j0, j1)) {
+				boolean isDisjunct = true;
+				for(int t=res.size()-1; t>=0 && isDisjunct; t--)
+					isDisjunct = !res.get(t).union(poly,0.0001d);
+				if(isDisjunct)
+					res.add(poly);
+			}
+			for(JDPolygon poly: getIntBasedPolygons(data, lower, upper, im, i1, j0, j1)) {
+				boolean isDisjunct = true;
+				for(int t=res.size()-1; t>=0 && isDisjunct; t--)
+					isDisjunct = !res.get(t).union(poly,0.0001d);
+				if(isDisjunct)
+					res.add(poly);
+			}
+		} else
+		if(j1-j0>1) {
+			int jm = (j1+1-j0) / 2 + j0;
+			for(JDPolygon poly: getIntBasedPolygons(data, lower, upper, i0, i1, j0, jm)) {
+				boolean isDisjunct = true;
+				for(int t=res.size()-1; t>=0 && isDisjunct; t--)
+					isDisjunct = !res.get(t).union(poly,0.0001d);
+				if(isDisjunct)
+					res.add(poly);
+			}
+			for(JDPolygon poly: getIntBasedPolygons(data, lower, upper, i0, i1, jm, j1)) {
+				boolean isDisjunct = true;
+				for(int t=res.size()-1; t>=0 && isDisjunct; t--)
+					isDisjunct = !res.get(t).union(poly,0.0001d);
+				if(isDisjunct)
+					res.add(poly);
+			}
 		}
-		double[] m4 = q.refineUV(0.5d*(m0[0]+m8[0]), 0.5d*(m0[1]+m8[1]), l);
-		
-		double[] m2 = q.refineUV(0.5d*(m0[0]+m4[0]), 0.5d*(m0[1]+m4[1]), l);
-		double[] m6 = q.refineUV(0.5d*(m4[0]+m8[0]), 0.5d*(m4[1]+m8[1]), l);
-		
-		double[] m1 = q.refineUV(0.5d*(m0[0]+m2[0]), 0.5d*(m0[1]+m2[1]), l);
-		double[] m3 = q.refineUV(0.5d*(m2[0]+m4[0]), 0.5d*(m2[1]+m4[1]), l);
-		double[] m5 = q.refineUV(0.5d*(m4[0]+m6[0]), 0.5d*(m4[1]+m6[1]), l);
-		double[] m7 = q.refineUV(0.5d*(m5[0]+m8[0]), 0.5d*(m6[1]+m8[1]), l);
-		
-		if(path.isEmpty() || !check_emptynes)
-			path.add(q.pointFromUV(m0));
-		path.add(q.pointFromUV(m1));
-		path.add(q.pointFromUV(m2));
-		path.add(q.pointFromUV(m3));
-		path.add(q.pointFromUV(m4));
-		path.add(q.pointFromUV(m5));
-		path.add(q.pointFromUV(m6));
-		path.add(q.pointFromUV(m7));
-		path.add(q.pointFromUV(m8));
+		else {
+			JDQuad qu = new JDQuad(
+					new JDPoint(i0,j0, data[j0][i0].value),
+					new JDPoint(i1,j0, data[j0][i1].value),
+					new JDPoint(i1,j1, data[j1][i1].value),
+					new JDPoint(i0,j1, data[j1][i0].value));
+			JDPolygon[] polys = qu.getLevelRangePolygons(lower, upper);
+			if(polys!=null) {
+//				System.out.println("got "+polys.length+" polygon(s)");
+				for(JDPolygon subpoly: polys)
+					res.add(subpoly);
+			}
+		}
+		return res;
 	}
-	
 	
 	public Object cutoutLevelrange(JDTriangle tri, double lower, double upper) {
 		double x1 = tri.x[0], x2 = tri.x[1], x3 = tri.x[2];

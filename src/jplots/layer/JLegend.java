@@ -7,12 +7,14 @@ import jplots.JAxis;
 import jplots.JPlot;
 import jplots.shapes.JEllipseShape;
 import jplots.shapes.JGroupShape;
+import jplots.shapes.JLatexShape;
 import jplots.shapes.JLineShape;
 import jplots.shapes.JPlotShape;
 import jplots.shapes.JRectShape;
 import jplots.shapes.JTextShape;
 import processing.core.PConstants;
 import processing.core.PGraphics;
+import processing.core.PShape;
 
 public class JLegend extends JPlotsLayer {
 
@@ -80,7 +82,12 @@ public class JLegend extends JPlotsLayer {
 		JPlot plot = ax.getPlot();
 		plot.getGraphic().textSize(200f);
 		for (LegendEntry le : entries) {
-			labelWidth = Math.max(labelWidth, plot.getGraphic().textWidth(le.getName()) / 200d);
+			if(JPlot.supportLatex) {
+				PShape ps = JLatexShape.toPShape(le.getName(), 200, 0xff000000, "\\text");
+				labelWidth = Math.max(ps.width/200d, labelWidth);
+			} else {
+				labelWidth = Math.max(labelWidth, plot.getGraphic().textWidth(le.getName()) / 200d);
+			}
 		}
 		double ts = ax.getTextSize() * rts;
 		labelWidth += 3d;
@@ -90,7 +97,7 @@ public class JLegend extends JPlotsLayer {
 		JGroupShape lggs = new JGroupShape();
 		lggs.addChild(new JRectShape((float) (toplefX - 0.5d * ts), (float) (toplefY - 0.5d * ts),
 				(float) (toplefX + labelWidth + 0.5d * ts), (float) (toplefY + (0.5d + 1.5d * entries.size()) * ts),
-				(float) Math.min(labelWidth, 1.5d * entries.size()) * 0.1f, 0x3fffffff, 0x3f999999, 2f, true));
+				(float) Math.min(labelWidth, 1.5d * entries.size()) * 0.1f, 0x7fffffff, 0x7f999999, 2f, true));
 		for (int le = 0; le < entries.size(); le++)
 			entries.get(le).toShape(lggs, (float) toplefX, (float) (toplefY + le * ts * 1.5d), (float) ts);
 		s.addChild(lggs);
@@ -142,7 +149,10 @@ public class JLegend extends JPlotsLayer {
 				break;
 			}
 			JPlotShape.fill(0xff000000);
-			s.addChild(new JTextShape(name, x + 3 * ts, y, ts, PConstants.LEFT, PConstants.TOP, 0xff000000, 0f));
+			if(JPlot.supportLatex)
+				s.addChild(new JLatexShape(name, x+3*ts, y, ts, PConstants.LEFT, PConstants.TOP, 0xff000000, 0f, null));
+			else
+				s.addChild(new JTextShape(name, x+3*ts, y, ts, PConstants.LEFT, PConstants.TOP, 0xff000000, 0f, null));
 		}
 
 		private void drawLine(JGroupShape s, float x, float y, float lw) {
