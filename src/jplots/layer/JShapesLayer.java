@@ -48,7 +48,7 @@ public class JShapesLayer extends JPlotsLayer {
 				.scale(invertAxisX?-1d:1d, invertAxisY?1d:-1d).translate(invertAxisX?Xax:-Xin, invertAxisY?-Yin:Yax)
 				.scale(xs, ys).translate(p[0], p[1]);
 		double[][] affmat = affine.getMatrix();
-		boolean debug = ax.getPlot().isDebug();
+//		boolean debug = ax.getPlot().isDebug();
 //		if(debug)
 //			System.out.println("[DEBUG] JShapeLayer: begin reading shape file \""+connect.get("url")+"\"");
 		int fidx = 0;

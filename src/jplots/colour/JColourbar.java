@@ -319,7 +319,7 @@ public class JColourbar extends JAxis {
 		float tw = 0f;
 		double vf = 1d / (ticks[0]);
 		int decimal = (int) (1000d * ticks[1] + 0.5d);
-		decimal = decimal % 100 == 0 ? 1 : decimal % 10 == 0 ? 2 : 3;
+		decimal = decimal%1000==0 ? 0 : decimal % 100 == 0 ? 1 : decimal % 10 == 0 ? 2 : 3;
 		for (int t = 2; t < ticks.length; t++)
 			if (ticks[t] >= Math.min(minC, maxC) && ticks[t] <= Math.max(minC, maxC)) {
 				axisgrid.addChild(new JLineShape(2f, 0xff000000, px + pw, (float) tcpos[t], px + 1.250f * pw, (float) tcpos[t]));

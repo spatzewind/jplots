@@ -321,7 +321,7 @@ public class JPlotMath {
 		if (vmin == vmax)
 			return new double[] { 0d, 0d };
 		double vin = Math.min(vmin, vmax), vax = Math.max(vmin, vmax);
-		double p10 = Math.log10(Math.max(vax, -vin)) / 3d;
+		double p10 = Math.log10(Math.max(vax, -vin)) / 3d - 0.176091259d;
 		int p10i = (int) (p10) - (p10 < 0d ? 1 : 0);
 		if (p10i == -1)
 			p10i = 0;

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jplots.JAxis;
-import jplots.helper.GeometryTools;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDLine;
 import jplots.maths.JDPoint;

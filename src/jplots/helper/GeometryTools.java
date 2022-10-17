@@ -142,7 +142,7 @@ public class GeometryTools {
 			JDPoint ps = sub_polygon.get(s), pe = sub_polygon.get(e);
 			double us = ps.x * normal[0] + ps.y * normal[1], ue = pe.x * normal[0] + pe.y * normal[1];
 			if (Math.abs(us - crit) < eps && Math.abs(ue - crit) < eps) {
-				int idx = 0;
+//				int idx = 0;
 				double vs = ps.x * normal[1] - ps.y * normal[0];
 				double ve = pe.x * normal[1] - pe.y * normal[0];
 				int cnt_insertes = (int) (Math.abs(ve-vs)/delta+0.0001d);

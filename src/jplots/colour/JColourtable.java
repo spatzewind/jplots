@@ -24,8 +24,8 @@ public abstract class JColourtable {
 				new LinearSegmentedJColourtable(0xff0000aa, 0xffaa0000, 0xff999999, new double[] {0d, 0.5d, 1d},
 						new int[][] {{0xff0000ff,0xffffffff},{0xffffffff,0xffff0000}}));
 		pctables.put("enmediff",
-				new LinearSegmentedJColourtable(0xff00cc00, 0xffffff66, 0x007f7f7f, new double[] {0d,0.25d,0.5d,0.75d,1d},
-						new int[][] {{0xff00b200,0xff0000ff},{0xff0000ff,0xffffffff},{0xffffffff,0xffff0000},{0xffff0000,0xffffff00}}));
+				new LinearSegmentedJColourtable(0xff00cc00, 0xffffff66, 0x007f7f7f, new double[] {0d,0.05d,0.25d,0.5d,0.75d,0.95d,1d},
+						new int[][] {{0xff00cc00,0xff00b200},{0xff00b200,0xff0000ff},{0xff0000ff,0xffffffff},{0xffffffff,0xffff0000},{0xffff0000,0xffffff00},{0xffffff00,0xffffff66}}));
 		pctables.put("hot",
 				new LinearSegmentedJColourtable( 0xff030000, 0xffffffff, 0x00999999, new double[] {0d,0.36d,0.75d,1d},
 						new int[][] {{0xff030000,0xffff0000},{0xffff0000,0xffffff00},{0xffffff00,0xffffffff}}));

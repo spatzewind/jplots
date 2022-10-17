@@ -1,9 +1,7 @@
 package jplots.shapes;
 
 import jplots.JPlot;
-import processing.core.PApplet;
 import processing.core.PGraphics;
-import processing.pdf.PGraphicsPDF;
 
 public class JLineShape extends JPlotShape {
 
@@ -24,7 +22,10 @@ public class JLineShape extends JPlotShape {
 	public void draw(JPlot plot, PGraphics g) {
 		g.stroke(col);
 		g.strokeWeight(sw);
-		for(int i=0; i+3<coords.length; i+=2)
+		for(int i=0; i+3<coords.length; i+=2) {
+			if(Float.isNaN(coords[i]) || Float.isNaN(coords[i+1]) || Float.isNaN(coords[i+2]) || Float.isNaN(coords[i+3]))
+				continue;
 			g.line(coords[i], coords[i+1], coords[i+2], coords[i+3]);
+		}
 	}
 }

@@ -17,7 +17,6 @@ import processing.core.PGraphics;
 public class JXYLayer extends JPlotsLayer {
 
 	private double[] xarrayx, yarrayy;
-	private int col;
 
 	public JXYLayer(float[] x, float[] y, int colour, float linewidth, String linestyle) {
 		xarrayx = new double[x.length];
@@ -33,7 +32,6 @@ public class JXYLayer extends JPlotsLayer {
 		maxZ = Double.NaN;
 		minZ = Double.NaN;
 		setLineColour(colour);
-		col = colour;
 		lw = linewidth;
 		setStyle(linestyle);
 		ls = linestyle;
@@ -49,7 +47,6 @@ public class JXYLayer extends JPlotsLayer {
 		maxZ = Double.NaN;
 		minZ = Double.NaN;
 		setLineColour(colour);
-		col = colour;
 		lw = linewidth;
 		setStyle(linestyle);
 		ls = linestyle;

@@ -15,11 +15,9 @@ import jplots.maths.JDelaunayTriangulator;
 import jplots.maths.JGridTriangulator;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JDGeometry;
-import jplots.shapes.JEllipseShape;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JImageShape;
 import jplots.shapes.JLineShape;
-import jplots.shapes.JPlotShape;
 import jplots.shapes.JPolygonShape;
 import jplots.transform.JProjection;
 import processing.core.PConstants;
@@ -306,11 +304,11 @@ public class JContourLayer extends JPlotsLayer {
 	}
 	
 	public void drawContours(List<JDTriangle> triangles, JGroupShape s, JAxis ax) {
-		int[] p = ax.getSize();
-		JPlot parent = ax.getPlot();
-		int[] psize = parent.getSize();
-		double pdist = Math.min((double)p[0]/(double)parent.getNumColumns(), (double)p[1]/(double)parent.getNumRows()) / 10d;
-		psize = ax.getSize();
+//		int[] p = ax.getSize();
+//		JPlot parent = ax.getPlot();
+//		int[] psize = parent.getSize();
+//		double pdist = Math.min((double)p[0]/(double)parent.getNumColumns(), (double)p[1]/(double)parent.getNumRows()) / 10d;
+//		psize = ax.getSize();
 		
 	}
 

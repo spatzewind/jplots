@@ -18,7 +18,6 @@ import jplots.shapes.JImageShape;
 import jplots.shapes.JLineShape;
 import jplots.shapes.JPlotShape;
 import jplots.shapes.JPolygonShape;
-import jplots.transform.JProjection;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 
@@ -1400,31 +1399,31 @@ public class JContourLayer2D extends JPlotsLayer {
 		}
 	}
 
-	private void addTriangle2polygonList(List<JDPolygon> list, JDTriangle tri, double tol) {
-		if (list.isEmpty()) {
-			list.add(tri.toPolygon());
-		} else {
-			boolean failed = true;
-			for (int l = 0; l < list.size() && failed; l++) {
-				if(list.get(l).c.length>999) continue;
-				failed = !list.get(l).union(tri, tol);
-			}
-			if (failed)
-				list.add(tri.toPolygon());
-		}
-	}
+//	private void addTriangle2polygonList(List<JDPolygon> list, JDTriangle tri, double tol) {
+//		if (list.isEmpty()) {
+//			list.add(tri.toPolygon());
+//		} else {
+//			boolean failed = true;
+//			for (int l = 0; l < list.size() && failed; l++) {
+//				if(list.get(l).c.length>999) continue;
+//				failed = !list.get(l).union(tri, tol);
+//			}
+//			if (failed)
+//				list.add(tri.toPolygon());
+//		}
+//	}
 
-	private void addPolygon2polygonList(List<JDPolygon> list, JDPolygon poly, double tol) {
-		if (list.isEmpty()) {
-			list.add(poly.copy());
-		} else {
-			boolean failed = true;
-			for (int l = 0; l < list.size() && failed; l++) {
-				if(list.get(l).c.length>999) continue;
-				failed = !list.get(l).union(poly, tol);
-			}
-			if (failed)
-				list.add(poly.copy());
-		}
-	}
+//	private void addPolygon2polygonList(List<JDPolygon> list, JDPolygon poly, double tol) {
+//		if (list.isEmpty()) {
+//			list.add(poly.copy());
+//		} else {
+//			boolean failed = true;
+//			for (int l = 0; l < list.size() && failed; l++) {
+//				if(list.get(l).c.length>999) continue;
+//				failed = !list.get(l).union(poly, tol);
+//			}
+//			if (failed)
+//				list.add(poly.copy());
+//		}
+//	}
 }

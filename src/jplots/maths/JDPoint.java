@@ -142,10 +142,11 @@ public class JDPoint implements Comparable<JDPoint> {
 	public JDPoint circleCrossBetween(JDPoint p1, JDPoint p2, double radius) {
 		double dx = p2.x - p1.x;
 		double dy = p2.y - p1.y;
+		if(Double.isNaN(dx)||Double.isNaN(dy)) return null;
 		double dr2 = dx * dx + dy * dy;
 		double D = (this.x-p1.x)*dy - (this.y-p1.y)*dx;
 		double w = dr2 * radius * radius - D * D;
-		if(w<0d) return null;
+		if(Double.isNaN(w) || w<0d) return null;
 		w = Math.sqrt(w);
 		D = (this.x-p1.x)*dx + (this.y-p1.y)*dy;
 		double f = D-w;

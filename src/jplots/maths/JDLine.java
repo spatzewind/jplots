@@ -193,6 +193,17 @@ public class JDLine {
 		}
 		for(int i=1; i<points.length; i++) {
 			double di = (points[i].x-xl)*dx;
+			if(Double.isNaN(di)) {
+				if(!np.isEmpty()) {
+					if(np.size()>1) {
+						sres.add(np.toArray(new JDPoint[0]));
+						cres.add(toArray(nc));
+					}
+					np.clear();
+					nc.clear();
+				}
+				continue;
+			}
 			double f0 = (0d-di)/(d0-di), f1 = (1d-di)/(d0-di);
 			if(0<=di && di<=1d) {
 				if(d0<0d) {
