@@ -21,6 +21,12 @@ public class JPlotMath {
 				im = i;
 		return im;
 	}
+	public static int isum(int[] arr) {
+		int is = 0;
+		for(int i: arr)
+			is += i;
+		return is;
+	}
 	public static int imin(int[][] arr) {
 		int im = Integer.MAX_VALUE;
 		for (int[] ia : arr)
@@ -36,6 +42,13 @@ public class JPlotMath {
 				if (i > im)
 					im = i;
 		return im;
+	}
+	public static int isum(int[][] arr) {
+		int is = 0;
+		for(int[] ia: arr)
+			for(int i: ia)
+				is += i;
+		return is;
 	}
 
 	public static float fmin(float[] arr) {
@@ -55,6 +68,15 @@ public class JPlotMath {
 		if (fm < 0 && Float.isInfinite(fm))
 			return Float.NaN;
 		return fm;
+	}
+	public static float fsum(float[] arr) {
+		float fs = 0f;
+		for(float f : arr) {
+			if(Float.isNaN(f))
+				return Float.NaN;
+			fs += f;
+		}
+		return fs;
 	}
 	public static float fmin(float[][] arr) {
 		float fm = Float.POSITIVE_INFINITY;
@@ -76,6 +98,16 @@ public class JPlotMath {
 			return Float.NaN;
 		return fm;
 	}
+	public static float fsum(float[][] arr) {
+		float fs = 0f;
+		for(float[] fa : arr)
+			for(float f : fa) {
+				if(Float.isNaN(f))
+					return Float.NaN;
+				fs += f;
+			}
+		return fs;
+	}
 
 	public static double dmin(double[] arr) {
 		double dm = Double.POSITIVE_INFINITY;
@@ -94,6 +126,15 @@ public class JPlotMath {
 		if (dm < 0 && Double.isInfinite(dm))
 			return Double.NaN;
 		return dm;
+	}
+	public static double dsum(double[] arr) {
+		double ds = 0d;
+		for(double d : arr) {
+			if(Double.isNaN(d))
+				return Double.NaN;
+			ds += d;
+		}
+		return ds;
 	}
 	public static double dmin(double[][] arr) {
 		double dm = Double.POSITIVE_INFINITY;
@@ -114,6 +155,16 @@ public class JPlotMath {
 		if (dm < 0 && Double.isInfinite(dm))
 			return Double.NaN;
 		return dm;
+	}
+	public static double dsum(double[][] arr) {
+		double ds = 0d;
+		for(double[] da : arr)
+			for(double d : da) {
+				if(Double.isNaN(d))
+					return Double.NaN;
+				ds += d;
+			}
+		return ds;
 	}
 
 	public static float map(float val, float in_s, float in_e, float out_s, float out_e) {
@@ -807,6 +858,18 @@ public class JPlotMath {
 				int a = res.indexOf("M");
 				int b = res.lastIndexOf("M");
 				res = res.substring(0, a) + PApplet.nf(dd[4], b + 1 - a) + res.substring(b + 1);
+			}
+			if (res.contains("N")) {
+				int a = res.indexOf("N");
+				int b = res.lastIndexOf("N");
+				if(b-a<2) {
+					char M = '?';
+					if(dd[4]<1||dd[4]>12) M = "JFMAMJJASOND".charAt(dd[1]-1);
+					res = res.substring(0, a) + M + res.substring(b + 1);
+				} else {
+					String M = "JanFebMarAprMaiJunJulAugSepOctNovDec".substring(dd[1]*3-3, dd[1]*3);
+					res = res.substring(0, a) + M + res.substring(b + 1);
+				}
 			}
 			if (res.contains("s")) {
 				int a = res.indexOf("s");

@@ -20,17 +20,39 @@ public class JLegend extends JPlotsLayer {
 
 //	private JAxis srcAxis;
 //	private boolean isHorizontal, borders;
-	private double rts;
+	private double rts, set_pos_x, set_pos_y;
+	private int horpos,vertpos;
 	private List<LegendEntry> entries;
 
 	public JLegend(JAxis parent) {
-		this(parent, (int) (parent.getSize()[0] + 1.04d * parent.getSize()[2] + 0.5d), parent.getSize()[1],
-				(int) (0.08d * parent.getSize()[2] + 0.5d), parent.getSize()[3], false, 1d);
+//		this(parent, (int) (parent.getSize()[0] + 1.04d * parent.getSize()[2] + 0.5d), parent.getSize()[1],
+//				(int) (0.08d * parent.getSize()[2] + 0.5d), parent.getSize()[3], false, 1d);
+		this(parent, PConstants.RIGHT, PConstants.TOP, false, 1d);
 	}
 
 	public JLegend(JAxis parent, double relTextSize) {
-		this(parent, (int) (parent.getSize()[0] + 1.04d * parent.getSize()[2] + 0.5d), parent.getSize()[1],
-				(int) (0.08d * parent.getSize()[2] + 0.5d), parent.getSize()[3], false, relTextSize);
+//		this(parent, (int) (parent.getSize()[0] + 1.04d * parent.getSize()[2] + 0.5d), parent.getSize()[1],
+//				(int) (0.08d * parent.getSize()[2] + 0.5d), parent.getSize()[3], false, relTextSize);
+		this(parent, PConstants.RIGHT, PConstants.TOP, false, relTextSize);
+	}
+	
+	public JLegend(JAxis parent, int left_right_positioning, int top_bottom_positioning) {
+		this(parent, left_right_positioning, top_bottom_positioning, false, 1d);
+	}
+	
+
+	public JLegend(JAxis parent, int left_right_positioning, int top_bottom_positioning, boolean horizontal) {
+		this(parent, left_right_positioning, top_bottom_positioning, horizontal, 1d);
+	}
+
+	public JLegend(JAxis parent, int left_right_positioning, int top_bottom_positioning, boolean horizontal, double relTextSize) {
+//		srcAxis = parent;
+//		isHorizontal = horizontal;
+//		borders = true;
+		rts = relTextSize;
+		horpos = left_right_positioning;
+		vertpos = top_bottom_positioning;
+		entries = new ArrayList<>();
 	}
 
 	public JLegend(JAxis parent, int pos_x, int pos_y, int width, int height, boolean horizontal) {
@@ -42,7 +64,7 @@ public class JLegend extends JPlotsLayer {
 //		isHorizontal = horizontal;
 //		borders = true;
 		rts = relTextSize;
-
+		
 		entries = new ArrayList<>();
 	}
 
@@ -76,7 +98,7 @@ public class JLegend extends JPlotsLayer {
 		for (int le = entries.size() - 1; le >= 0; le--)
 			if (entries.get(le).getName().length() == 0)
 				entries.remove(le);
-
+		
 		int[] p = ax.getSize();
 		double labelWidth = 0d;
 		JPlot plot = ax.getPlot();
@@ -92,12 +114,28 @@ public class JLegend extends JPlotsLayer {
 		double ts = ax.getTextSize() * rts;
 		labelWidth += 3d;
 		labelWidth *= ts;
-		double toplefX = (p[0] + p[2] - labelWidth - 0.5d * ts), toplefY = p[1] + 0.5d * ts;
-
+		double toplefX = p[0], toplefY = p[1];
+		switch(horpos) {
+			case 0:                 toplefX = set_pos_x; break;
+			case PConstants.LEFT:   break;
+			case PConstants.CENTER: toplefX += 0.5d*(p[2]-labelWidth)-0.5d*ts; break;
+			default:
+			case PConstants.RIGHT:  toplefX += p[2] - labelWidth - ts; break;
+		}
+		switch(vertpos) {
+			case 0:                 toplefY = set_pos_y; break;
+			case PConstants.TOP:    break;
+			case PConstants.CENTER: toplefY += 0.5d*(p[3]-1.5d*entries.size()*ts) - 0.5d*ts; break;
+			default:
+			case PConstants.BOTTOM: toplefY += p[3] - 1.5d*entries.size()*ts - ts; break;
+		}
+		
 		JGroupShape lggs = new JGroupShape();
-		lggs.addChild(new JRectShape((float) (toplefX - 0.5d * ts), (float) (toplefY - 0.5d * ts),
-				(float) (toplefX + labelWidth + 0.5d * ts), (float) (toplefY + (0.5d + 1.5d * entries.size()) * ts),
+		lggs.addChild(new JRectShape((float) toplefX, (float) toplefY,
+				(float) (toplefX + labelWidth + ts), (float) (toplefY + (1.5d * entries.size()+1d) * ts),
 				(float) Math.min(labelWidth, 1.5d * entries.size()) * 0.1f, 0x7fffffff, 0x7f999999, 2f, true));
+		toplefX += 0.5d*ts;
+		toplefY += 0.5d*ts;
 		for (int le = 0; le < entries.size(); le++)
 			entries.get(le).toShape(lggs, (float) toplefX, (float) (toplefY + le * ts * 1.5d), (float) ts);
 		s.addChild(lggs);

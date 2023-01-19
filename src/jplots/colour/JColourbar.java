@@ -8,6 +8,8 @@ import jplots.JPlot;
 import jplots.layer.JContourLayer;
 import jplots.layer.JContourLayer2D;
 import jplots.layer.JHatchLayer;
+import jplots.layer.JPColourLayer;
+import jplots.layer.JPhaseLayer2D;
 import jplots.layer.JPlotsLayer;
 import jplots.layer.JXYLayer;
 import jplots.maths.JDPoint;
@@ -340,6 +342,8 @@ public class JColourbar extends JAxis {
 	private void collectPrimarySource() {
 		JContourLayer contours = null;
 		JContourLayer2D contours2 = null;
+		JPColourLayer pcolour = null;
+		JPhaseLayer2D phasel2d = null;
 		JXYLayer xys = null;
 		for (JPlotsLayer layer : srcAxis.getLayers()) {
 			if (layer instanceof JContourLayer) {
@@ -356,6 +360,24 @@ public class JColourbar extends JAxis {
 				srcColT = contours2.getColourtable();
 				if(srcColT==null) {
 					contours2 = null;
+				} else {
+					break;
+				}
+			}
+			if (layer instanceof JPColourLayer) {
+				pcolour = (JPColourLayer) layer;
+				srcColT = pcolour.getColourtable();
+				if(srcColT==null) {
+					pcolour = null;
+				} else {
+					break;
+				}
+			}
+			if (layer instanceof JPhaseLayer2D) {
+				phasel2d = (JPhaseLayer2D) layer;
+				srcColT = phasel2d.getColourtable();
+				if(srcColT==null) {
+					phasel2d = null;
 				} else {
 					break;
 				}
@@ -399,6 +421,40 @@ public class JColourbar extends JAxis {
 			contourLevels = contours2.getLevels();
 			minC= JPlotMath.dmin(contourLevels);
 			maxC= JPlotMath.dmax(contourLevels);
+			if(minC<minV) minV = minC;
+			if(maxC>maxV) maxV = maxC;
+			if (Double.isNaN(minC))
+				minC = minV;
+			if (Double.isNaN(maxC))
+				maxC = maxV;
+			if (pplot.isDebug())
+				System.out.println("[DEBUG] JColourbar: set vmin/vmax:  " + minV + "/" + maxV);
+			foundPrimary = true;
+			return;
+		}
+		if(pcolour!=null) {
+			if (pplot.isDebug())
+				System.out.println("[DEBUG] JColourbar: found JPColourLayer: " + pcolour);
+			double[] zr = pcolour.getZRange();
+			contourLevels = JPlotMath.linspace(zr[0], zr[1], 100);
+			minV = zr[0];
+			maxV = zr[1];
+			minC = zr[0];
+			maxC = zr[1];
+			if (pplot.isDebug())
+				System.out.println("[DEBUG] JColourbar: set vmin/vmax:  " + minV + "/" + maxV);
+			foundPrimary = true;
+			return;
+		}
+		if(phasel2d!=null) {
+			if (pplot.isDebug())
+				System.out.println("[DEBUG] JColourbar: found JPhaseLayer2D: " + phasel2d);
+			double[] zr = phasel2d.getZRange();
+			minV = zr[0];
+			maxV = zr[1];
+			contourLevels = phasel2d.getLevels();
+			minC = JPlotMath.dmin(contourLevels);
+			maxC = JPlotMath.dmax(contourLevels);
 			if(minC<minV) minV = minC;
 			if(maxC>maxV) maxV = maxC;
 			if (Double.isNaN(minC))

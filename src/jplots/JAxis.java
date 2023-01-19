@@ -25,11 +25,14 @@ import jplots.layer.JHatchLayer2D;
 import jplots.layer.JImageLayer;
 import jplots.layer.JLegend;
 import jplots.layer.JLineLayer;
+import jplots.layer.JPColourLayer;
 import jplots.layer.JPlotsLayer;
+import jplots.layer.JPolygonLayer;
 import jplots.layer.JScatterLayer;
 import jplots.layer.JShapesLayer;
 import jplots.layer.JTextLayer;
 import jplots.layer.JXYLayer;
+import jplots.maths.JDPolygon;
 import jplots.maths.JPlotMath;
 import jplots.maths.JPlotMath.DateTime;
 import jplots.shapes.JGroupShape;
@@ -338,6 +341,35 @@ public class JAxis {
 		updateRange(cnl);
 	}
 
+	public void pcolour(float[] x, float[] y, float[][] z, float cmin, float cmax, Object... params) {
+		JPColourLayer pcl = new JPColourLayer(x, y, z, cmin, cmax);
+		pcl.setColourtable(JColourtable.pctables.get("default"));
+		layers.add(pcl);
+		readParams(pcl, params);
+		updateRange(pcl);
+	}
+	public void pcolour(float[][] x, float[][] y, float[][] z, float cmin, float cmax, Object... params) {
+		JPColourLayer pcl = new JPColourLayer(x, y, z, cmin, cmax);
+		pcl.setColourtable(JColourtable.pctables.get("default"));
+		layers.add(pcl);
+		readParams(pcl, params);
+		updateRange(pcl);
+	}
+	public void pcolour(double[] x, double[] y, double[][] z, double cmin, double cmax, Object... params) {
+		JPColourLayer pcl = new JPColourLayer(x, y, z, cmin, cmax);
+		pcl.setColourtable(JColourtable.pctables.get("default"));
+		layers.add(pcl);
+		readParams(pcl, params);
+		updateRange(pcl);
+	}
+	public void pcolour(double[][] x, double[][] y, double[][] z, double cmin, double cmax, Object... params) {
+		JPColourLayer pcl = new JPColourLayer(x, y, z, cmin, cmax);
+		pcl.setColourtable(JColourtable.pctables.get("default"));
+		layers.add(pcl);
+		readParams(pcl, params);
+		updateRange(pcl);
+	}
+
 	public void plot(float[] x, float[] y) {
 		this.plot(x, y, 0xff000000, 3f, "-", (Object) null);
 	}
@@ -446,6 +478,9 @@ public class JAxis {
 		JTextLayer tl = new JTextLayer(false, text, x, y, textsize, colour, alignx, aligny, rotation, style);
 		layers.add(tl);
 	}
+	public void addPolygon(JDPolygon poly, int inn_colour, int out_colour, double linewidth) {
+		layers.add(new JPolygonLayer(poly, inn_colour, out_colour, linewidth));
+	}
 	
 	public void annotate(double x, double y, String text) {
 		annotate(x, y, text, new Object[0]);
@@ -466,11 +501,19 @@ public class JAxis {
 	}
 
 	public void legend() {
-		JPlotsLayer lgl = new JLegend(this);
+		JPlotsLayer lgl = new JLegend(this, PConstants.RIGHT, PConstants.TOP, false, 1d);
 		layers.add(lgl);
 	}
 	public void legend(double rts) {
-		JPlotsLayer lgl = new JLegend(this, rts);
+		JPlotsLayer lgl = new JLegend(this, PConstants.RIGHT, PConstants.TOP, false, rts);
+		layers.add(lgl);
+	}
+	public void legend(int left_right, int top_bottom) {
+		JPlotsLayer lgl = new JLegend(this, left_right, top_bottom, false, 1d);
+		layers.add(lgl);
+	}
+	public void legend(int left_right, int top_bottom, double rts) {
+		JPlotsLayer lgl = new JLegend(this, left_right, top_bottom, false, rts);
 		layers.add(lgl);
 	}
 

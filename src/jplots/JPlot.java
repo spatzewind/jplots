@@ -3,6 +3,8 @@ package jplots;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import jplots.colour.JColourbar;
+import jplots.maths.JDPolygon;
+import jplots.maths.JPlotMath;
 import jplots.shapes.JPlotShape;
 import jplots.transform.JProjection;
 import processing.core.PApplet;
@@ -738,6 +740,19 @@ public class JPlot {
 		gca().hatch(x, y, z, lower, upper, pattern, params);
 	}
 
+	public void pcolour(float[] x, float[] y, float[][] z, float cmin, float cmax, Object... params) {
+		gca().pcolour(x, y, z, cmin, cmax, params);
+	}
+	public void pcolour(float[][] x, float[][] y, float[][] z, float cmin, float cmax, Object... params) {
+		gca().pcolour(x, y, z, cmin, cmax, params);
+	}
+	public void pcolour(double[] x, double[] y, double[][] z, double cmin, double cmax, Object... params) {
+		gca().pcolour(x, y, z, cmin, cmax, params);
+	}
+	public void pcolour(double[][] x, double[][] y, double[][] z, double cmin, double cmax, Object... params) {
+		gca().pcolour(x, y, z, cmin, cmax, params);
+	}
+
 	public void annotate(double x, double y, String text) {
 		gca().annotate(x, y, text, new Object[0]);
 	}
@@ -798,10 +813,16 @@ public class JPlot {
 	 * @example SimpleLegend
 	 */
 	public void legend() {
-		gca().legend();
+		gca().legend(PConstants.RIGHT, PConstants.TOP, 1d);
 	}
 	public void legend(double rts) {
-		gca().legend(rts);
+		gca().legend(PConstants.RIGHT, PConstants.TOP, rts);
+	}
+	public void legend(int left_right, int top_bottom) {
+		gca().legend(left_right, top_bottom, 1d);
+	}
+	public void legend(int left_right, int top_bottom, double rts) {
+		gca().legend(left_right, top_bottom, rts);
 	}
 
 	public void addText(double x, double y, String text) {
@@ -815,6 +836,9 @@ public class JPlot {
 	}
 	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny, double rotation, String style) {
 		gca().addText(x, y, text, textsize, colour, alignx, aligny, rotation, style);
+	}
+	public void addPolygon(JDPolygon poly, int inn_colour, int out_colour, double linewidth) {
+		gca().addPolygon(poly, inn_colour, out_colour, linewidth);
 	}
 
 	public void predefImgShow(String predefined_images) {
