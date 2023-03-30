@@ -3,7 +3,7 @@ package jplots.transform;
 import java.util.ArrayList;
 import java.util.List;
 
-import jplots.JAxis;
+import jplots.axes.JAxis;
 import jplots.helper.GeometryTools;
 import jplots.maths.JDLine;
 import jplots.maths.JDPoint;

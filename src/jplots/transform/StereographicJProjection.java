@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import jplots.JAxis;
+import jplots.axes.JAxis;
 import jplots.maths.JDLine;
 import jplots.maths.JDPolygon;
 import jplots.maths.JPlotMath;

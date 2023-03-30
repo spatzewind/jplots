@@ -1,7 +1,7 @@
 package jplots.layer;
 
-import jplots.JAxis;
 import jplots.JPlot;
+import jplots.axes.JAxis;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JEllipseShape;
 import jplots.shapes.JGroupShape;

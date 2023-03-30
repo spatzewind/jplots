@@ -3,8 +3,8 @@ package jplots.layer;
 import java.util.ArrayList;
 import java.util.List;
 
-import jplots.JAxis;
 import jplots.JPlot;
+import jplots.axes.JAxis;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDLine;
 import jplots.maths.JDPoint;

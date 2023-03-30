@@ -3,7 +3,7 @@ package jplots.shapes;
 import java.io.PrintWriter;
 
 import jplots.JPlot;
-import processing.core.PApplet;
+import jplots.JPlotConstants;
 import processing.core.PGraphics;
 
 public abstract class JPlotShape {
@@ -13,8 +13,9 @@ public abstract class JPlotShape {
 	public static int fillColour = 0xffffffff;
 	public static int strokeColour = 0xff000000;
 	public static float strokeWeight = 1f;
-	public static float ROTATE_CLOCKWISE = PApplet.HALF_PI;
-	public static float ROTATE_COUNTERCLOCKWISE = -PApplet.HALF_PI;
+	
+	public final static float ROTATE_CLOCKWISE        = JPlotConstants.ROTATE_CLOCKWISE;
+	public final static float ROTATE_COUNTERCLOCKWISE = JPlotConstants.ROTATE_COUNTERCLOCKWISE;
 
 	public static void fill(int col) {
 		fillColour = col;

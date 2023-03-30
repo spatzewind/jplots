@@ -1,10 +1,10 @@
-package jplots.colour;
+package jplots.axes;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import jplots.JAxis;
 import jplots.JPlot;
+import jplots.colour.JColourtable;
 import jplots.layer.JContourLayer;
 import jplots.layer.JContourLayer2D;
 import jplots.layer.JHatchLayer;
@@ -15,12 +15,14 @@ import jplots.layer.JXYLayer;
 import jplots.maths.JDPoint;
 import jplots.maths.JDTriangle;
 import jplots.maths.JPlotMath;
+import jplots.maths.JPlotMath.DateTime;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JImageShape;
 import jplots.shapes.JLatexShape;
 import jplots.shapes.JLineShape;
 import jplots.shapes.JPlotShape;
 import jplots.shapes.JTextShape;
+import jplots.transform.JProjection;
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PImage;
@@ -29,37 +31,44 @@ public class JColourbar extends JAxis {
 
 	private JAxis srcAxis;
 	private JColourtable srcColT;
+	private boolean isTim, isLog;
 	private boolean isHorizontal, borders, foundPrimary, extendLower, extendUpper;
 	private double minC, maxC, minH, maxH, minV, maxV;
 	private double[] contourLevels;
-	private String titleC;
+	private String titleC, unitC;
+	private String timUnit, timCal, timFormat;
 	private PImage img;
 	private List<JHatchLayer> hatchPatterns;
 	
 	public JColourbar(JAxis parent) {
-		this(parent, "");
+		this(parent, (int) (parent.getSize()[0] + 1.04d * parent.getSize()[2] + 0.5d), parent.getSize()[1],
+				(int) (0.08d * parent.getSize()[2] + 0.5d), parent.getSize()[3], "", false);
 	}
-
 	public JColourbar(JAxis parent, String colorbar_title) {
 		this(parent, (int) (parent.getSize()[0] + 1.04d * parent.getSize()[2] + 0.5d), parent.getSize()[1],
 				(int) (0.08d * parent.getSize()[2] + 0.5d), parent.getSize()[3], colorbar_title, false);
 	}
-
 	public JColourbar(JAxis parent, int pos_x, int pos_y, int width, int height, String colorbar_title, boolean horizontal) {
 		super(parent.getPlot(), pos_x, pos_y, width, height);
 		srcAxis = parent;
 		srcColT = null;
 		titleC = colorbar_title;
+		unitC  = "";
 		isHorizontal = horizontal;
 		minC = Double.NaN;
 		maxC = Double.NaN;
+		isLog = false;
+		isLog = false;
+		isTim = false;
+		isTim = false;
 		contourLevels = new double[0];
 		borders = true;
 		extendLower = false;
 		extendUpper = false;
 		hatchPatterns = new ArrayList<>();
+		defaults();
 	}
-
+	
 	@Override
 	public JGroupShape createPlot(PApplet applet, int w, int h) {
 		if (pplot.isDebug()) {
@@ -237,6 +246,45 @@ public class JColourbar extends JAxis {
 		if(what.equalsIgnoreCase("upper")) { extendLower = false; extendUpper = true; }
 		if(what.equalsIgnoreCase("both")) { extendLower = true; extendUpper = true; }
 	}
+	public void setXTitle(String xtitle) {
+		titleC = "";
+		if(xtitle != null) titleC = xtitle;
+		unitC = "";
+	}
+	public void setXTitle(String xtitle, String xunit) {
+		titleC = "";
+		if(xtitle != null) titleC = xtitle;
+		unitC = "";
+		if(xunit != null) unitC = xunit;
+	}
+	public void setYTitle(String ytitle) {
+		titleC = "";
+		if(ytitle != null) titleC = ytitle;
+		unitC = "";
+	}
+	public void setYTitle(String ytitle, String yunit) {
+		titleC = "";
+		if(ytitle != null) titleC = ytitle;
+		unitC = "";
+		if(yunit != null) unitC = yunit;
+	}
+
+	public void setLogarithmicAxis() {
+		isLog = true; isTim = false;
+	}
+	public void setAsTimeAxis(String unit) {
+		setAsTimeAxis(unit, "gregorian", "dd.mm.yyyy");
+	}
+	public void setAsTimeAxis(String unit, String calendar) {
+		setAsTimeAxis(unit, calendar, "dd.mm.yyyy");
+	}
+	public void setAsTimeAxis(String unit, String calendar, String format) {
+		isLog = false; isTim = true;
+		timUnit = unit;
+		timCal  = calendar;
+		if(format!=null)
+			timFormat = format;
+	}
 	
 	private JGroupShape createXAxis() {
 		int trihgt = Math.min(pw,ph);
@@ -244,33 +292,72 @@ public class JColourbar extends JAxis {
 		int xe = extendUpper ? px+pw-trihgt : px+pw;
 		int xw = xe-xs;
 		JGroupShape axisgrid = new JGroupShape();
-		double[] ticks = JPlotMath.optimalLinearTicks(minC, maxC);
-		double[] tcpos = JPlotMath.map(ticks, minC, maxC, xs, xe);
-		String[] tickmark = new String[ticks.length];
-		double vf = 1d / (ticks[0]);
-		int decimal = (int) (1000d * ticks[1] + 0.5d);
-		decimal = decimal % 100 == 0 ? 1 : decimal % 10 == 0 ? 2 : 3;
-		double tmlen = 0d, tmlc = 0d;
+		double[] oticks = null;
+		String[] otickmark = null;
+		if (isLog) {
+			oticks = JPlotMath.optimalLogarithmicTicks(minC, maxC);
+			otickmark = new String[oticks.length];
+			for (int t = 2; t < otickmark.length; t++) {
+				otickmark[t] = oticks[t] + "";
+				oticks[t] = Math.log10(oticks[t]);
+			}
+		} else if (isTim) {
+			oticks = JPlotMath.optimalTimeTicks(minC, maxC, timUnit, timCal);
+			otickmark = new String[oticks.length];
+			for (int t = 2; t < otickmark.length; t++)
+				otickmark[t] = DateTime.fromDouble(oticks[t], timUnit, timCal).format(timFormat, timCal);
+		} else {
+			oticks = JPlotMath.optimalLinearTicks(minC, maxC);
+			double vf = 1d / (oticks[0]);
+			int decimal = (int) (1000d * oticks[1] + 0.5d);
+			decimal = decimal % 100 == 0 ? 1 : decimal % 10 == 0 ? 2 : 3;
+			otickmark = new String[oticks.length];
+			for (int t = 2; t < otickmark.length; t++)
+				otickmark[t] = PApplet.nf((float) (oticks[t] * vf), 0, decimal).replace(",", ".");
+		}
+		otickmark[0] = "";
+		otickmark[1] = "";
+		double tmlen = 0d;
 		pplot.getGraphic().textSize(200);
-		for (int t = 0; t < ticks.length; t++) {
-			tickmark[t] = PApplet.nf((float) (ticks[t] * vf), 0, decimal);
-			if (t > 1) {
-				tmlen += pplot.getGraphic().textWidth(tickmark[t]) / 200f;
-				tmlc += 1d;
+		pplot.getGraphic().textAlign(PConstants.LEFT, PConstants.TOP);
+		// create tickmark strings and calc mean tickmark text width
+		for (int t = 2; t < oticks.length; t++) {
+			tmlen += pplot.getGraphic().textWidth(otickmark[t]) / 200f;
+		}
+		tmlen *= this.txtsize / (oticks.length - 2);
+		int tickcount = Math.max(2, (int) (xw / (1.2d * tmlen) + 0.99999999d));
+		double[] ticks = null;
+		double[] tcpos = JPlotMath.map(ticks, minC, maxC, xs, xe);
+		String[] tickmark = null;
+		String tickmarkFactor = "";
+		if (isLog) {
+			ticks = JPlotMath.optimalLogarithmicTicks(minC, maxC, tickcount);
+			tickmark = new String[ticks.length];
+			for (int t = 2; t < tickmark.length; t++) {
+				tickmark[t] = ticks[t] + "";
+				ticks[t] = Math.log10(ticks[t]);
+			}
+		} else if (isTim) {
+			ticks = JPlotMath.optimalTimeTicks(minC, maxC, timUnit, timCal, tickcount);
+			tickmark = new String[ticks.length];
+			for (int t = 2; t < tickmark.length; t++)
+				tickmark[t] = DateTime.fromDouble(ticks[t], timUnit, timCal).format(timFormat, timCal);
+		} else {
+			ticks = JPlotMath.optimalLinearTicks(minC, maxC, tickcount);
+			double vf = 1d / (ticks[0]);
+			int decimal = (int) (1000d * ticks[1] + 0.5d);
+			decimal = decimal % 1000 == 0 ? 0 : decimal % 100 == 0 ? 1 : decimal % 10 == 0 ? 2 : 3;
+			tickmark = new String[ticks.length];
+			for (int t = 2; t < tickmark.length; t++) {
+				if(decimal==0) tickmark[t] = ""+(int)(ticks[t]*vf+0.0005d-(ticks[t]*vf<0d?1:0));
+				else tickmark[t] = PApplet.nf((float) (ticks[t] * vf), 0, decimal).replace(",", ".");
+			}
+			double lvf = Math.log10(ticks[0]);
+			if(Math.abs(lvf)>2.9d) {
+				int ivf = (int) (lvf+0.5d) - (lvf<0d ? -1 : 0);
+				tickmarkFactor = JPlot.supportLatex ? "10$^{"+ivf+"}$" : "10^"+ivf;
 			}
 		}
-		tmlen *= this.txtsize / tmlc;
-		int tickcount = Math.max(2, (int) (xw / (1.2d * tmlen) + 0.9999d));
-		if (pplot.isDebug())
-			System.out.println("[DEBUG] JAxis-object: tmlen=" + tmlen + " -> tickcount approx. " + tickcount);
-		ticks = JPlotMath.optimalLinearTicks(minC, maxC, tickcount);
-		tcpos = JPlotMath.map(ticks, minC, maxC, xs, xe);
-		tickmark = new String[ticks.length];
-		vf = 1d / (ticks[0]);
-		decimal = (int) (1000d * ticks[1] + 0.5d);
-		decimal = decimal % 100 == 0 ? 1 : decimal % 10 == 0 ? 2 : 3;
-		for (int t = 0; t < ticks.length; t++)
-			tickmark[t] = PApplet.nf((float) (ticks[t] * vf), 0, decimal);
 		if (pplot.isDebug()) {
 			String tickStr = "", posStr = "";
 			for (int t = 2; t < ticks.length; t++) {
@@ -289,11 +376,16 @@ public class JColourbar extends JAxis {
 				axisgrid.addChild(new JTextShape(tickmark[t], (float) tcpos[t], py + 1.188f * ph, (float) txtsize,
 						PConstants.CENTER, PConstants.TOP, 0xff000000, 0, null));
 			}
-		if (titleC.length() > 0) {
+		if (titleC.length() > 0 || unitC.length() > 0) {
+			String txtemp = ""+titleC;
+			if(unitC.length()>0 || tickmarkFactor.length()>0) txtemp += (titleC.length()>0?" ":"")+"[";
+			if(tickmarkFactor.length()>0) txtemp += tickmarkFactor;
+			if(unitC.length()>0) txtemp += (tickmarkFactor.length()>0?" ":"")+unitC;
+			if(unitC.length()>0 || tickmarkFactor.length()>0) txtemp += "]";
 			if(JPlot.supportLatex)
-				axisgrid.addChild(new JLatexShape(titleC, xs+0.5f*xw, py+1.250f*ph+(float)txtsize, (float)(1.1d*txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0f, null));
+				axisgrid.addChild(new JLatexShape(txtemp, xs+0.5f*xw, py+1.250f*ph+(float)txtsize, (float)(1.1d*txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0f, null));
 			else
-				axisgrid.addChild(new JTextShape(titleC, xs+0.5f*xw, py+1.250f*ph+(float)txtsize, (float)(1.1d*txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0, null));
+				axisgrid.addChild(new JTextShape(txtemp, xs+0.5f*xw, py+1.250f*ph+(float)txtsize, (float)(1.1d*txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, 0, null));
 		}
 		return axisgrid;
 	}
@@ -302,10 +394,42 @@ public class JColourbar extends JAxis {
 		int ys = extendUpper ? py+trihgt : py;
 		int ye = extendLower ? py+ph-trihgt : py+ph;
 		int yh = ye-ys;
+		double Cin = isLog ? Math.log10(minC) : minC;
+		double Cax = isLog ? Math.log10(maxC) : maxC;
 		JGroupShape axisgrid = new JGroupShape();
 		int nticks = (int)((ye-ys) / txtsize + 0.5d);
-		double[] ticks = JPlotMath.optimalLinearTicks(minC, maxC, nticks);
-		double[] tcpos = JPlotMath.map(ticks, minC, maxC, ye, ys);
+		double[] ticks = null;
+		String[] tickmark = null;
+		String   tickmarkFactor = "";
+		if (isLog) {
+			ticks = JPlotMath.optimalLogarithmicTicks(minC, maxC, nticks);
+			tickmark = new String[ticks.length];
+			for (int t = 2; t < ticks.length; t++) {
+				tickmark[t] = "" + ticks[t] + "";
+				ticks[t] = Math.log10(ticks[t]);
+			}
+		} else if (isTim) {
+			ticks = JPlotMath.optimalTimeTicks(minC, maxC, timUnit, timCal, nticks);
+			tickmark = new String[ticks.length];
+			for (int t = 2; t < ticks.length; t++)
+				tickmark[t] = DateTime.fromDouble(ticks[t], timUnit, timCal).format(timFormat, timCal);
+		} else {
+			ticks = JPlotMath.optimalLinearTicks(minC, maxC, nticks);
+			double vf = 1d / (ticks[0]);
+			int decimal = (int) (1000d * ticks[1] + 0.5d);
+			decimal = decimal % 1000 == 0 ? 0 : decimal % 100 == 0 ? 1 : decimal % 10 == 0 ? 2 : 3;
+			tickmark = new String[ticks.length];
+			for (int t = 2; t < ticks.length; t++) {
+				if(decimal==0) tickmark[t] = ""+(int)(ticks[t]*vf+0.0005d - (ticks[t]*vf<0d?1:0));
+				tickmark[t] = PApplet.nf((float) (ticks[t] * vf), 0, decimal).replace(",", ".");
+			}
+			double lvf = Math.log10(ticks[0]);
+			if(Math.abs(lvf)>2.9d) {
+				int ivf = (int) lvf - (lvf<0d ? 1 : 0);
+				tickmarkFactor = JPlot.supportLatex ? "10$^{"+ivf+"}$" : "10^"+ivf;
+			}
+		}
+		double[] tcpos = JPlotMath.map(ticks, Cin, Cax, ye, ys);
 //		for(int t=0; t<tcpos.length; t++)
 //			tcpos[t] = 2*py+ph-tcpos[t];
 		if (pplot.isDebug()) {
@@ -319,22 +443,23 @@ public class JColourbar extends JAxis {
 			System.out.println("[DEBUG] JAxis-object: Ytickpos={" + posStr.substring(2) + "}");
 		}
 		float tw = 0f;
-		double vf = 1d / (ticks[0]);
-		int decimal = (int) (1000d * ticks[1] + 0.5d);
-		decimal = decimal%1000==0 ? 0 : decimal % 100 == 0 ? 1 : decimal % 10 == 0 ? 2 : 3;
 		for (int t = 2; t < ticks.length; t++)
-			if (ticks[t] >= Math.min(minC, maxC) && ticks[t] <= Math.max(minC, maxC)) {
+			if (ticks[t] >= Math.min(Cin, Cax) && ticks[t] <= Math.max(Cin, Cax)) {
 				axisgrid.addChild(new JLineShape(2f, 0xff000000, px + pw, (float) tcpos[t], px + 1.250f * pw, (float) tcpos[t]));
-				String tmstr = PApplet.nf((float) (ticks[t] * vf), 0, decimal);
-				tw = Math.max(tw, (float) txtsize * pplot.getGraphic().textWidth(tmstr) / pplot.getGraphic().textSize);
-				axisgrid.addChild(new JTextShape(tmstr, px + 1.375f * pw, (float) tcpos[t], (float) txtsize,
+				tw = Math.max(tw, (float) txtsize * pplot.getGraphic().textWidth(tickmark[t]) / pplot.getGraphic().textSize);
+				axisgrid.addChild(new JTextShape(tickmark[t], px + 1.375f * pw, (float) tcpos[t], (float) txtsize,
 						PConstants.LEFT, PConstants.CENTER, 0xff000000, 0, null));
 			}
-		if (titleC.length() > 0) {
+		if (titleC.length() > 0 || unitC.length() > 0) {
+			String tytemp = ""+titleC;
+			if(unitC.length()>0 || tickmarkFactor.length()>0) tytemp += (titleC.length()>0?" ":"")+"[";
+			if(tickmarkFactor.length() > 0) tytemp += tickmarkFactor;
+			if(unitC.length()>0) tytemp += (tickmarkFactor.length()>0?" ":"")+unitC;
+			if(unitC.length()>0 || tickmarkFactor.length()>0) tytemp += "]";
 			if(JPlot.supportLatex)
-				axisgrid.addChild(new JLatexShape(titleC, px+1.500f*pw+tw, ys+0.5f*yh, (float)(1.1d*txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE, null));
+				axisgrid.addChild(new JLatexShape(tytemp, px+1.500f*pw+tw, ys+0.5f*yh, (float)(1.1d*txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE, null));
 			else
-				axisgrid.addChild(new JTextShape(titleC, px+1.500f*pw+tw, ys+0.5f*yh, (float)(1.1d*txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE, null));
+				axisgrid.addChild(new JTextShape(tytemp, px+1.500f*pw+tw, ys+0.5f*yh, (float)(1.1d*txtsize), PConstants.CENTER, PConstants.TOP, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE, null));
 		}
 		return axisgrid;
 	}
@@ -506,7 +631,6 @@ public class JColourbar extends JAxis {
 			}
 	}
 	
-	
 	private int getColor(double value) {
 		if(Double.isNaN(value)) return srcColT.getColour(Double.NaN);
 		if(value<contourLevels[0]) return srcColT.getColour(-1d);
@@ -559,4 +683,18 @@ public class JColourbar extends JAxis {
 			layer.drawPatterns(triangles, s, codes[0], codes[1], this);
 		}
 	}
+	
+	// implement abstract methods
+	public JAxis copy() {
+		return new JColourbar(srcAxis, px, py, pw, ph, titleC, isHorizontal);
+	}
+	public int[] getSize() { return new int[] {px,py,pw,ph}; }
+	public double[] getRange() { return null; }
+	public boolean isXlogAxis() { return isLog; }
+	public boolean isYlogAxis() { return isLog; };
+	public boolean isGeoAxis() { return false; }
+	public void setGeoProjection(JProjection proj) {
+		System.err.println("A Colourbar cannot have a GeoProjection!");
+	}
+	public List<JPlotsLayer> getLayers() { return new ArrayList<JPlotsLayer>(); }
 }

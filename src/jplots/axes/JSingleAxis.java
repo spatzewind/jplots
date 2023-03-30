@@ -1,4 +1,4 @@
-package jplots;
+package jplots.axes;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -13,10 +13,8 @@ import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-import jplots.colour.ColourSequenceJColourtable;
-import jplots.colour.JColourbar;
+import jplots.JPlot;
 import jplots.colour.JColourtable;
-import jplots.colour.LinearSegmentedJColourtable;
 import jplots.helper.FileLoader;
 import jplots.layer.JContourLayer;
 import jplots.layer.JContourLayer2D;
@@ -44,10 +42,9 @@ import jplots.transform.IdentityJProjection;
 import jplots.transform.JProjection;
 import processing.core.PApplet;
 import processing.core.PConstants;
-import processing.core.PFont;
 import processing.core.PImage;
 
-public class JAxis {
+public class JSingleAxis extends JAxis {
 
 	private static CoordinateReferenceSystem coast_crs = null;
 	private static Map<String, PImage> loadedPreDefImgs = new HashMap<>();
@@ -63,50 +60,44 @@ public class JAxis {
 			fe.printStackTrace();
 		}
 	}
-
-	protected JPlot pplot;
-	private boolean xRangeFix, yRangeFix, isGeoAxis;
-	private boolean xAxOn, yAxOn, xGrdOn, yGrdOn, xTkOn, yTkOn, xAxInv, yAxInv;
-	private boolean xTim, yTim, xLog, yLog;
-	private String xTimUnit, yTimUnit, xTimCal, yTimCal, xTimFormat, yTimFormat;
-	protected int px, py, pw, ph;
-	private double minX, maxX, minY, maxY;
-	protected double txtsize;
-	private String titleX, titleY, titleP;
-	private List<JPlotsLayer> layers;
-	protected PFont pfont;
-	private JProjection projection;
-	private JAxis[] shareXaxis, shareYaxis;
-
-	public JAxis(JPlot plot, int pos_x, int pos_y, int width, int height) {
-		pplot = plot;
-		px = pos_x;
-		py = pos_y;
-		pw = width;
-		ph = height;
+	
+	protected boolean xRangeFix, yRangeFix;
+	protected boolean isGeoAxis, xTim, yTim, xLog, yLog, xAxInv, yAxInv;
+	protected double minX, maxX, minY, maxY;
+	protected String titleX, titleY, unitX, unitY;
+	protected String xTimUnit, yTimUnit, xTimCal, yTimCal, xTimFormat, yTimFormat;
+	protected List<JPlotsLayer> layers;
+	protected JSingleAxis[] shareXaxis, shareYaxis;
+	
+	public JSingleAxis(JPlot plot, int pos_x, int pos_y, int width, int height) {
+		super(plot, pos_x, pos_y, width, height);
 		layers = new ArrayList<>();
-		shareXaxis = new JAxis[] {};
-		shareYaxis = new JAxis[] {};
+		shareXaxis = new JSingleAxis[] {};
+		shareYaxis = new JSingleAxis[] {};
 		if (plot.isDebug())
 			System.out.println("[DEBUG] created PAxis-object: x/y=" + px + "/" + py + " w/h=" + pw + "/" + ph);
 		defaults();
 	}
-
-	public JAxis(JAxis src_axis) {
-		this(src_axis.getPlot(), src_axis.getSize()[0], src_axis.getSize()[1], src_axis.getSize()[2],
-				src_axis.getSize()[3]);
+	
+	public JSingleAxis(JSingleAxis src_axis) {
+		super(src_axis);
+		layers = new ArrayList<>();
+		shareXaxis = new JSingleAxis[] {};
+		shareYaxis = new JSingleAxis[] {};
+		defaults();
 	}
-
-	private void defaults() {
+	
+	@Override
+	protected void defaults() {
+		super.defaults();
 		xRangeFix = false;
-		xAxOn = true;
-		yAxOn = true;
-		xGrdOn = false;
-		yGrdOn = false;
-		xTkOn = true;
-		yTkOn = true;
+		yRangeFix = false;
 		xAxInv = false;
 		yAxInv = false;
+		minX = -1d;
+		maxX = 1d;
+		minY = -1d;
+		maxY = 1d;
 		xLog = false;
 		yLog = false;
 		xTim = false;
@@ -117,23 +108,31 @@ public class JAxis {
 		yTimCal = null;
 		xTimFormat = "dd.mm.yyyy";
 		yTimFormat = "dd.mm.yyyy";
-		minX = -1d;
-		maxX = 1d;
-		minY = -1d;
-		maxY = 1d;
-		txtsize = 300d * 10d / 72d;
-		titleX = "";
-		titleY = "";
-		titleP = "";
+		titleX = ""; unitX = "";
+		titleY = ""; unitY = "";
 		layers.clear();
-		projection = new IdentityJProjection();
 	}
-
+	
 	// ************************************
 	// **** PUBLIC ************************
 	// ************************************
-
+	
 	// ....
+	@Override
+	public void printInfo() {
+		System.out.print(
+				 this.getClass().getSimpleName()+":\n"
+				+"    pos/size: "+px+"|"+py+" / "+pw+"|"+ph+"\n"
+				+"    font/txtsize: "+pfont+"/"+txtsize+"\n"
+				+"    x-Axis: log="+isXlogAxis()+" draw="+xAxOn+" ticks="+xTkOn+" grid="+xGrdOn+"\n"
+				+"            label="+(titleX!=null?"\""+titleX+"\"":null)+" unit="+(unitX!=null?"\""+unitX+"\"":null)+"\n"
+				+"    y-Axis: log="+isYlogAxis()+" draw="+yAxOn+" ticks="+yTkOn+" grid="+yGrdOn+"\n"
+				+"            label="+(titleY!=null?"\""+titleY+"\"":null)+" unit="+(unitY!=null?"\""+unitY+"\"":null)+"\n"
+				+"    proj:   geo="+isGeoAxis()+" which="+projection+"\n"
+				+"    title:  "+(titleP!=null?"\""+titleP+"\"":null)+"\n"
+			);
+		}
+	
 	public void contour(float[] x, float[] y, float[][] z) {
 		this.contour(x, y, z, 10, (Object[]) null);
 	}
@@ -194,7 +193,7 @@ public class JAxis {
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
+	
 	public void contourf(float[] x, float[] y, float[][] z) {
 		this.contourf(x, y, z, 10, (Object[]) null);
 	}
@@ -263,7 +262,7 @@ public class JAxis {
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
+	
 	public void contourp(float[] x, float[] y, float[][] z) {
 		this.contourf(x, y, z, 10, (Object[]) null);
 	}
@@ -340,7 +339,7 @@ public class JAxis {
 		readParams(cnl, params);
 		updateRange(cnl);
 	}
-
+	
 	public void pcolour(float[] x, float[] y, float[][] z, float cmin, float cmax, Object... params) {
 		JPColourLayer pcl = new JPColourLayer(x, y, z, cmin, cmax);
 		pcl.setColourtable(JColourtable.pctables.get("default"));
@@ -369,7 +368,7 @@ public class JAxis {
 		readParams(pcl, params);
 		updateRange(pcl);
 	}
-
+	
 	public void plot(float[] x, float[] y) {
 		this.plot(x, y, 0xff000000, 3f, "-", (Object) null);
 	}
@@ -388,7 +387,7 @@ public class JAxis {
 		readParams(xyl, params);
 		updateRange(xyl);
 	}
-
+	
 	public void scatter(float[] x, float[] y) {
 		this.scatter(x, y, 0xff000000, 1f, "c", (Object) null);
 	}
@@ -407,7 +406,7 @@ public class JAxis {
 		readParams(scl, params);
 		updateRange(scl);
 	}
-
+	
 	public void hatch(float[] x, float[] y, float[][] z, float lower, float upper, String pattern) {
 		this.hatch(x,y,z, lower,upper, pattern, (Object)null);
 	}
@@ -461,7 +460,7 @@ public class JAxis {
 		layers.add(xyl);
 		updateRange(xyl, "x");
 	}
-
+	
 	public void addText(double x, double y, String text) {
 		JTextLayer tl = new JTextLayer(false, text, x, y, 1.0d, 0xff000000, PConstants.LEFT, PConstants.BOTTOM, 0d, null);
 		layers.add(tl);
@@ -490,16 +489,6 @@ public class JAxis {
 		layers.add(tl); readParams(tl, params);
 	}
 	
-	public JColourbar colourbar() {
-		return pplot.colourbar(this, "", "neither");
-	}
-	public JColourbar colourbar(String name) {
-		return pplot.colourbar(this, name, "neither");
-	}
-	public JColourbar colourbar(String name, String extent) {
-		return pplot.colourbar(this, name, extent);
-	}
-
 	public void legend() {
 		JPlotsLayer lgl = new JLegend(this, PConstants.RIGHT, PConstants.TOP, false, 1d);
 		layers.add(lgl);
@@ -516,7 +505,7 @@ public class JAxis {
 		JPlotsLayer lgl = new JLegend(this, left_right, top_bottom, false, rts);
 		layers.add(lgl);
 	}
-
+	
 	public void coastLines() {
 		coastLines(110);
 	}
@@ -526,7 +515,7 @@ public class JAxis {
 		layers.add(shl);
 		shl.setLineColour(0xff000000);
 	}
-
+	
 	public void land() {
 		land(0xff676767, 0xff000000);
 	}
@@ -539,7 +528,7 @@ public class JAxis {
 		shl.setFillColour(land_colour);
 		shl.setLineColour(coast_colour);
 	}
-
+	
 	public void showShapefile(String path_to_shapefile, String shapeType) {
 		showShapefile(path_to_shapefile, shapeType, null);
 	}
@@ -561,7 +550,7 @@ public class JAxis {
 		layers.add(shl);
 		readParams(shl, params);
 	}
-
+	
 	/**
 	 * predefined images are used as background images in plot, especially with
 	 * geographical projections
@@ -586,32 +575,38 @@ public class JAxis {
 		}
 		layers.add(0, iml);
 	}
-
+	
 	public void imgShow(PImage img) {
 		JPlotsLayer iml = new JImageLayer(img);
 		layers.add(iml);
 		// updateRange(iml);
 	}
-
-	/**
-	 * removes all plotting infos also all configuration will be reseted
-	 */
-	public void clear() {
-		defaults();
-	}
-
+	
 	// ....
-	public JAxis setPositionAndSize(int pos_x, int pos_y, int width, int height) {
-		px = pos_x;
-		py = pos_y;
-		pw = width;
-		ph = height;
-		if (pplot.isDebug())
-			System.out.println("[DEBUG] resize PAxis-object: x/y=" + px + "/" + py + " w/h=" + pw + "/" + ph);
-		return this;
+	public void setXTitle(String xtitle) {
+		titleX = "";
+		if(xtitle!=null) titleX = xtitle;
+		unitX  = "";
+	}
+	public void setXTitle(String xtitle, String xunit) {
+		titleX = "";
+		if(xtitle!=null) titleX = xtitle;
+		unitX  = "";
+		if(xunit!=null) unitX = xunit;
+	}
+	public void setYTitle(String ytitle) {
+		titleY = "";
+		if(ytitle!=null) titleY = ytitle;
+		unitY  = "";
+	}
+	public void setYTitle(String ytitle, String yunit) {
+		titleY = "";
+		if(ytitle!=null) titleY = ytitle;
+		unitY  = "";
+		if(yunit!=null) unitY = yunit;
 	}
 	
-	public JAxis setXRange(double xmin, double xmax) {
+	public JSingleAxis setXRange(double xmin, double xmax) {
 		setXRange(xmin, xmax, true);
 		return this;
 	}
@@ -620,11 +615,11 @@ public class JAxis {
 		maxX = Math.max(xmin,xmax);
 		xRangeFix = true;
 		if (notify)
-			for (JAxis a : shareXaxis)
+			for (JSingleAxis a : shareXaxis)
 				if (!a.equals(this))
 					a.setXRange(xmin, xmax, false);
 	}
-	public JAxis setYRange(double ymin, double ymax) {
+	public JSingleAxis setYRange(double ymin, double ymax) {
 		setYRange(ymin, ymax, true);
 		return this;
 	}
@@ -633,79 +628,20 @@ public class JAxis {
 		maxY = Math.max(ymin,ymax);
 		yRangeFix = true;
 		if (notify)
-			for (JAxis a : shareYaxis)
+			for (JSingleAxis a : shareYaxis)
 				if (!a.equals(this))
 					a.setYRange(ymin, ymax, false);
 	}
-	public JAxis setRange(double xmin, double xmax, double ymin, double ymax) {
+	public JSingleAxis setRange(double xmin, double xmax, double ymin, double ymax) {
 		setXRange(xmin, xmax);
 		setYRange(ymin, ymax);
 		return this;
 	}
-
-	public void setAxis(String axis, String which, boolean onoff) {
-		boolean setX = false, setY = false;
-		boolean setAx = false, setGrd = false, setTck = false;
-		if ("both".equals(axis.toLowerCase())) {
-			setX = true;
-			setY = true;
-		}
-		if ("x".equals(axis.toLowerCase()))
-			setX = true;
-		if ("y".equals(axis.toLowerCase()))
-			setY = true;
-		String w = which.toLowerCase();
-		if ("all".equals(w)) {
-			setAx = true;
-			setGrd = true;
-		}
-		if ("a".equals(w) || "axis".equals(w))
-			setAx = true;
-		if ("g".equals(w) || "grid".equals(w))
-			setGrd = true;
-		if ("t".equals(w) || "tick".equals(w) || "ticks".equals(w))
-			setTck = true;
-		if (setAx) {
-			if (setX)
-				xAxOn = onoff;
-			if (setY)
-				yAxOn = onoff;
-		}
-		if (setGrd) {
-			if (setX)
-				xGrdOn = onoff;
-			if (setY)
-				yGrdOn = onoff;
-		}
-		if (setTck) {
-			if (setX)
-				xTkOn = onoff;
-			if (setY)
-				yTkOn = onoff;
-		}
-	}
-	public void setGrid() {
-		setGrid("both", true);
-	}
-	public void setGrid(String axis, boolean onoff) {
-		boolean setX = false, setY = false;
-		if ("both".equals(axis.toLowerCase())) {
-			setX = true;
-			setY = true;
-		}
-		if ("x".equals(axis.toLowerCase()))
-			setX = true;
-		if ("y".equals(axis.toLowerCase()))
-			setY = true;
-		if (setX)
-			xGrdOn = onoff;
-		if (setY)
-			yGrdOn = onoff;
-	}
 	
-	public JAxis setGeoProjection(JProjection proj) {
+	@Override
+	public void setGeoProjection(JProjection proj) {
 		projection = proj;
-		isGeoAxis = true;
+		isGeoAxis = !(proj instanceof IdentityJProjection);
 		double[] rr = projection.defaultMapExtend();
 		setRange(rr[0], rr[1], rr[2], rr[3]);
 		xAxOn = false;
@@ -713,26 +649,8 @@ public class JAxis {
 		xGrdOn = false;
 		yGrdOn = false;
 		pplot.redraw(true);
-		return this;
 	}
-
-	// ....
-	public void setFont(PFont font) {
-		pfont = font;
-	}
-	public void setTextSize(double ts) {
-		txtsize = JPlot.dpi * ts / 72d;
-	}
-	public void setXTitle(String xtitle) {
-		titleX = xtitle;
-	}
-	public void setYTitle(String ytitle) {
-		titleY = ytitle;
-	}
-	public void setTitle(String _title) {
-		titleP = _title;
-	}
-
+	
 	public void setLogarithmicAxis(char axis) {
 		switch (axis) {
 		case 'b':
@@ -753,10 +671,10 @@ public class JAxis {
 		}
 	}
 	public void setAsTimeAxis(char axis, String unit) {
-		setAsTimeAxis(axis, unit, "gregorian", null);
+		setAsTimeAxis(axis, unit, "gregorian", "dd.mm.yyyy");
 	}
 	public void setAsTimeAxis(char axis, String unit, String calendar) {
-		setAsTimeAxis(axis, unit, calendar, null);
+		setAsTimeAxis(axis, unit, calendar, "dd.mm.yyyy");
 	}
 	public void setAsTimeAxis(char axis, String unit, String calendar, String format) {
 		switch (axis) {
@@ -785,87 +703,64 @@ public class JAxis {
 			break;
 		}
 	}
-
-	public JAxis addSharedAxis(char which, JAxis new_axis) {
+	
+	public JSingleAxis addSharedAxis(char which, JSingleAxis new_axis) {
 		addSharedAxis(which, new_axis, false);
 		return this;
 	}
-
+	
 	// ************************************
 	// **** GETTER ************************
 	// ************************************
-
+	
 	/**
 	 * gives a new JAxis instance with same position and dimensions
 	 * 
 	 * @return new JAxis object
 	 */
+	@Override
 	public JAxis copy() {
-		return new JAxis(pplot, px, py, pw, ph);
+		return new JSingleAxis(this);
 	}
-
-	public JPlot getPlot() {
-		return pplot;
-	}
-
-	public int[] getSize() {
-		return new int[] { px, py, pw, ph };
-	}
-
-	public double getTextSize() {
-		return txtsize;
-	}
-
+	
+	@Override
 	public double[] getRange() {
 		return new double[] { minX, maxX, minY, maxY };
 	}
-
+	public int[] getSize() {
+		return new int[] { px, py, pw, ph };
+	}
+	
 	public boolean isXlogAxis() {
 		return xLog;
 	}
-
 	public boolean isYlogAxis() {
 		return yLog;
 	}
-
 	public boolean isGeoAxis() {
 		return isGeoAxis;
 	}
-
-	public JProjection getGeoProjection() {
-		return projection;
-	}
-
-	public boolean isXGridVisible() {
-		return xGrdOn;
-	}
-
-	public boolean isYGridVisible() {
-		return yGrdOn;
-	}
-
+	
 	public JPlotsLayer getLayer(int layernum) {
 		return layers.get(layernum);
 	}
 
+	@Override
 	public List<JPlotsLayer> getLayers() {
 		return layers;
 	}
-
-	public void addJPlotsLayer(JPlotsLayer layer, Object... params) {
+	
+	public void addLayer(JPlotsLayer layer, Object... params) {
 		layers.add(layer);
 		readParams(layer, params);
 		updateRange(layer);
 	}
-
-	public PFont getFont() {
-		return pfont;
-	}
-
+	
 	// ************************************
 	// **** PACKAGE PRIVATE ***************
 	// ************************************
-
+	
+	@Override
 	public JGroupShape createPlot(PApplet applet, int w, int h) {
 		if (isGeoAxis) {
 			double r = 0.5d * Math.max((maxX - minX) / pw, (maxY - minY) / ph);
@@ -939,6 +834,7 @@ public class JAxis {
 		graph.addChild(new JLineShape(0f, 0x00999999, 0f,0f, 1f,1f));
 		return graph;
 	}
+	@Override
 	public JPlotShape createPlotOnlyAxes(PApplet applet, int w, int h) {
 		if (isGeoAxis) {
 			double r = 0.5d * Math.max((maxX - minX) / pw, (maxY - minY) / ph);
@@ -999,19 +895,15 @@ public class JAxis {
 		return graph;
 	}
 	
-	public JProjection getProjection() {
-		return projection;
-	}
-
-	private void addSharedAxis(char which, JAxis new_axis, boolean notify) {
+	protected void addSharedAxis(char which, JSingleAxis new_axis, boolean notify) {
 		if (new_axis.equals(this))
 			return;
 		switch (which) {
 		case 'x':
-			JAxis[] tempx = new JAxis[shareXaxis.length];
+			JSingleAxis[] tempx = new JSingleAxis[shareXaxis.length];
 			for (int a = 0; a < tempx.length; a++)
 				tempx[a] = shareXaxis[a];
-			shareXaxis = new JAxis[tempx.length + 1];
+			shareXaxis = new JSingleAxis[tempx.length + 1];
 			for (int a = 0; a < tempx.length; a++)
 				shareXaxis[a] = tempx[a];
 			shareXaxis[tempx.length] = new_axis;
@@ -1020,10 +912,10 @@ public class JAxis {
 					shareXaxis[a].addSharedAxis('x', new_axis, false);
 			break;
 		case 'y':
-			JAxis[] tempy = new JAxis[shareYaxis.length];
+			JSingleAxis[] tempy = new JSingleAxis[shareYaxis.length];
 			for (int a = 0; a < tempy.length; a++)
 				tempy[a] = shareYaxis[a];
-			shareYaxis = new JAxis[tempy.length + 1];
+			shareYaxis = new JSingleAxis[tempy.length + 1];
 			for (int a = 0; a < tempy.length; a++)
 				shareYaxis[a] = tempy[a];
 			shareYaxis[tempy.length] = new_axis;
@@ -1039,7 +931,7 @@ public class JAxis {
 	// ************************************
 	// **** PRIVATE ***********************
 	// ************************************
-
+	
 	private void readParams(JPlotsLayer layer, Object... params) {
 		if (params == null)
 			return;
@@ -1116,19 +1008,9 @@ public class JAxis {
 				}
 				if (isunread && ("ct".equals(p) || "colortable".equals(p) || "colourtable".equals(p))
 						&& o + 1 < params.length) {
-					if (params[o + 1] instanceof ColourSequenceJColourtable) {
-						layer.setColourtable((ColourSequenceJColourtable) params[o + 1]);
-						o++;
-						isunread = false;
-					} else if (params[o + 1] instanceof LinearSegmentedJColourtable) {
-						layer.setColourtable((LinearSegmentedJColourtable) params[o + 1]);
-						o++;
-						isunread = false;
-					} else if (params[o + 1] instanceof JColourtable) {
-						layer.setColourtable((JColourtable) params[o + 1]);
-						o++;
-						isunread = false;
-					}
+					layer.setColourtable((JColourtable) params[o + 1]);
+					o++;
+					isunread = false;
 				}
 				if (isunread && ("z".equals(p)) && o + 1 < params.length) {
 					layer.addParallelArray(params[o + 1]);
@@ -1341,11 +1223,14 @@ public class JAxis {
 					axisgrid.addChild(new JLineShape(2f, 0xff999999, (float) tcpos[t], py, (float) tcpos[t], py + ph));
 		}
 		if (xAxOn) {
-			if (titleX.length() > 0) {
+			if (titleX.length() > 0 || unitX.length() > 0) {
 				if (pplot.isDebug())
-					System.out.println("[DEBUG] JAxi-object: add x-axis title \"" + titleX + "\" with text size " + txtsize);
+					System.out.println("[DEBUG] JAxi-object: add x-axis title \""+titleX+"\" and unit \""+unitX+"\" with text size "+txtsize);
 				String txtemp = ""+titleX;
-				if(tickmarkFactor.length()>0) txtemp += " (*"+tickmarkFactor+")";
+				if(unitX.length()>0 || tickmarkFactor.length()>0) txtemp += (titleX.length()>0?" ":"")+"[";
+				if(tickmarkFactor.length()>0) txtemp += tickmarkFactor;
+				if(unitX.length()>0) txtemp += (tickmarkFactor.length()>0?" ":"")+unitX;
+				if(unitX.length()>0 || tickmarkFactor.length()>0) txtemp += "]";
 				//TODO set txtsize back to 1.1d*txtsize
 				if(JPlot.supportLatex) {
 					axisgrid.addChild(new JLatexShape(txtemp, px + 0.5f * pw, py + 1.04f * ph + (float) txtsize,
@@ -1364,7 +1249,7 @@ public class JAxis {
 						axisgrid.addChild(new JTextShape(tickmark[t], (float) tcpos[t], py + 1.03f * ph,
 								(float) txtsize, PConstants.CENTER, PConstants.TOP, 0xff000000, 0, null));
 					}
-				if(titleX.length()==0 && tickmarkFactor.length()>0) {
+				if(titleX.length()==0 && unitX.length()==0 && tickmarkFactor.length()>0) {
 					if(JPlot.supportLatex) {
 						axisgrid.addChild(new JLatexShape(tickmarkFactor, px+pw, py+ph, (float) txtsize,
 								PConstants.LEFT, PConstants.CENTER, 0xff000000, 0, null));
@@ -1453,12 +1338,15 @@ public class JAxis {
 					}
 				}
 			}
-			if (titleY.length() > 0) {
+			if (titleY.length() > 0 || unitY.length() > 0) {
 				if (pplot.isDebug())
 					System.out.println(
-							"[DEBUG] JAxi-object: add y-axis title \"" + titleY + "\" with text size " + txtsize);
+							"[DEBUG] JAxi-object: add y-axis title \""+titleY+"\" and unit \""+unitY+"\" with text size "+txtsize);
 				String tytemp = ""+titleY;
-				if(tickmarkFactor.length() > 0) tytemp += " (*"+tickmarkFactor+")";
+				if(unitY.length()>0 || tickmarkFactor.length()>0) tytemp += (titleY.length()>0?" ":"")+"[";
+				if(tickmarkFactor.length() > 0) tytemp += tickmarkFactor;
+				if(unitY.length()>0) tytemp += (tickmarkFactor.length()>0?" ":"")+unitY;
+				if(unitY.length()>0 || tickmarkFactor.length()>0) tytemp += "]";
 				if(JPlot.supportLatex) {
 					axisgrid.addChild(new JLatexShape(tytemp, px - 0.03f * pw - tw, py + 0.5f * ph, (float) (1.1d * txtsize),
 							PConstants.CENTER, PConstants.BOTTOM, 0xff000000, JPlotShape.ROTATE_COUNTERCLOCKWISE, null));

@@ -1,7 +1,7 @@
 package jplots.layer;
 
-import jplots.JAxis;
 import jplots.JPlot;
+import jplots.axes.JAxis;
 import jplots.colour.JColourtable;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
@@ -11,22 +11,21 @@ import processing.core.PGraphics;
 import processing.core.PImage;
 
 public abstract class JPlotsLayer {
-
-	// package private variables
-	boolean invertAxisX, invertAxisY, logAxisX, logAxisY;
-	boolean drawLines, singleLineColour, singleFillColour;
-	int lc, pc;
-	int[] lcs, pcs;
-	double lw;
-	double minX, maxX, minY, maxY, minZ, maxZ;
-	double angleMode;
-	String ls;
-	String label;
-	PImage img;
-	JProjection inputProj;
-	JColourtable colourtable;
-	Object parallelArray;
-
+	
+	protected boolean invertAxisX, invertAxisY, logAxisX, logAxisY;
+	protected boolean drawLines, singleLineColour, singleFillColour;
+	protected int lc, pc;
+	protected int[] lcs, pcs;
+	protected double lw;
+	protected double minX, maxX, minY, maxY, minZ, maxZ;
+	protected double angleMode;
+	protected String ls, label;
+	protected PImage img;
+	protected JProjection inputProj;
+	protected JColourtable colourtable;
+	protected Object parallelArray;
+	
+	
 	public JPlotsLayer() {
 		lw = 2d;
 		lc = 0xff000000;
@@ -50,26 +49,43 @@ public abstract class JPlotsLayer {
 		logAxisY = false;
 		parallelArray = null;
 	}
-
+	
+	// ******************
+	// **** ABSTRACT ****
+	// ******************
+	
+	public abstract void createRasterImg(JPlot plot, PGraphics g);
+	public abstract void createVectorImg(JAxis ax, int layernum, JGroupShape s);
+	
+	// ****************
+	// **** PUBLIC ****
+	// ****************
+	
 	public void setRange(double xmin, double xmax, double ymin, double ymax) {
 		minX = xmin;
 		maxX = xmax;
 		minY = ymin;
 		maxY = ymax;
 	}
-
 	public double[] getRange() {
 		return new double[] { minX, maxX, minY, maxY };
+	}
+	public void setZRange(double zmin, double zmax) {
+		minZ = zmin;
+		maxZ = zmax;
 	}
 
 	public void setSourceProjection(JProjection in_proj) {
 		inputProj = in_proj;
 	}
-
+	
 	public void setColourtable(JColourtable ct) {
 		colourtable = ct;
 	}
-
+	public JColourtable getColourtable() {
+		return colourtable;
+	}
+	
 	public void angleMode(String angle_type) {
 		if (angle_type == null) {
 			System.err.println("[ERROR] Cannot read anglemode from null!");
@@ -90,48 +106,37 @@ public abstract class JPlotsLayer {
 		System.err.println("[ERROR] Cannot interprete anglemode \"" + angle_type + "\". Reset to RADIANS");
 		angleMode = 1d;
 	}
-
+	
 	public void lines(boolean l) {
 		drawLines = l;
 	}
-
 	public void setLineColour(int _lc) {
 		lc = _lc;
 		singleLineColour = true;
 	}
-
 	public void setLineColours(int[] _lcs) {
 		lcs = _lcs;
 		singleLineColour = false;
 	}
-
 	public int getLineColour() {
 		return singleLineColour ? lc : 0;
 	}
-
+	
 	public void setLineWidth(double lwd) {
 		lw = lwd;
 	}
-
 	public double getLineWidth() {
 		return lw;
 	}
-
+	
 	public void setFillColour(int _pc) {
 		pc = _pc;
 		singleFillColour = true;
 	}
-
 	public void setFillColours(int[] _pcs) {
 		pcs = _pcs;
 		singleFillColour = false;
 	}
-	
-	public void setZRange(double zmin, double zmax) {
-		minZ = zmin;
-		maxZ = zmax;
-	}
-
 	public int getFillColour() {
 		return singleFillColour ? pc : 0;
 	}
@@ -139,7 +144,6 @@ public abstract class JPlotsLayer {
 	public void setStyle(String lst) {
 		ls = lst;
 	}
-
 	public String getStyle() {
 		return ls;
 	}
@@ -167,16 +171,8 @@ public abstract class JPlotsLayer {
 	public void setLabel(String _l) {
 		label = _l;
 	}
-
 	public String getLabel() {
 		return label;
 	}
-
-	public JColourtable getColourtable() {
-		return colourtable;
-	}
-
-	public abstract void createRasterImg(JPlot plot, PGraphics g);
-
-	public abstract void createVectorImg(JAxis ax, int layernum, JGroupShape s);
+	
 }

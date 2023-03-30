@@ -2,8 +2,8 @@ package jplots.layer;
 
 import java.util.Arrays;
 
-import jplots.JAxis;
 import jplots.JPlot;
+import jplots.axes.JAxis;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDPoint;
 import jplots.maths.JDPolygon;

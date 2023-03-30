@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.locationtech.jts.geom.Coordinate;
 
-import jplots.JAxis;
 import jplots.JPlot;
+import jplots.axes.JAxis;
 import jplots.helper.FileLoader;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDLine;

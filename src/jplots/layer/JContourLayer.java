@@ -3,8 +3,8 @@ package jplots.layer;
 import java.util.ArrayList;
 import java.util.List;
 
-import jplots.JAxis;
 import jplots.JPlot;
+import jplots.axes.JAxis;
 import jplots.colour.JColourtable;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDEdge;
@@ -303,15 +303,6 @@ public class JContourLayer extends JPlotsLayer {
 		contourStyle = nstyle;
 	}
 	
-	public void drawContours(List<JDTriangle> triangles, JGroupShape s, JAxis ax) {
-//		int[] p = ax.getSize();
-//		JPlot parent = ax.getPlot();
-//		int[] psize = parent.getSize();
-//		double pdist = Math.min((double)p[0]/(double)parent.getNumColumns(), (double)p[1]/(double)parent.getNumRows()) / 10d;
-//		psize = ax.getSize();
-		
-	}
-
 	public void drawTriangleBorders(int[] p, JAxis ax, double xs, double ys, JGroupShape s) {
 		
 	}

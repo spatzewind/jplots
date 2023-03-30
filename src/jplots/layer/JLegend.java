@@ -3,8 +3,10 @@ package jplots.layer;
 import java.util.ArrayList;
 import java.util.List;
 
-import jplots.JAxis;
 import jplots.JPlot;
+import jplots.axes.JSingleAxis;
+import jplots.axes.JAxis;
+import jplots.axes.JMultiAxis;
 import jplots.shapes.JEllipseShape;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLatexShape;
@@ -25,30 +27,18 @@ public class JLegend extends JPlotsLayer {
 	private List<LegendEntry> entries;
 
 	public JLegend(JAxis parent) {
-//		this(parent, (int) (parent.getSize()[0] + 1.04d * parent.getSize()[2] + 0.5d), parent.getSize()[1],
-//				(int) (0.08d * parent.getSize()[2] + 0.5d), parent.getSize()[3], false, 1d);
 		this(parent, PConstants.RIGHT, PConstants.TOP, false, 1d);
 	}
-
 	public JLegend(JAxis parent, double relTextSize) {
-//		this(parent, (int) (parent.getSize()[0] + 1.04d * parent.getSize()[2] + 0.5d), parent.getSize()[1],
-//				(int) (0.08d * parent.getSize()[2] + 0.5d), parent.getSize()[3], false, relTextSize);
 		this(parent, PConstants.RIGHT, PConstants.TOP, false, relTextSize);
 	}
-	
 	public JLegend(JAxis parent, int left_right_positioning, int top_bottom_positioning) {
 		this(parent, left_right_positioning, top_bottom_positioning, false, 1d);
 	}
-	
-
 	public JLegend(JAxis parent, int left_right_positioning, int top_bottom_positioning, boolean horizontal) {
 		this(parent, left_right_positioning, top_bottom_positioning, horizontal, 1d);
 	}
-
 	public JLegend(JAxis parent, int left_right_positioning, int top_bottom_positioning, boolean horizontal, double relTextSize) {
-//		srcAxis = parent;
-//		isHorizontal = horizontal;
-//		borders = true;
 		rts = relTextSize;
 		horpos = left_right_positioning;
 		vertpos = top_bottom_positioning;
@@ -58,11 +48,7 @@ public class JLegend extends JPlotsLayer {
 	public JLegend(JAxis parent, int pos_x, int pos_y, int width, int height, boolean horizontal) {
 		this(parent, pos_x, pos_y, width, height, horizontal, 1d);
 	}
-
 	public JLegend(JAxis parent, int pos_x, int pos_y, int width, int height, boolean horizontal, double relTextSize) {
-//		srcAxis = parent;
-//		isHorizontal = horizontal;
-//		borders = true;
 		rts = relTextSize;
 		
 		entries = new ArrayList<>();
@@ -75,7 +61,10 @@ public class JLegend extends JPlotsLayer {
 	@Override
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 		entries.clear();
-		for (JPlotsLayer layer : ax.getLayers()) {
+		ArrayList<JPlotsLayer> allLayers = new ArrayList<>();
+		if(ax instanceof JSingleAxis) allLayers.addAll(((JSingleAxis)ax).getLayers());
+		if(ax instanceof JMultiAxis) allLayers.addAll(((JMultiAxis)ax).getLayers());
+		for (JPlotsLayer layer : allLayers) {
 			if (layer instanceof JContourLayer) {
 				// maybe do something with contourlayers -> hatching? -> CONTOURHATCHING_LABEL
 			}

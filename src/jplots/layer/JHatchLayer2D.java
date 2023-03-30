@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import jplots.JAxis;
 import jplots.JPlot;
+import jplots.axes.JAxis;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDEdge;
 import jplots.maths.JDLine;

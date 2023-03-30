@@ -8,7 +8,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 
-import jplots.JAxis;
+import jplots.axes.JAxis;
 import jplots.helper.GeometryTools;
 
 public class JDPolygon {

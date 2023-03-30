@@ -1,11 +1,12 @@
 package jplots.maths;
 
+import jplots.JPlotConstants;
 import processing.core.PApplet;
 
 public class JPlotMath {
 
-	public final static double DEG_TO_RAD = Math.PI / 180d;
-	public final static double RAD_TO_DEG = 180d / Math.PI;
+	public final static double DEG_TO_RAD = JPlotConstants.DEG_TO_RAD;
+	public final static double RAD_TO_DEG = JPlotConstants.RAD_TO_DEG;
 
 	public static int imin(int[] arr) {
 		int im = Integer.MAX_VALUE;

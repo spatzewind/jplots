@@ -2,7 +2,7 @@ package jplots.transform;
 
 import java.util.List;
 
-import jplots.JAxis;
+import jplots.axes.JAxis;
 import jplots.maths.JDLine;
 import jplots.maths.JDPolygon;
 import jplots.shapes.JGroupShape;
