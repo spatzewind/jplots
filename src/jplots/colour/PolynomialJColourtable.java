@@ -23,4 +23,7 @@ public class PolynomialJColourtable extends JColourtable {
 		return toColour(r, g, b);
 	}
 	
+	public void setUndefinedColour(int c) {
+		invalidColour = c;
+	}
 }

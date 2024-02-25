@@ -53,7 +53,7 @@ public class JLegend extends JPlotsLayer {
 		
 		entries = new ArrayList<>();
 	}
-
+	
 	@Override
 	public void createRasterImg(JPlot plot, PGraphics g) {
 	}
@@ -70,19 +70,15 @@ public class JLegend extends JPlotsLayer {
 			}
 			// no JImageLayer
 			// no other JLegend
-			if (layer instanceof JLineLayer)
-				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getLineColour(),
-						layer.getStyle()));
+			if (layer instanceof JAxisAlignedLineLayer)
+				addEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getStyle(), layer.getLineColour());
 			// ignore JPlotsLayer, because it is abstract
 			if (layer instanceof JScatterLayer)
-				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.SCATTERPLOT_LABEL, layer.getLineColour(),
-						layer.getStyle()));
+				addEntry(layer.getLabel(), LegendEntry.SCATTERPLOT_LABEL, layer.getStyle(), layer.getLineColour());
 			if (layer instanceof JShapesLayer)
-				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getLineColour(),
-						layer.getStyle()));
+				addEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getStyle(), layer.getLineColour());
 			if (layer instanceof JXYLayer)
-				entries.add(new LegendEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getLineColour(),
-						layer.getStyle()));
+				addEntry(layer.getLabel(), LegendEntry.LINEPLOT_LABEL, layer.getStyle(), layer.getLineColour());
 		}
 		for (int le = entries.size() - 1; le >= 0; le--)
 			if (entries.get(le).getName().length() == 0)
@@ -129,47 +125,66 @@ public class JLegend extends JPlotsLayer {
 			entries.get(le).toShape(lggs, (float) toplefX, (float) (toplefY + le * ts * 1.5d), (float) ts);
 		s.addChild(lggs);
 	}
+	
+	private void addEntry(String label, int type, String style, int colour) {
+		boolean exists = false;
+		for(int i=entries.size()-1; i>=0; i--) {
+			LegendEntry le = entries.get(i);
+			if(le.getName().equals(label) && le.getType()==type) {
+				if(le instanceof MultiLegendEntry) {
+					((MultiLegendEntry) le).addEntry(colour, style);
+				} else {
+					entries.remove(le);
+					MultiLegendEntry mle = new MultiLegendEntry(label, type, le.getColour(), le.getStyle());
+					mle.addEntry(colour, style);
+					entries.add(mle);
+				}
+				exists = true;
+				break;
+			}
+		}
+		if(!exists)
+			entries.add(new LegendEntry(label, type, colour, style));
+	}
 
-	public class LegendEntry {
+	private class LegendEntry {
 		public final static int LINEPLOT_LABEL = 1;
 		public final static int SCATTERPLOT_LABEL = 2;
 		public final static int CONTOURHATCHING_LABEL = 3;
-
-		private String name;
+		
+		protected String name;
+		protected int type; // line, marker or hatching
+		
 		private int col;
-		private int type; // line, marker or hatching
 		private String linestyle;
-
+		
 		public LegendEntry(String label, int plotType, int colour, String style) {
 			name = label;
 			type = plotType;
 			col = colour;
 			linestyle = style;
 		}
-
+		
 		public String getName() {
 			return name;
 		}
-
-		public int getColour() {
-			return col;
-		}
-
 		public int getType() {
 			return type;
 		}
-
 		public String getStyle() {
 			return linestyle;
 		}
-
+		public int getColour() {
+			return col;
+		}
+		
 		public void toShape(JGroupShape s, float x, float y, float ts) {
 			switch (type) {
 			case LINEPLOT_LABEL:
-				drawLine(s, x, y + 0.667f * ts, 0.125f * ts);
+				drawLine(s, x, y + 0.667f * ts, 0.125f * ts, linestyle, col);
 				break;
 			case SCATTERPLOT_LABEL:
-				drawSymbol(s, x + 1.250f * ts, y + 0.667f * ts, 0.125f * ts);
+				drawSymbol(s, x + 1.250f * ts, y + 0.667f * ts, 0.125f * ts, linestyle, col);
 				break;
 			case CONTOURHATCHING_LABEL:
 				drawHatching(s, x, y, 0.125f * ts);
@@ -181,29 +196,29 @@ public class JLegend extends JPlotsLayer {
 			else
 				s.addChild(new JTextShape(name, x+3*ts, y, ts, PConstants.LEFT, PConstants.TOP, 0xff000000, 0f, null));
 		}
-
-		private void drawLine(JGroupShape s, float x, float y, float lw) {
+		
+		protected void drawLine(JGroupShape s, float x, float y, float lw, String style, int color) {
 			// System.out.println("[JLEGEND] draw Line: found linestyle \""+linestyle+"\"");
 			double lln = 1d, llf = 0d, lpn = 0d, lpf = 0d, loff = 0d;
-			if ("-".equals(linestyle)) {
+			if ("-".equals(style)) {
 				lln = 1000 * lw;
 				llf = 0;
 				lpn = 0;
 				lpf = 0;
 			}
-			if (".".equals(linestyle)) {
+			if (".".equals(style)) {
 				lln = 0;
 				llf = 0;
 				lpn = 1 * lw;
 				lpf = 3 * lw;
 			}
-			if (",".equals(linestyle)) {
+			if (",".equals(style)) {
 				lln = 8 * lw;
 				llf = 7 * lw;
 				lpn = 0;
 				lpf = 0;
 			}
-			if (";".equals(linestyle)) {
+			if (";".equals(style)) {
 				lln = 8 * lw;
 				llf = 3 * lw;
 				lpn = 1 * lw;
@@ -244,7 +259,7 @@ public class JLegend extends JPlotsLayer {
 						xf2 = (float) (x1 + (lpos + ldif) * dx), yf2 = (float) (y1 + (lpos + ldif) * dy);
 				// xf1=x1; xf2=x2; yf1=y1; yf2=y2;
 				if (li % 2 == 0 && ldif > 0d)
-					s.addChild(new JLineShape(lw, col, xf1, yf1, xf2, yf2));
+					s.addChild(new JLineShape(lw, color, xf1, yf1, xf2, yf2));
 				loff += ldif;
 				switch (li) {
 				case 0:
@@ -275,40 +290,83 @@ public class JLegend extends JPlotsLayer {
 				lpos += ldif;
 			}
 		}
-
-		private void drawSymbol(JGroupShape s, float x1, float y1, float lw) {
-			System.out.println("[JLEGEND] draw Symbol: found symbol \"" + linestyle + "\"");
-			JPlotShape.stroke(col);
+		protected void drawSymbol(JGroupShape s, float x1, float y1, float lw, String style, int color) {
+			System.out.println("[JLEGEND] draw Symbol: found symbol \"" + style + "\"");
+			JPlotShape.stroke(color);
 			JPlotShape.strokeWeight(lw);
-			if ("o".equals(linestyle) || "@".equals(linestyle)) {
-				JPlotShape.fill(col);
+			if ("o".equals(style) || "@".equals(style)) {
+				JPlotShape.fill(color);
 			} else {
 				JPlotShape.noFill();
 			}
-			if ("()".equals(linestyle) || "o".equals(linestyle)) {
+			if ("()".equals(style) || "o".equals(style)) {
 				s.addChild(new JEllipseShape(x1, y1, 6f * lw, 6f * lw));
 			}
-			if ("[]".equals(linestyle) || "@".equals(linestyle)) {
+			if ("[]".equals(style) || "@".equals(style)) {
 				s.addChild(new JRectShape(x1 - 2f * lw, y1 - 2f * lw, x1 + 2f * lw, y1 + 2f * lw));
 			}
-			if ("x".equals(linestyle)) {
+			if ("x".equals(style)) {
 				s.addChild(new JLineShape(lw, lc, x1 - 2f * lw, y1 - 2f * lw, x1 + 2f * lw, y1 + 2f * lw));
 				s.addChild(new JLineShape(lw, lc, x1 - 2f * lw, y1 + 2f * lw, x1 + 2f * lw, y1 - 2f * lw));
 			}
-			if ("+".equals(linestyle)) {
+			if ("+".equals(style)) {
 				s.addChild(new JLineShape(lw, lc, x1 - 3f * lw, y1, x1 + 3f * lw, y1));
 				s.addChild(new JLineShape(lw, lc, x1, y1 - 3f * lw, x1, y1 + 3f * lw));
 			}
-			if ("<>".equals(linestyle)) {
+			if ("<>".equals(style)) {
 				s.addChild(new JLineShape(lw, lc, x1, y1 - 3f * lw, x1 + 3f * lw, y1));
 				s.addChild(new JLineShape(lw, lc, x1 + 3f * lw, y1, x1, y1 + 3f * lw));
 				s.addChild(new JLineShape(lw, lc, x1, y1 + 3f * lw, x1 - 3f * lw, y1));
 				s.addChild(new JLineShape(lw, lc, x1 - 3f * lw, y1, x1, y1 - 3f * lw));
 			}
 		}
-
 		private void drawHatching(JGroupShape s, float x, float y, float t) {
-
+			
+		}
+	}
+	private class MultiLegendEntry extends LegendEntry {
+		private int[] cols;
+		private String[] linestyles;
+		
+		public MultiLegendEntry(String label, int plotType, int colour, String style) {
+			super(label, plotType, colour, style);
+			cols = new int[] {colour};
+			linestyles = new String[] {style};
+		}
+		public void addEntry(int colour, String style) {
+			int[] newcols = new int[cols.length+1];
+			String[] newstyles = new String[linestyles.length+1];
+			for(int i=0; i<cols.length; i++) {
+				newcols[i] = cols[i];
+				newstyles[i] = linestyles[i];
+			}
+			newcols[cols.length] = colour;
+			newstyles[linestyles.length] = style;
+			cols = newcols.clone();
+			linestyles = newstyles.clone();
+		}
+		
+		@Override
+		public void toShape(JGroupShape s, float x, float y, float ts) {
+			for(int i=0; i<cols.length; i++) {
+				float frac = (i + 0.5f)/cols.length-0.5f;
+				switch(type) {
+					case LINEPLOT_LABEL:
+						drawLine(s, x, y+(0.667f+frac)*ts, 0.125f*ts, linestyles[i], cols[i]);
+						break;
+					case SCATTERPLOT_LABEL:
+						drawSymbol(s, x+(1.250f+2*frac)*ts, y+0.667f*ts, 0.125f*ts, linestyles[i], cols[i]);
+						break;
+					default:
+						break;
+				}
+			}
+			
+			JPlotShape.fill(0xff000000);
+			if(JPlot.supportLatex)
+				s.addChild(new JLatexShape(name, x+3*ts, y, ts, PConstants.LEFT, PConstants.TOP, 0xff000000, 0f, null));
+			else
+				s.addChild(new JTextShape(name, x+3*ts, y, ts, PConstants.LEFT, PConstants.TOP, 0xff000000, 0f, null));
 		}
 	}
 }

@@ -6,6 +6,7 @@ import java.util.List;
 import jplots.JPlot;
 import jplots.axes.JAxis;
 import jplots.colour.JColourtable;
+import jplots.helper.GeometryTools;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDEdge;
 import jplots.maths.JDPoint;
@@ -1316,7 +1317,10 @@ public class JContourLayer extends JPlotsLayer {
 			boolean failed = true;
 			for (int l = 0; l < list.size() && failed; l++) {
 				if(list.get(l).c.length>999) continue;
-				failed = !list.get(l).union(tri, tol);
+				JDPolygon temp = GeometryTools.union(list.get(l), tri.toPolygon(), tol);
+				if(temp==null) continue;
+				list.set(l, temp);
+				failed = false;
 			}
 			if (failed)
 				list.add(tri.toPolygon());
@@ -1330,7 +1334,10 @@ public class JContourLayer extends JPlotsLayer {
 			boolean failed = true;
 			for (int l = 0; l < list.size() && failed; l++) {
 				if(list.get(l).c.length>999) continue;
-				failed = !list.get(l).union(poly, tol);
+				JDPolygon temp = GeometryTools.union(list.get(l), poly, tol);
+				if(temp==null) continue;
+				list.set(l, temp);
+				failed = false;
 			}
 			if (failed)
 				list.add(poly.copy());

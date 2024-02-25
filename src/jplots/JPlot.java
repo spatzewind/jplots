@@ -27,10 +27,7 @@ import processing.data.IntList;
  * @example SimpleXY
  */
 
-public class JPlot {
-	
-	/** the version of the Library. */
-	public final static String VERSION = "##library.prettyVersion##";
+public class JPlot implements JPlotConstants {
 	
 	public static double dpi = 300d;
 	public static boolean supportLatex = false;
@@ -359,7 +356,7 @@ public class JPlot {
 	}
 
 	public JPlot setGeoProjection(JProjection proj) {
-		gcja().setGeoProjection(proj);
+		gcsa().setGeoProjection(proj);
 		return this;
 	}
 
@@ -541,40 +538,59 @@ public class JPlot {
 	// ************************************
 	// **** GETTER ************************
 	// ************************************
-
+	
 	public PApplet getApplet() {
 		return myParent;
 	}
-
+	
 	public int[] getSize() {
 		return new int[] { width, height };
 	}
-
-	public JAxis[] ga() {
+	
+	public JAxis[]       ga() {
 		return axes;
 	}
-
-	public JAxis gca() {
-		if(currAxNum<0) return null;
-		return axes[currAxNum];
+	public JSingleAxis[] gsa() {
+		JSingleAxis[] sa = new JSingleAxis[axes.length];
+		for(int i=0; i<axes.length; i++) {
+			if(axes[i] instanceof JSingleAxis) sa[i] = (JSingleAxis) axes[i];
+			else sa[i] = null;
+		}
+		return sa;
 	}
-	private JSingleAxis gcja() {
-		if(currAxNum<0) return null;
-		return (JSingleAxis) axes[currAxNum];
+	public JMultiAxis[]  gma() {
+		JMultiAxis[] ma = new JMultiAxis[axes.length];
+		for(int i=0; i<axes.length; i++) {
+			if(axes[i] instanceof JMultiAxis) ma[i] = (JMultiAxis) axes[i];
+			else ma[i] = null;
+		}
+		return ma;
 	}
-	private JMultiAxis gcma() {
-		if(currAxNum<0) return null;
-		return (JMultiAxis) axes[currAxNum];
-	}
-
-	public JAxis ga(int a) {
+	
+	public JAxis       ga(int a) {
 		if (a < -axes.length || a > axes.length-1)
 			throw new IndexOutOfBoundsException(
 					"Number out of range of axis count: " + a + " <> {0..." + axes.length + "}");
 		currAxNum = a + (a < 0 ? axes.length : 0);
 		return axes[currAxNum];
 	}
-
+	public JSingleAxis gsa(int a) {
+		return (JSingleAxis) ga(a);
+	}
+	public JMultiAxis  gma(int a) {
+		return (JMultiAxis) ga(a);
+	}
+	
+	public JAxis       gca() {
+		return axes[currAxNum];
+	}
+	public JSingleAxis gcsa() {
+		return (JSingleAxis) axes[currAxNum];
+	}
+	public JMultiAxis  gcma() {
+		return (JMultiAxis) axes[currAxNum];
+	}
+	
 	// ************************************
 	// **** PRIVATE ***********************
 	// ************************************
@@ -601,44 +617,68 @@ public class JPlot {
 	// ************************************
 	// **** PASS ON ***********************
 	// ************************************
-
+	
 	public void hline(float y) {
-		gcja().axhline(y);
+		gcsa().axhline(y);
 	}
-	public void hline(float y, int colour, float linewidth, String linestyle) {
-		gcja().axhline(y, colour, linewidth, linestyle);
+	public void hline(float y, int colour, float linewidth, String linestyle, Object... params) {
+		gcsa().axhline(y, colour, linewidth, linestyle, params);
 	}
 	public void hline(double y) {
-		gcja().axhline(y);
+		gcsa().axhline(y);
 	}
-	public void hline(double y, int colour, double linewidth, String linestyle) {
-		gcja().axhline(y, colour, linewidth, linestyle);
+	public void hline(double y, int colour, double linewidth, String linestyle, Object... params) {
+		gcsa().axhline(y, colour, linewidth, linestyle, params);
 	}
-
+	public void hline(int y_section, float y) {
+		gcma().axhline(y_section, y);
+	}
+	public void hline(int y_section, float y, int colour, float linewidth, String linestyle, Object... params) {
+		gcma().axhline(y_section, y, colour, linewidth, linestyle, params);
+	}
+	public void hline(int y_section, double y) {
+		gcma().axhline(y_section, y);
+	}
+	public void hline(int y_section, double y, int colour, double linewidth, String linestyle, Object... params) {
+		gcma().axhline(y_section, y, colour, linewidth, linestyle, params);
+	}
+	
 	public void vline(float x) {
-		gcja().axvline(x);
+		gcsa().axvline(x);
 	}
-	public void vline(float x, int colour, float linewidth, String linestyle) {
-		gcja().axvline(x, colour, linewidth, linestyle);
+	public void vline(float x, int colour, float linewidth, String linestyle, Object... params) {
+		gcsa().axvline(x, colour, linewidth, linestyle, params);
 	}
 	public void vline(double x) {
-		gcja().axvline(x);
+		gcsa().axvline(x);
 	}
-	public void vline(double x, int colour, double linewidth, String linestyle) {
-		gcja().axvline(x, colour, linewidth, linestyle);
+	public void vline(double x, int colour, double linewidth, String linestyle, Object... params) {
+		gcsa().axvline(x, colour, linewidth, linestyle, params);
+	}
+	public void vline(int x_section, float x) {
+		gcma().axvline(x_section, x);
+	}
+	public void vline(int x_section, float x, int colour, float linewidth, String linestyle, Object... params) {
+		gcma().axvline(x_section, x, colour, linewidth, linestyle, params);
+	}
+	public void vline(int x_section, double x) {
+		gcma().axvline(x_section, x);
+	}
+	public void vline(int x_section, double x, int colour, double linewidth, String linestyle, Object... params) {
+		gcma().axvline(x_section, x, colour, linewidth, linestyle, params);
 	}
 	
 	public void plot(float[] x, float[] y) {
-		gcja().plot(x, y);
+		gcsa().plot(x, y);
 	}
 	public void plot(float[] x, float[] y, int colour, float linewidth, String linestyle, Object... params) {
-		gcja().plot(x, y, colour, linewidth, linestyle, params);
+		gcsa().plot(x, y, colour, linewidth, linestyle, params);
 	}
 	public void plot(double[] x, double[] y) {
-		gcja().plot(x, y);
+		gcsa().plot(x, y);
 	}
 	public void plot(double[] x, double[] y, int colour, double linewidth, String linestyle, Object... params) {
-		gcja().plot(x, y, colour, linewidth, linestyle, params);
+		gcsa().plot(x, y, colour, linewidth, linestyle, params);
 	}
 	public void plot(int subaxis, float[] x, float[] y) {
 		gcma().plot(subaxis, x, y);
@@ -654,16 +694,16 @@ public class JPlot {
 	}
 	
 	public void scatter(float[] x, float[] y) {
-		gcja().scatter(x, y);
+		gcsa().scatter(x, y);
 	}
 	public void scatter(float[] x, float[] y, int colour, float iconsize, String symbol, Object... params) {
-		gcja().scatter(x, y, colour, iconsize, symbol, params);
+		gcsa().scatter(x, y, colour, iconsize, symbol, params);
 	}
 	public void scatter(double[] x, double[] y) {
-		gcja().scatter(x, y);
+		gcsa().scatter(x, y);
 	}
 	public void scatter(double[] x, double[] y, int colour, double iconsize, String symbol, Object... params) {
-		gcja().scatter(x, y, colour, iconsize, symbol, params);
+		gcsa().scatter(x, y, colour, iconsize, symbol, params);
 	}
 	public void scatter(int subaxis, float[] x, float[] y) {
 		gcma().scatter(subaxis, x, y);
@@ -679,22 +719,22 @@ public class JPlot {
 	}
 	
 	public void contour(float[] x, float[] y, float[][] z) {
-		gcja().contour(x, y, z);
+		gcsa().contour(x, y, z);
 	}
 	public void contour(float[] x, float[] y, float[][] z, int levels, Object... params) {
-		gcja().contour(x, y, z, levels, params);
+		gcsa().contour(x, y, z, levels, params);
 	}
 	public void contour(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
-		gcja().contour(x, y, z, levels, params);
+		gcsa().contour(x, y, z, levels, params);
 	}
 	public void contour(float[][] x, float[][] y, float[][] z) {
-		gcja().contour(x, y, z);
+		gcsa().contour(x, y, z);
 	}
 	public void contour(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
-		gcja().contour(x, y, z, levels, params);
+		gcsa().contour(x, y, z, levels, params);
 	}
 	public void contour(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
-		gcja().contour(x, y, z, levels, params);
+		gcsa().contour(x, y, z, levels, params);
 	}
 	public void contour(int subaxis, float[] x, float[] y, float[][] z) {
 		gcma().contour(subaxis, x, y, z);
@@ -715,22 +755,22 @@ public class JPlot {
 		gcma().contour(subaxis, x, y, z, levels, params);
 	}
 	public void contour(double[] x, double[] y, double[][] z) {
-		gcja().contour(x, y, z);
+		gcsa().contour(x, y, z);
 	}
 	public void contour(double[] x, double[] y, double[][] z, int levels, Object... params) {
-		gcja().contour(x, y, z, levels, params);
+		gcsa().contour(x, y, z, levels, params);
 	}
 	public void contour(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
-		gcja().contour(x, y, z, levels, params);
+		gcsa().contour(x, y, z, levels, params);
 	}
 	public void contour(double[][] x, double[][] y, double[][] z) {
-		gcja().contour(x, y, z);
+		gcsa().contour(x, y, z);
 	}
 	public void contour(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
-		gcja().contour(x, y, z, levels, params);
+		gcsa().contour(x, y, z, levels, params);
 	}
 	public void contour(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
-		gcja().contour(x, y, z, levels, params);
+		gcsa().contour(x, y, z, levels, params);
 	}
 	public void contour(int subaxis, double[] x, double[] y, double[][] z) {
 		gcma().contour(subaxis, x, y, z);
@@ -752,22 +792,22 @@ public class JPlot {
 	}
 	
 	public void contourf(float[] x, float[] y, float[][] z) {
-		gcja().contourf(x, y, z);
+		gcsa().contourf(x, y, z);
 	}
 	public void contourf(float[] x, float[] y, float[][] z, int levels, Object... params) {
-		gcja().contourf(x, y, z, levels, params);
+		gcsa().contourf(x, y, z, levels, params);
 	}
 	public void contourf(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
-		gcja().contourf(x, y, z, levels, params);
+		gcsa().contourf(x, y, z, levels, params);
 	}
 	public void contourf(float[][] x, float[][] y, float[][] z) {
-		gcja().contourf(x, y, z);
+		gcsa().contourf(x, y, z);
 	}
 	public void contourf(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
-		gcja().contourf(x, y, z, levels, params);
+		gcsa().contourf(x, y, z, levels, params);
 	}
 	public void contourf(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
-		gcja().contourf(x, y, z, levels, params);
+		gcsa().contourf(x, y, z, levels, params);
 	}
 	public void contourf(int subaxis, float[] x, float[] y, float[][] z) {
 		gcma().contourf(subaxis, x, y, z);
@@ -788,22 +828,22 @@ public class JPlot {
 		gcma().contourf(subaxis, x, y, z, levels, params);
 	}
 	public void contourf(double[] x, double[] y, double[][] z) {
-		gcja().contourf(x, y, z);
+		gcsa().contourf(x, y, z);
 	}
 	public void contourf(double[] x, double[] y, double[][] z, int levels, Object... params) {
-		gcja().contourf(x, y, z, levels, params);
+		gcsa().contourf(x, y, z, levels, params);
 	}
 	public void contourf(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
-		gcja().contourf(x, y, z, levels, params);
+		gcsa().contourf(x, y, z, levels, params);
 	}
 	public void contourf(double[][] x, double[][] y, double[][] z) {
-		gcja().contourf(x, y, z);
+		gcsa().contourf(x, y, z);
 	}
 	public void contourf(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
-		gcja().contourf(x, y, z, levels, params);
+		gcsa().contourf(x, y, z, levels, params);
 	}
 	public void contourf(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
-		gcja().contourf(x, y, z, levels, params);
+		gcsa().contourf(x, y, z, levels, params);
 	}
 	public void contourf(int subaxis, double[] x, double[] y, double[][] z) {
 		gcma().contourf(subaxis, x, y, z);
@@ -825,22 +865,22 @@ public class JPlot {
 	}
 	
 	public void contourp(float[] x, float[] y, float[][] z) {
-		gcja().contourp(x, y, z);
+		gcsa().contourp(x, y, z);
 	}
 	public void contourp(float[] x, float[] y, float[][] z, int levels, Object... params) {
-		gcja().contourp(x, y, z, levels, params);
+		gcsa().contourp(x, y, z, levels, params);
 	}
 	public void contourp(float[] x, float[] y, float[][] z, float[] levels, Object... params) {
-		gcja().contourp(x, y, z, levels, params);
+		gcsa().contourp(x, y, z, levels, params);
 	}
 	public void contourp(float[][] x, float[][] y, float[][] z) {
-		gcja().contourp(x, y, z);
+		gcsa().contourp(x, y, z);
 	}
 	public void contourp(float[][] x, float[][] y, float[][] z, int levels, Object... params) {
-		gcja().contourp(x, y, z, levels, params);
+		gcsa().contourp(x, y, z, levels, params);
 	}
 	public void contourp(float[][] x, float[][] y, float[][] z, float[] levels, Object... params) {
-		gcja().contourp(x, y, z, levels, params);
+		gcsa().contourp(x, y, z, levels, params);
 	}
 	public void contourp(int subaxis, float[] x, float[] y, float[][] z) {
 		gcma().contourp(subaxis, x, y, z);
@@ -861,22 +901,22 @@ public class JPlot {
 		gcma().contourp(subaxis, x, y, z, levels, params);
 	}
 	public void contourp(double[] x, double[] y, double[][] z) {
-		gcja().contourp(x, y, z);
+		gcsa().contourp(x, y, z);
 	}
 	public void contourp(double[] x, double[] y, double[][] z, int levels, Object... params) {
-		gcja().contourp(x, y, z, levels, params);
+		gcsa().contourp(x, y, z, levels, params);
 	}
 	public void contourp(double[] x, double[] y, double[][] z, double[] levels, Object... params) {
-		gcja().contourp(x, y, z, levels, params);
+		gcsa().contourp(x, y, z, levels, params);
 	}
 	public void contourp(double[][] x, double[][] y, double[][] z) {
-		gcja().contourp(x, y, z);
+		gcsa().contourp(x, y, z);
 	}
 	public void contourp(double[][] x, double[][] y, double[][] z, int levels, Object... params) {
-		gcja().contourp(x, y, z, levels, params);
+		gcsa().contourp(x, y, z, levels, params);
 	}
 	public void contourp(double[][] x, double[][] y, double[][] z, double[] levels, Object... params) {
-		gcja().contourp(x, y, z, levels, params);
+		gcsa().contourp(x, y, z, levels, params);
 	}
 	public void contourp(int subaxis, double[] x, double[] y, double[][] z) {
 		gcma().contourp(subaxis, x, y, z);
@@ -898,16 +938,16 @@ public class JPlot {
 	}
 	
 	public void hatch(float[] x, float[] y, float[][] z, float lower, float upper, String pattern) {
-		gcja().hatch(x,y,z, lower,upper, pattern, (Object)null);
+		gcsa().hatch(x,y,z, lower,upper, pattern, (Object)null);
 	}
 	public void hatch(float[] x, float[] y, float[][] z, float lower, float upper, String pattern, Object... params) {
-		gcja().hatch(x, y, z, lower, upper, pattern, params);
+		gcsa().hatch(x, y, z, lower, upper, pattern, params);
 	}
 	public void hatch(float[][] x, float[][] y, float[][] z, float lower, float upper, String pattern) {
-		gcja().hatch(x,y,z, lower,upper, pattern, (Object)null);
+		gcsa().hatch(x,y,z, lower,upper, pattern, (Object)null);
 	}
 	public void hatch(float[][] x, float[][] y, float[][] z, float lower, float upper, String pattern, Object... params) {
-		gcja().hatch(x, y, z, lower, upper, pattern, params);
+		gcsa().hatch(x, y, z, lower, upper, pattern, params);
 	}
 	public void hatch(int subaxis, float[] x, float[] y, float[][] z, float lower, float upper, String pattern) {
 		gcma().hatch(subaxis, x,y,z, lower,upper, pattern, (Object)null);
@@ -922,16 +962,16 @@ public class JPlot {
 		gcma().hatch(subaxis, x, y, z, lower, upper, pattern, params);
 	}
 	public void hatch(double[] x, double[] y, double[][] z, double lower, double upper, String pattern) {
-		gcja().hatch(x, y, z, lower, upper, pattern, (Object)null);
+		gcsa().hatch(x, y, z, lower, upper, pattern, (Object)null);
 	}
 	public void hatch(double[] x, double[] y, double[][] z, double lower, double upper, String pattern, Object... params) {
-		gcja().hatch(x, y, z, lower, upper, pattern, params);
+		gcsa().hatch(x, y, z, lower, upper, pattern, params);
 	}
 	public void hatch(double[][] x, double[][] y, double[][] z, double lower, double upper, String pattern) {
-		gcja().hatch(x, y, z, lower, upper, pattern, (Object)null);
+		gcsa().hatch(x, y, z, lower, upper, pattern, (Object)null);
 	}
 	public void hatch(double[][] x, double[][] y, double[][] z, double lower, double upper, String pattern, Object... params) {
-		gcja().hatch(x, y, z, lower, upper, pattern, params);
+		gcsa().hatch(x, y, z, lower, upper, pattern, params);
 	}
 	public void hatch(int subaxis, double[] x, double[] y, double[][] z, double lower, double upper, String pattern) {
 		gcma().hatch(subaxis, x, y, z, lower, upper, pattern, (Object)null);
@@ -947,16 +987,16 @@ public class JPlot {
 	}
 	
 	public void pcolour(float[] x, float[] y, float[][] z, float cmin, float cmax, Object... params) {
-		gcja().pcolour(x, y, z, cmin, cmax, params);
+		gcsa().pcolour(x, y, z, cmin, cmax, params);
 	}
 	public void pcolour(float[][] x, float[][] y, float[][] z, float cmin, float cmax, Object... params) {
-		gcja().pcolour(x, y, z, cmin, cmax, params);
+		gcsa().pcolour(x, y, z, cmin, cmax, params);
 	}
 	public void pcolour(double[] x, double[] y, double[][] z, double cmin, double cmax, Object... params) {
-		gcja().pcolour(x, y, z, cmin, cmax, params);
+		gcsa().pcolour(x, y, z, cmin, cmax, params);
 	}
 	public void pcolour(double[][] x, double[][] y, double[][] z, double cmin, double cmax, Object... params) {
-		gcja().pcolour(x, y, z, cmin, cmax, params);
+		gcsa().pcolour(x, y, z, cmin, cmax, params);
 	}
 	public void pcolour(int subaxis, float[] x, float[] y, float[][] z, float cmin, float cmax, Object... params) {
 		gcma().pcolour(subaxis, x, y, z, cmin, cmax, params);
@@ -972,54 +1012,60 @@ public class JPlot {
 	}
 	
 	public void annotate(double x, double y, String text) {
-		gcja().annotate(x, y, text, new Object[0]);
+		gcsa().annotate(x, y, text, new Object[0]);
 	}
 	public void annotate(double x, double y, String text, Object... params) {
-		gcja().annotate(x, y, text, params);
+		gcsa().annotate(x, y, text, params);
 	}
 	
 	public void coastLines() {
-		gcja().coastLines();
+		gcsa().coastLines();
 	}
 	public void coastLines(int resolution) {
-		gcja().coastLines(resolution);
+		gcsa().coastLines(resolution);
 	}
 	
 	public void land() {
-		gcja().land(0xff676767, 0xff000000);
+		gcsa().land(0xff676767, 0xff000000);
 	}
 	public void land(int land_colour, int coast_colour) {
-		gcja().land(land_colour, coast_colour);
+		gcsa().land(land_colour, coast_colour);
 	}
 	
 	public void showShapefile(String path_to_shapefile, String shapeType) {
-		gcja().showShapefile(path_to_shapefile, shapeType);
+		gcsa().showShapefile(path_to_shapefile, shapeType);
 	}
 	public void showShapefile(String path_to_shapefile, String shapeType, CoordinateReferenceSystem user_crs,
 			Object... params) {
-		gcja().showShapefile(path_to_shapefile, shapeType, user_crs, params);
+		gcsa().showShapefile(path_to_shapefile, shapeType, user_crs, params);
 	}
 	public void showShapefile(String path_to_shapefile, String shapeType, int user_epsg_code, Object... params) {
-		gcja().showShapefile(path_to_shapefile, shapeType, user_epsg_code, params);
+		gcsa().showShapefile(path_to_shapefile, shapeType, user_epsg_code, params);
 	}
 	
 	public JColourbar colourbar() {
-		return colourbar(gca(), "", "meither");
+		return colourbar(gca(), "", "neither", VERTICAL);
 	}
 	public JColourbar colourbar(String name) {
-		return colourbar(gca(), name, "neither");
+		return colourbar(gca(), name, "neither", VERTICAL);
 	}
 	public JColourbar colourbar(String name, String extent) {
-		return colourbar(gca(), name, extent);
+		return colourbar(gca(), name, extent, VERTICAL);
+	}
+	public JColourbar colourbar(String name, String extent, int orientation) {
+		return colourbar(gca(), name, extent, orientation);
 	}
 	public JColourbar colourbar(JAxis axis) {
-		return colourbar(axis, "", "neither");
+		return colourbar(axis, "", "neither", VERTICAL);
 	}
 	public JColourbar colourbar(JAxis axis, String name) {
-		return colourbar(axis, name, "neither");
+		return colourbar(axis, name, "neither", VERTICAL);
 	}
 	public JColourbar colourbar(JAxis axis, String name, String extent) {
-		JColourbar cb = new JColourbar(axis, name);
+		return colourbar(axis, name, extent, VERTICAL);
+	}
+	public JColourbar colourbar(JAxis axis, String name, String extent, int orientation) {
+		JColourbar cb = new JColourbar(axis, name, orientation);
 		cb.setExtent(extent);
 		addSubplot(cb);
 		return cb;
@@ -1031,16 +1077,16 @@ public class JPlot {
 	 * @example SimpleLegend
 	 */
 	public void legend() {
-		gcja().legend(PConstants.RIGHT, PConstants.TOP, 1d);
+		gcsa().legend(PConstants.RIGHT, PConstants.TOP, 1d);
 	}
 	public void legend(double rts) {
-		gcja().legend(PConstants.RIGHT, PConstants.TOP, rts);
+		gcsa().legend(PConstants.RIGHT, PConstants.TOP, rts);
 	}
 	public void legend(int left_right, int top_bottom) {
-		gcja().legend(left_right, top_bottom, 1d);
+		gcsa().legend(left_right, top_bottom, 1d);
 	}
 	public void legend(int left_right, int top_bottom, double rts) {
-		gcja().legend(left_right, top_bottom, rts);
+		gcsa().legend(left_right, top_bottom, rts);
 	}
 	public void legend(int subaxis) {
 		gcma().legend(subaxis, PConstants.RIGHT, PConstants.TOP, 1d);
@@ -1056,63 +1102,63 @@ public class JPlot {
 	}
 	
 	public void addText(double x, double y, String text) {
-		gcja().addText(x, y, text, 1.0d, 0xff000000, PConstants.LEFT, PConstants.BOTTOM, 0d, null);
+		gcsa().addText(x, y, text, 1.0d, 0xff000000, PConstants.LEFT, PConstants.BOTTOM, 0d, null);
 	}
 	public void addText(double x, double y, String text, double textsize, int colour, String style) {
-		gcja().addText(x, y, text, textsize, colour, PConstants.LEFT, PConstants.BOTTOM, 0d, style);
+		gcsa().addText(x, y, text, textsize, colour, PConstants.LEFT, PConstants.BOTTOM, 0d, style);
 	}
 	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny, String style) {
-		gcja().addText(x, y, text, textsize, colour, alignx, aligny, 0d, style);
+		gcsa().addText(x, y, text, textsize, colour, alignx, aligny, 0d, style);
 	}
 	public void addText(double x, double y, String text, double textsize, int colour, int alignx, int aligny, double rotation, String style) {
-		gcja().addText(x, y, text, textsize, colour, alignx, aligny, rotation, style);
+		gcsa().addText(x, y, text, textsize, colour, alignx, aligny, rotation, style);
 	}
 	public void addPolygon(JDPolygon poly, int inn_colour, int out_colour, double linewidth) {
-		gcja().addPolygon(poly, inn_colour, out_colour, linewidth);
+		gcsa().addPolygon(poly, inn_colour, out_colour, linewidth);
 	}
 
 	public void predefImgShow(String predefined_images) {
-		gcja().predefImgShow(predefined_images);
+		gcsa().predefImgShow(predefined_images);
 	}
 
 	public void imgShow(PImage img) {
-		gcja().imgShow(img);
+		gcsa().imgShow(img);
 	}
 
 	public void setXRange(float xmin, float xmax) {
-		gcja().setXRange(xmin, xmax);
+		gcsa().setXRange(xmin, xmax);
 	}
 	public void setXRange(double xmin, double xmax) {
-		gcja().setXRange(xmin, xmax);
+		gcsa().setXRange(xmin, xmax);
 	}
 	public void setYRange(float ymin, float ymax) {
-		gcja().setYRange(ymin, ymax);
+		gcsa().setYRange(ymin, ymax);
 	}
 	public void setYRange(double ymin, double ymax) {
-		gcja().setYRange(ymin, ymax);
+		gcsa().setYRange(ymin, ymax);
 	}
 	public void setRange(float xmin, float xmax, float ymin, float ymax) {
-		gcja().setRange(xmin, xmax, ymin, ymax);
+		gcsa().setRange(xmin, xmax, ymin, ymax);
 	}
 	public void setRange(double xmin, double xmax, double ymin, double ymax) {
-		gcja().setRange(xmin, xmax, ymin, ymax);
+		gcsa().setRange(xmin, xmax, ymin, ymax);
 	}
 	
 	public void setFont(PFont font) {
-		gcja().setFont(font);
+		gcsa().setFont(font);
 	}
 	
 	public void setXTitle(String xtitle) {
-		gcja().setXTitle(xtitle,"");
+		gcsa().setXTitle(xtitle,"");
 	}
 	public void setXTitle(String xtitle, String xunit) {
-		gcja().setXTitle(xtitle, xunit);
+		gcsa().setXTitle(xtitle, xunit);
 	}
 	public void setYTitle(String ytitle) {
-		gcja().setYTitle(ytitle,"");
+		gcsa().setYTitle(ytitle,"");
 	}
 	public void setYTitle(String ytitle, String yunit) {
-		gcja().setYTitle(ytitle, yunit);
+		gcsa().setYTitle(ytitle, yunit);
 	}
 	public void setXTitle(int x_section, String xtitle) {
 		gcma().setXTitle(x_section, xtitle,"");
@@ -1131,16 +1177,16 @@ public class JPlot {
 	}
 	
 	public void setLogarithmicAxis(char axis) {
-		gcja().setLogarithmicAxis(axis);
+		gcsa().setLogarithmicAxis(axis);
 	}
 	public void setAsTimeAxis(char axis, String unit) {
-		gcja().setAsTimeAxis(axis, unit);
+		gcsa().setAsTimeAxis(axis, unit);
 	}
 	public void setAsTimeAxis(char axis, String unit, String calendar) {
-		gcja().setAsTimeAxis(axis, unit, calendar);
+		gcsa().setAsTimeAxis(axis, unit, calendar);
 	}
 	public void setAsTimeAxis(char axis, String unit, String calendar, String format) {
-		gcja().setAsTimeAxis(axis, unit, calendar, format);
+		gcsa().setAsTimeAxis(axis, unit, calendar, format);
 	}
 	
 	public void showXAxisSide(String side) { gca().showXAxisSide(side); }

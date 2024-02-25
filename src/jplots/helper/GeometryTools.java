@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jplots.maths.JDPoint;
+import jplots.maths.JDPolygon;
 
 public class GeometryTools {
 	
@@ -55,6 +56,23 @@ public class GeometryTools {
 			a += (points[e].x - points[s].x) * (points[e].y + points[s].y);
 		return 0.5d * a;
 	}
+	/**
+	 * calculates the signed area of a polygon
+	 * 
+	 * @param  points   array of corner points of the polygon
+	 * @param  edges    array of pairs of indices of points, which defines edges of the polygon
+	 * @return negative area when corners are counterclockwise in right-handed coordinate system
+	 */
+	public static double area(JDPoint[] points, int[][] edges) {
+		if (points==null || edges==null)
+			return Double.NaN;
+		if (edges.length == 2)
+			return 0d;
+		double a = 0d;
+		for(int[] e: edges)
+			a += (points[e[1]].x - points[e[0]].x) * (points[e[1]].y + points[e[0]].y);
+		return 0.5d * a;
+	}
 	
 	
 	public static double atan(JDPoint p1, JDPoint p2) {
@@ -71,7 +89,18 @@ public class GeometryTools {
 		return c;
 	}
 	
-	
+	public static boolean segmentContainsPoint(JDPoint es, JDPoint ee, JDPoint p, double tol) {
+		double dx = ee.x-es.x, dy = ee.y-es.y;
+		double dr = Math.sqrt(dx*dx+dy*dy), dt = tol*dr;
+//		double or = Math.abs((p.x-es.x)*dy-(p.y-es.y)*dx);
+//		double ta = (p.x-es.x)*dx+(p.y-es.y)*dy;
+//		System.out.println("SCP:   ta/or="+ta+"/"+or+"  with  dr/dt="+dr+"/"+dt);
+		if(Math.abs((p.x-es.x)*dy-(p.y-es.y)*dx)>=dt) return false;
+		double dl = (p.x-es.x)*dx+(p.y-es.y)*dy;
+		if(dl<=-dt) return false;
+		if(dl>=dr*dr+dt) return false;
+		return true;
+	}
 	public static JDPoint segmentIntersection(JDPoint as, JDPoint ae, JDPoint bs, JDPoint be, double tol) {
 		// as + u*(ae-as)  =  bs + v*(be-bs)
 		// 
@@ -87,6 +116,222 @@ public class GeometryTools {
 		v = Math.max(0d, Math.min(1d, v));
 		return bs.fractionTowards(v, be);
 	}
+	public static JDPoint intersects(JDPoint as, JDPoint ae, JDPoint bs, JDPoint be, double tolerance) {
+		if(as.equals(bs, tolerance)) return null;
+		if(ae.equals(be, tolerance)) return null;
+		
+		if(GeometryTools.segmentContainsPoint(as, ae, bs, tolerance))
+			return bs;
+		if(GeometryTools.segmentContainsPoint(bs, be, as, tolerance))
+			return as;
+		if(GeometryTools.segmentContainsPoint(as, ae, be, tolerance))
+			return null;
+		if(GeometryTools.segmentContainsPoint(bs, be, ae, tolerance))
+			return null;
+	    // As + u*(Ae-As) = Bs + v*(Be-Bs)
+	    // u*(Ae-As) + v*(Bs-Be) = Bs - As
+	    double abx = bs.x-as.x, aby = bs.y-as.y;
+	    double aax = ae.x-as.x, aay = ae.y-as.y;
+	    double bbx = be.x-bs.x, bby = be.y-bs.y;
+	    //println("A: "+aax+"/"+aay+"\nB: "+bbx+"/"+bby+"\nAB: "+abx+"/"+aby);
+	    // u*aax - v*bbx = abx
+	    // u*aay - v*bby = aby
+	    double u = (abx*bby - aby*bbx) / (aax*bby - aay*bbx);
+	    double v = (abx*aay - aby*aax) / (aax*bby - aay*bbx);
+	    //println("u = "+u+"\nv = "+v);
+	    if( u<0d || u>1d ) return null;
+	    if( v<0d || v>1d ) return null;
+	    return new JDPoint( 0.5d*(as.x+u*aax + bs.x+v*bbx), 0.5d*(as.y+u*aay + bs.y+v*bby) );
+	}
+
+	public static JDPolygon union(JDPolygon poly1, JDPolygon poly2) {
+		return union(poly1, poly2, Double.NaN);
+	}
+	public static JDPolygon union(JDPolygon poly1, JDPolygon poly2, double tolerance) {
+	    if(poly1==null) return poly2;
+	    if(poly2==null) return poly1;
+	    
+	    double[] pb = poly1.getBounds(), tb = poly2.getBounds();
+	    if(pb[1]<tb[0] || pb[0]>tb[1] || pb[3]<tb[2] || pb[2]>tb[3]) return null;
+	    
+	    if(Double.isNaN(tolerance)) {
+	    	double ix = Math.min(pb[0],tb[0]), iy = Math.min(pb[2],tb[2]);
+	    	double ax = Math.max(pb[1],tb[1]), ay = Math.max(pb[3],tb[3]);
+	    	tolerance = Math.max(ax-ix,ay-iy) * 1e-10d;
+	    }
+	    
+	    List<Intersection> intersections = new ArrayList<>();
+	    for(int i=0; i<poly1.edges.length; i++) {
+	    	int[] ee = poly1.edges[i];
+	    	for(int j=0; j<poly2.edges.length; j++) {
+	    		int[] ff = poly2.edges[j];
+	            JDPoint X = intersects(poly1.c[ee[0]],poly1.c[ee[1]], poly2.c[ff[0]],poly2.c[ff[1]], tolerance);
+	            if(X!=null)
+	                intersections.add(new Intersection(ee[0],ee[1],ff[0],ff[1], X, i,j));
+	        }
+	    }
+	    
+	    if(intersections.isEmpty()) {
+	        if(poly2.contains(poly1.c[0], tolerance)) {
+	            return poly2;
+	        }
+	        if(poly1.contains(poly2.c[0], tolerance)) {
+	            return poly1;
+	        }
+	        return null;
+	    }
+	    
+        boolean[] bp = new boolean[poly1.c.length];
+        boolean[] bq = new boolean[poly2.c.length];
+        for(int i=Math.max(poly1.c.length,poly2.c.length)-1; i>=0; i--) {
+            if(i<poly1.c.length)
+                bp[i] = !poly2.contains(poly1.c[i], tolerance);
+            if(i<poly2.c.length)
+                bq[i] = !poly1.contains(poly2.c[i], tolerance);
+        }
+        
+        List<JDPoint> new_points = new ArrayList<>();
+        
+        //find left most point.
+        double leftmost = Double.POSITIVE_INFINITY;
+        int id=-1; int currPoly = 0;
+        for(int i=0; i<poly1.edges.length; i++) {
+            JDPoint pp = poly1.c[poly1.edges[i][0]];
+            if(pp.x<leftmost) { leftmost = pp.x;
+                id = i; currPoly = 1; }
+        }
+        for(int i=0; i<poly2.edges.length; i++) {
+            JDPoint qq = poly2.c[poly2.edges[i][0]];
+            if(qq.x<leftmost) { leftmost = qq.x;
+                id = i; currPoly = 2; }
+        }
+        
+        JDPoint lastpoint = poly1.c[0];
+        double vx=0d, vy=0d;
+        if(currPoly==1) { lastpoint = poly1.c[poly1.edges[id][0]]; JDPoint n = poly1.c[poly1.edges[id][1]];
+            vx = n.x-lastpoint.x; vy = n.y-lastpoint.y; bp[poly1.edges[id][0]] = false; }
+        if(currPoly==2) { lastpoint = poly2.c[poly2.edges[id][0]]; JDPoint n = poly2.c[poly2.edges[id][1]];
+            vx = n.x-lastpoint.x; vy = n.y-lastpoint.y; bq[poly2.edges[id][0]] = false; }
+//        println((currPoly==1?"P1["+poly1.edges[id][0]:"P2["+poly2.edges[id][0])+"]: "+lastpoint);
+        JDPoint startPoint = lastpoint.copy();
+        JDPolygon res = null;
+        int hi = 0;
+        while(lastpoint!=null) {
+        	//trace boundary
+	        while(true) {
+	            new_points.add(lastpoint.copy());
+	            int isct=-1, isct_cnt=0;
+	            double dd = Double.POSITIVE_INFINITY;
+	            int lpi = -1;
+	            if(currPoly==1) lpi = poly1.edges[id][0];
+	            if(currPoly==2) lpi = poly2.edges[id][0];
+	            for(int k=0; k<intersections.size(); k++) {
+	                Intersection ii = intersections.get(k);
+	                boolean find = (ii.p1s==lpi && currPoly==1) || (ii.p2s==lpi && currPoly==2);
+	                if(find) {
+	                    JDPoint X = ii.p;
+	                    double d = (X.x-lastpoint.x)*vx + (X.y-lastpoint.y)*vy;
+	                    if(d>=0d) {
+	                        if(d<dd) {
+	                            dd = d;
+	                            isct = k;
+	                        }
+	                        isct_cnt++;
+	                    }
+	                }
+	            }
+	            if(isct_cnt==0) {
+	                if(currPoly==1) {
+	                	lastpoint = poly1.c[poly1.edges[id][1]];
+	                    bp[poly1.edges[id][1]] = false;
+	                	id = poly1.edges[id][2];
+	                	JDPoint n = poly1.c[poly1.edges[id][1]];
+	                    vx = n.x-lastpoint.x; vy = n.y-lastpoint.y;
+	                }
+	                if(currPoly==2) {
+	                	lastpoint = poly2.c[poly2.edges[id][1]];
+	                    bq[poly2.edges[id][1]] = false;
+	                	id = poly2.edges[id][2];
+	                	JDPoint n = poly2.c[poly2.edges[id][1]];
+	                    vx = n.x-lastpoint.x; vy = n.y-lastpoint.y;
+	                }
+//	                println((currPoly==1?"P1["+poly1.edges[id][0]:"P2["+poly2.edges[id][0])+"]: "+lastpoint);
+	            } else {
+	            	Intersection ii = intersections.get(isct);
+	                lastpoint = ii.p;
+	                intersections.remove(isct);
+	                int nextPoly = 0;
+	                if(currPoly==1) { nextPoly = 2; id = ii.n2; JDPoint n = poly2.c[poly2.edges[id][1]];
+	                    vx = n.x-lastpoint.x; vy = n.y-lastpoint.y; }
+	                if(currPoly==2) { nextPoly = 1; id = ii.n1; JDPoint n = poly1.c[poly1.edges[id][1]];
+	                    vx = n.x-lastpoint.x; vy = n.y-lastpoint.y; }
+	                currPoly = nextPoly;
+//	                println("isect: "+lastpoint+"  "+ii.p1s+"/"+ii.p1e+"/"+ii.p2s+"/"+ii.p2e+"  (-> "+(currPoly==1?"P1":"P2")+")");
+	            }
+	            //TODO rem break;
+//	            if(new_points.size()>100) break;
+	            if(lastpoint.equals(startPoint)) break;
+	        }
+	        if(res==null) {
+//	        	System.out.println("Polygon created...\n\n");
+	        	res = new JDPolygon(new_points.toArray(new JDPoint[0]));
+//	        	fill(0xffff9900); noStroke();
+//	            for(Intersection i: intersections)
+//	            	circle((float)i.p.x, height-(float)i.p.y, diam);
+	        } else {
+//	        	System.out.println("Hole added to polygon...");
+	        	res.addHole(new_points.toArray(new JDPoint[0]));
+//	        	//TODO rem break;
+//	        	break;
+	        }
+	        lastpoint = null;
+	        id = -1;
+	        currPoly = -1;
+	        new_points.clear();
+	        for(int i=0; i<poly1.edges.length && lastpoint==null; i++)
+	        	if(bp[poly1.edges[i][0]]) {
+	        		lastpoint = poly1.c[poly1.edges[i][0]]; JDPoint n = poly1.c[poly1.edges[i][1]];
+	        		vx = n.x-lastpoint.x; vy = n.y-lastpoint.y;
+	        		id = i; currPoly = 1; }
+		    for(int i=0; i<poly2.edges.length && lastpoint==null; i++)
+		    	if(bq[poly2.edges[i][0]]) {
+			        lastpoint = poly2.c[poly2.edges[i][0]]; JDPoint n = poly2.c[poly2.edges[i][1]];
+	        		vx = n.x-lastpoint.x; vy = n.y-lastpoint.y;
+			        id = i; currPoly = 2; }
+		    if(lastpoint==null && !intersections.isEmpty()) {
+		    	Intersection ii = intersections.get(0);
+		    	vx = poly1.c[ii.p1e].x-poly1.c[ii.p1s].x;
+		    	vy = poly1.c[ii.p1e].y-poly1.c[ii.p1s].y;
+		    	double os = vx*(poly2.c[ii.p2s].y-poly1.c[ii.p1s].y) - vy*(poly2.c[ii.p2s].x-poly1.c[ii.p1s].x);
+		    	double oe = vx*(poly2.c[ii.p2e].y-poly1.c[ii.p1s].y) - vy*(poly2.c[ii.p2e].x-poly1.c[ii.p1s].x);
+		    	boolean n2_i2o = oe>os;
+		    	vx = poly2.c[ii.p2e].x-poly2.c[ii.p2s].x;
+		    	vy = poly2.c[ii.p2e].y-poly2.c[ii.p2s].y;
+		    	os = vx*(poly1.c[ii.p1s].y-poly2.c[ii.p2s].y) - vy*(poly1.c[ii.p1s].x-poly2.c[ii.p2s].x);
+		    	oe = vx*(poly1.c[ii.p1e].y-poly2.c[ii.p2s].y) - vy*(poly1.c[ii.p1e].x-poly2.c[ii.p2s].x);
+		    	boolean n1_i2o = oe>os;
+		    	if(n1_i2o && !n2_i2o) {
+		    		lastpoint = ii.p.copy(); JDPoint n = poly1.c[ii.p1e];
+		    		vx = n.x-lastpoint.x; vy = n.y-lastpoint.y;
+		    		id = ii.n1; currPoly = 1;
+		    	} else
+		    	if(n2_i2o && !n1_i2o) {
+		    		lastpoint = ii.p.copy(); JDPoint n = poly2.c[ii.p2e];
+		    		vx = n.x-lastpoint.x; vy = n.y-lastpoint.y;
+		    		id = ii.n2; currPoly = 2;
+		    	}
+		    }
+		    if(lastpoint!=null) {
+		    	startPoint = lastpoint.copy();
+//		    	println((currPoly==1?"P1["+poly1.edges[id][0]:"P2["+poly2.edges[id][0])+"]: "+lastpoint);
+		    }
+        }
+        
+        return res;
+	}
+	
+	
+	
 	
 	
 	public static void checkCut(List<JDPoint> p, List<Double> c, double[] normal, double crit, double eps) {
@@ -468,5 +713,28 @@ public class GeometryTools {
 		res.add(subpoly.toArray(new JDPoint[0]));
 
 		return res;
+	}
+	
+	
+	
+	
+
+	private static class Intersection {
+	    public int p1s,p1e, p2s,p2e;
+	    public JDPoint p;
+	    public int n1, n2;
+	    
+	    public Intersection(int p1i, int p1j, int p2i, int p2j, JDPoint isct, int n1, int n2) {
+	        this.p1s = p1i; this.p1e = p1j;
+	        this.p2s = p2i; this.p2e = p2j;
+	        this.p   = isct.copy();
+	        this.n1  = n1;
+	        this.n2  = n2;
+	    }
+	    
+	    @Override
+	    public String toString() {
+	    	return "Isect@"+String.format("%08X",hashCode())+"["+p1s+"/"+p1e+"|"+p2s+"/"+p2e+", "+p+" -> "+n1+"/"+n2+"]";
+	    }
 	}
 }

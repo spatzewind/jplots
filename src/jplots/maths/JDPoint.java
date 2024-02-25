@@ -53,7 +53,7 @@ public class JDPoint implements Comparable<JDPoint> {
 
 	@Override
 	public String toString() {
-		return "p[" + x + ", " + y + "]";
+		return "p[" + x + ", " + y + ", (" + value + ")]";
 	}
 
 	@Override
@@ -118,6 +118,7 @@ public class JDPoint implements Comparable<JDPoint> {
 		return Math.sqrt(dist2(point));
 	}
 	public double dist2(JDPoint point) {
+		if(point==null) return Double.NaN;
 		return (this.x - point.x) * (this.x - point.x) + (this.y - point.y) * (this.y - point.y);
 	}
 

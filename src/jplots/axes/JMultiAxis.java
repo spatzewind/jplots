@@ -10,6 +10,7 @@ import jplots.layer.JContourLayer2D;
 import jplots.layer.JHatchLayer;
 import jplots.layer.JHatchLayer2D;
 import jplots.layer.JLegend;
+import jplots.layer.JAxisAlignedLineLayer;
 import jplots.layer.JPColourLayer;
 import jplots.layer.JPlotsLayer;
 import jplots.layer.JScatterLayer;
@@ -20,7 +21,6 @@ import jplots.maths.JPlotMath.DateTime;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLatexShape;
 import jplots.shapes.JLineShape;
-import jplots.shapes.JPlotShape;
 import jplots.shapes.JTextShape;
 import jplots.transform.JProjection;
 import processing.core.PApplet;
@@ -40,21 +40,18 @@ public class JMultiAxis extends JAxis {
 		super(plot, pos_x,pos_y, width,height);
 		subdivX = subDivX;
 		subdivY = subDivY;
-		defaults();
 		defineSubAxes(true);
 	}
 	public JMultiAxis(JAxis src_axis, int subDivX, int subDivY) {
 		super(src_axis);
 		subdivX = subDivX;
 		subdivY = subDivY;
-		defaults();
 		defineSubAxes(true);
 	}
 	public JMultiAxis(JMultiAxis src_axis) {
 		super(src_axis);
 		subdivX = src_axis.subdivX;
 		subdivY = src_axis.subdivY;
-		defaults();
 		defineSubAxes(true);
 	}
 	
@@ -85,7 +82,7 @@ public class JMultiAxis extends JAxis {
 	// *********************************
 	
 	@Override
-	public JAxis copy() {
+	public JMultiAxis copy() {
 		return new JMultiAxis(this);
 	}
 	@Override
@@ -100,20 +97,35 @@ public class JMultiAxis extends JAxis {
 		int sdx=activeSubAxis%subdivX, sdy = activeSubAxis/subdivX;
 		return new int[] {subPosX[sdx],subPosY[sdy], subSizX[sdx], subSizY[sdy]};
 	}
+//	@Override
+//	public boolean isXlogAxis() {
+//		for(int sdx=0; sdx<subdivX; sdx++)
+//			if(xLog[sdx])
+//				return true;
+//		return false;
+//	}
+//	@Override
+//	public boolean isYlogAxis() {
+//		for(int sdy=0; sdy<subdivY; sdy++)
+//			if(yLog[sdy])
+//				return true;
+//		return false;
+//	}
 	@Override
-	public boolean isXlogAxis() {
-		for(int sdx=0; sdx<subdivX; sdx++)
-			if(xLog[sdx])
-				return true;
-		return false;
+	public AxisScale getScaleX() {
+		if(subdivX==1)
+			return scaleX[0];
+		System.err.println("Mulitple x-scales are present, use getScaleX(int column)");
+		return null;
 	}
 	@Override
-	public boolean isYlogAxis() {
-		for(int sdy=0; sdy<subdivY; sdy++)
-			if(yLog[sdy])
-				return true;
-		return false;
+	public AxisScale getScaleY() {
+		if(subdivX==1)
+			return scaleY[0];
+		System.err.println("Mulitple x-scales are present, use getScaleX(int column)");
+		return null;
 	}
+	
 	@Override
 	public boolean isGeoAxis() {
 		return false;
@@ -129,10 +141,6 @@ public class JMultiAxis extends JAxis {
 		return all;
 	}
 	
-	@Override
-	protected void defaults() {
-		super.defaults();
-	}
 	
 	
 	
@@ -223,7 +231,7 @@ public class JMultiAxis extends JAxis {
 		return graph;
 	}
 	@Override
-	public JPlotShape createPlotOnlyAxes(PApplet applet, int w, int h) {
+	public JGroupShape createPlotOnlyAxes(PApplet applet, int w, int h) {
 		JGroupShape graph = new JGroupShape();
 		boolean foundError = false;
 		for(int subax=0; subax<subdivX; subax++)
@@ -596,6 +604,29 @@ public class JMultiAxis extends JAxis {
 		updateRange(subaxis, scl);
 	}
 	
+	public void axhline(int y_section, double y) {
+		axhline(y_section, y, 0xff000000, 3f, "-");
+	}
+	public void axhline(int y_section, double y, int colour, double linewidth, String linestyle, Object... params) {
+		JPlotsLayer xyl = new JAxisAlignedLineLayer(y, 'h', colour, linewidth, linestyle);
+		for(int sdx=0; sdx<subdivX; sdx++) {
+			layers[y_section*subdivX+sdx].add(xyl);
+			readParams(sdx, xyl, params);
+		}
+		updateRange(y_section, xyl, "y");
+	}
+	public void axvline(int x_section, double x) {
+		axvline(x_section, x, 0xff000000, 3f, "-");
+	}
+	public void axvline(int x_section, double x, int colour, double linewidth, String linestyle, Object... params) {
+		JPlotsLayer xyl = new JAxisAlignedLineLayer(x, 'v', colour, linewidth, linestyle);
+		for(int sdy=0; sdy<subdivY; sdy++) {
+			layers[sdy*subdivX+x_section].add(xyl);
+			readParams(sdy, xyl, params);
+		}
+		updateRange(x_section, xyl, "x");
+	}
+	
 	public void legend(int subaxis) {
 		JPlotsLayer lgl = new JLegend(this, PConstants.RIGHT, PConstants.TOP, false, 1d);
 		layers[subaxis].add(lgl);
@@ -612,7 +643,7 @@ public class JMultiAxis extends JAxis {
 		JPlotsLayer lgl = new JLegend(this, left_right, top_bottom, false, rts);
 		layers[subaxis].add(lgl);
 	}
-
+	
 	public void setXTitle(int x_section, String xtitle) {
 		titleX[x_section] = "";
 		if(xtitle!=null) titleX[x_section] = xtitle;
@@ -756,7 +787,7 @@ public class JMultiAxis extends JAxis {
 			}
 		}
 	}
-	/* private void updateRange(int sa, JPlotsLayer layer, String axis) {
+	private void updateRange(int sc, JPlotsLayer layer, String axis) {
 		//TODO
 		double[] r = layer.getRange();
 		double xmin = r[0], xmax = r[1], ymin = r[2], ymax = r[3];
@@ -772,30 +803,23 @@ public class JMultiAxis extends JAxis {
 			ymin = ym - yr;
 			ymax = ym + yr;
 		}
-		if (layers[sa].size() == 1) {
-			if (!xRangeFix[sa] && axis.equals("x")) {
-				minX[sa] = xmin;
-				maxX[sa] = xmax;
-			}
-			if (!yRangeFix[sa] && axis.equals("y")) {
-				minY[sa] = ymin;
-				maxY[sa] = ymax;
-			}
-		} else {
-			if (!xRangeFix[sa] && axis.equals("x")) {
-				if (xmin < minX[sa])
-					minX[sa] = xmin;
-				if (xmax > maxX[sa])
-					maxX[sa] = xmax;
-			}
-			if (!yRangeFix[sa] && axis.equals("y")) {
-				if (ymin < minY[sa])
-					minY[sa] = ymin;
-				if (ymax > maxY[sa])
-					maxY[sa] = ymax;
+		if(axis.equals("x")) {
+			if (!xRangeFix[sc]) {
+				if (xmin < minX[sc])
+					minX[sc] = xmin;
+				if (xmax > maxX[sc])
+					maxX[sc] = xmax;
 			}
 		}
-	} */
+		if(axis.equals("y")) {
+			if (!yRangeFix[sc]) {
+				if (ymin < minY[sc])
+					minY[sc] = ymin;
+				if (ymax > maxY[sc])
+					maxY[sc] = ymax;
+			}
+		}
+	}
 	private void readParams(int subaxis, JPlotsLayer layer, Object... params) {
 		if (params == null)
 			return;
@@ -1181,7 +1205,6 @@ public class JMultiAxis extends JAxis {
 		}
 		return axisgrid;
 	}
-	
 	
 	private void defineSubAxes(boolean create) {
 		if(create) {

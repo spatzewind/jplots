@@ -6,6 +6,7 @@ import java.util.List;
 import jplots.JPlot;
 import jplots.axes.JAxis;
 import jplots.colour.JColourtable;
+import jplots.helper.GeometryTools;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDLine;
 import jplots.maths.JDPoint;
@@ -29,6 +30,7 @@ public class JContourLayer2D extends JPlotsLayer {
 	private double[] contourIntervals;
 	private String[] contourStyle;
 	private JDPoint[][] corners;
+	private float[][] imgRed, imgGre, imgBlu, imgCnt;
 	
 	public JContourLayer2D(float[] x, float[] y, float[][] z, float zmin, float zmax, int nIntervals, float[] zIntervals) {
 		boolean is_valid = (x!=null && y!=null && z!=null);
@@ -63,7 +65,7 @@ public class JContourLayer2D extends JPlotsLayer {
 			null_init();
 			return;
 		}
-		corners = new JDPoint[y.length][x.length];
+		corners = new JDPoint[x.length][x[0].length];
 		for(int j=0; j<x.length; j++)
 			for(int i=0; i<x[j].length; i++)
 				corners[j][i] = new JDPoint(x[j][i], y[j][i], z[j][i]);
@@ -106,7 +108,7 @@ public class JContourLayer2D extends JPlotsLayer {
 			null_init();
 			return;
 		}
-		corners = new JDPoint[y.length][x.length];
+		corners = new JDPoint[x.length][x[0].length];
 		for(int j=0; j<x.length; j++)
 			for(int i=0; i<x[j].length; i++)
 				corners[j][i] = new JDPoint(x[j][i], y[j][i], z[j][i]);
@@ -286,6 +288,9 @@ public class JContourLayer2D extends JPlotsLayer {
 		return new double[] { minZ, maxZ };
 	}
 	
+	public void setLevels(double[] levels) {
+		contourIntervals = levels.clone();
+	}
 	public double[] getLevels() {
 		return contourIntervals;
 	}
@@ -400,10 +405,29 @@ public class JContourLayer2D extends JPlotsLayer {
 			return;
 		}
 		if (img == null) {
+			if(ax.getPlot().isDebug())
+				System.out.println("[DEBUG] JContourLayer2D: create pixel-image with size "+p[2]+"x"+p[3]);
 			img = ax.getPlot().getApplet().createImage(p[2], p[3], PConstants.ARGB);
+			imgRed = new float[p[3]][p[2]];
+			imgGre = new float[p[3]][p[2]];
+			imgBlu = new float[p[3]][p[2]];
+			imgCnt = new float[p[3]][p[2]];
 		} else if (img.width != p[2] || img.height != p[3]) {
+			if(ax.getPlot().isDebug())
+				System.out.println("[DEBUG] JContourLayer2D: change pixel-image size to "+p[2]+"x"+p[3]);
 			img = ax.getPlot().getApplet().createImage(p[2], p[3], PConstants.ARGB);
+			imgRed = new float[p[3]][p[2]];
+			imgGre = new float[p[3]][p[2]];
+			imgBlu = new float[p[3]][p[2]];
+			imgCnt = new float[p[3]][p[2]];
 		}
+		for(int j=0; j<p[3]; j++)
+			for(int i=0; i<p[2]; i++) {
+				imgRed[j][i] = 0f;
+				imgGre[j][i] = 0f;
+				imgBlu[j][i] = 0f;
+				imgCnt[j][i] = 0f;
+			}
 		JDPoint[][] points = new JDPoint[input.length][input[0].length];
 		for(int j=0; j<input.length; j++)
 			for(int i=0; i<input[j].length; i++)
@@ -423,15 +447,48 @@ public class JContourLayer2D extends JPlotsLayer {
 				int iys =  Math.max((int) tyi    - (tyi < 0 ? 1 : 0), p[1]),
 					iye = -Math.max((int) (-tya) - (tya > 0 ? 1 : 0), 1 - p[1] - p[3]);
 				if ((ixe < ixs) || (iye < iys)) continue;
-				for (int v = iys; v <= iye; v++) {
-					for (int u = ixs; u <= ixe; u++) {
-						JDPoint ij = new JDPoint(u+0.5d,v+0.5d);
-						if(!qu.contains(ij)) continue;
-						img.pixels[(v-p[1]) * p[2] + u-p[0]] = getColor(qu.valueAt(ij));
+				if( iye-iys>1 && ixe-ixs>1 ) {
+					for (int v = iys; v <= iye; v++) {
+						for (int u = ixs; u <= ixe; u++) {
+							JDPoint ij = new JDPoint(u+0.5d,v+0.5d);
+							if(!qu.contains(ij)) continue;
+							int c = getColor(qu.valueAt(ij));
+							float f = ((c>>24)&255) / 255f;
+							imgRed[v-p[1]][u-p[0]] += f*((c>>16) & 255);
+							imgGre[v-p[1]][u-p[0]] += f*((c>>8) & 255);
+							imgBlu[v-p[1]][u-p[0]] += f*(c & 255);
+							imgCnt[v-p[1]][u-p[0]] += f;
+						}
+					}
+				} else
+				if( iye-iys>=1 && ixe-ixs>=1 ) {
+					for (int v = iys; v <= iye; v++) {
+						for (int u = ixs; u <= ixe; u++) {
+							JDPoint ij = new JDPoint(u+0.5d,v+0.5d);
+							JDPoint ji = qu.closestPointInside(ij);
+							float f = (ij.dist(ji)<0.0001d) ? 1f : 0.3f;
+							int c = getColor(qu.valueAt(ji));
+							f *= ((c>>24)&255) / 255f;
+							imgRed[v-p[1]][u-p[0]] += f*((c>>16) & 255);
+							imgGre[v-p[1]][u-p[0]] += f*((c>>8) & 255);
+							imgBlu[v-p[1]][u-p[0]] += f*(c & 255);
+							imgCnt[v-p[1]][u-p[0]] += f;
+						}
 					}
 				}
 			}
 		}
+		for(int j=0; j<p[3]; j++)
+			for(int i=0; i<p[2]; i++) {
+				if(imgCnt[j][i]<0.0005f) { img.pixels[j*p[2]+i] = 0x00999999; }
+				else {
+					int r = (int) (imgRed[j][i]/imgCnt[j][i]+0.5f),
+					    g = (int) (imgGre[j][i]/imgCnt[j][i]+0.5f),
+					    b = (int) (imgBlu[j][i]/imgCnt[j][i]+0.5f);
+					int a = (int) (255.9999d*Math.pow(Math.min(1d, imgCnt[j][i]), 0.3d));
+					img.pixels[j*p[2]+i] = (a<<24) | (r<<16) | (g<<8) | (b);
+				}
+			}
 		img.updatePixels();
 		s.addChild(new JImageShape(img, p[0], p[1], p[2], p[3]));
 	}
@@ -960,15 +1017,23 @@ public class JContourLayer2D extends JPlotsLayer {
 			int im = (i1+1-i0) / 2 + i0;
 			for(JDPolygon poly: getIntBasedPolygons(data, lower, upper, i0, im, j0, j1)) {
 				boolean isDisjunct = true;
-				for(int t=res.size()-1; t>=0 && isDisjunct; t--)
-					isDisjunct = !res.get(t).union(poly,0.0001d);
+				for(int t=res.size()-1; t>=0 && isDisjunct; t--) {
+					JDPolygon r = GeometryTools.union(poly, res.get(t), 0.0001d);
+					if(r==null) continue;
+					isDisjunct = true;
+					res.set(t, r);
+				}
 				if(isDisjunct)
 					res.add(poly);
 			}
 			for(JDPolygon poly: getIntBasedPolygons(data, lower, upper, im, i1, j0, j1)) {
 				boolean isDisjunct = true;
-				for(int t=res.size()-1; t>=0 && isDisjunct; t--)
-					isDisjunct = !res.get(t).union(poly,0.0001d);
+				for(int t=res.size()-1; t>=0 && isDisjunct; t--) {
+					JDPolygon r = GeometryTools.union(poly, res.get(t), 0.0001d);
+					if(r==null) continue;
+					isDisjunct = true;
+					res.set(t, r);
+				}
 				if(isDisjunct)
 					res.add(poly);
 			}
@@ -977,15 +1042,23 @@ public class JContourLayer2D extends JPlotsLayer {
 			int jm = (j1+1-j0) / 2 + j0;
 			for(JDPolygon poly: getIntBasedPolygons(data, lower, upper, i0, i1, j0, jm)) {
 				boolean isDisjunct = true;
-				for(int t=res.size()-1; t>=0 && isDisjunct; t--)
-					isDisjunct = !res.get(t).union(poly,0.0001d);
+				for(int t=res.size()-1; t>=0 && isDisjunct; t--) {
+					JDPolygon r = GeometryTools.union(poly, res.get(t), 0.0001d);
+					if(r==null) continue;
+					isDisjunct = true;
+					res.set(t, r);
+				}
 				if(isDisjunct)
 					res.add(poly);
 			}
 			for(JDPolygon poly: getIntBasedPolygons(data, lower, upper, i0, i1, jm, j1)) {
 				boolean isDisjunct = true;
-				for(int t=res.size()-1; t>=0 && isDisjunct; t--)
-					isDisjunct = !res.get(t).union(poly,0.0001d);
+				for(int t=res.size()-1; t>=0 && isDisjunct; t--) {
+					JDPolygon r = GeometryTools.union(poly, res.get(t), 0.0001d);
+					if(r==null) continue;
+					isDisjunct = true;
+					res.set(t, r);
+				}
 				if(isDisjunct)
 					res.add(poly);
 			}

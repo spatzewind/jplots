@@ -74,4 +74,12 @@ public class JEllipseShape extends JPlotShape {
 			break;
 		}
 	}
+	
+	
+	public float[] getCenter() {
+		return new float[] {0.5f * (xtl + xbr), 0.5f * (ytl + ybr)};
+	}
+	public float[] getRadii() {
+		return new float[] {0.5f * (xbr - xtl), 0.5f * (ybr - ytl)};
+	}
 }

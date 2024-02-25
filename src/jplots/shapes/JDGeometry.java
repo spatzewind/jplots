@@ -3,12 +3,13 @@ package jplots.shapes;
 import java.util.ArrayList;
 import java.util.List;
 
+import jplots.helper.GeometryTools;
 import jplots.maths.JDPolygon;
 
 public class JDGeometry {
 
 	private List<JDPolygon> polys;
-
+	
 	public JDGeometry() {
 		polys = new ArrayList<>();
 	}
@@ -38,8 +39,12 @@ public class JDGeometry {
 
 	private void addPolygon(JDPolygon p) {
 		boolean addToExistingPoly = false;
-		for (int pi = polys.size() - 1; pi >= 0 && !addToExistingPoly; pi--)
-			addToExistingPoly = polys.get(pi).union(p, p.getDefaultTolerance());
+		for (int pi = polys.size() - 1; pi >= 0 && !addToExistingPoly; pi--) {
+			JDPolygon temp = GeometryTools.union(polys.get(pi), p, Double.NaN);
+			if(temp==null) continue;
+			polys.set(pi, temp);
+			addToExistingPoly = true;
+		}
 		if (!addToExistingPoly)
 			polys.add(p);
 	}

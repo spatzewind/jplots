@@ -47,4 +47,14 @@ public class LinearSegmentedJColourtable extends JColourtable {
 		}
 		return colourmix(fircol, seccol, rel);
 	}
+	
+	public void setUnderflowColour(int c) {
+		underflowColour = c;
+	}
+	public void setOverflowColour(int c) {
+		overflowColour = c;
+	}
+	public void setUndefinedColour(int c) {
+		invalidColour = c;
+	}
 }

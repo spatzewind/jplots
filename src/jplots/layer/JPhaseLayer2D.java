@@ -6,6 +6,7 @@ import java.util.List;
 import jplots.JPlot;
 import jplots.axes.JAxis;
 import jplots.colour.JColourtable;
+import jplots.helper.GeometryTools;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDLine;
 import jplots.maths.JDPoint;
@@ -995,15 +996,23 @@ public class JPhaseLayer2D extends JPlotsLayer {
 			int im = (i1+1-i0) / 2 + i0;
 			for(JDPolygon poly: getIntBasedPolygons(data, lower, upper, i0, im, j0, j1)) {
 				boolean isDisjunct = true;
-				for(int t=res.size()-1; t>=0 && isDisjunct; t--)
-					isDisjunct = !res.get(t).union(poly,0.0001d);
+				for(int t=res.size()-1; t>=0 && isDisjunct; t--) {
+					JDPolygon r = GeometryTools.union(poly, res.get(t), 0.0001d);
+					if(r==null) continue;
+					isDisjunct = true;
+					res.set(t, r);
+				}
 				if(isDisjunct)
 					res.add(poly);
 			}
 			for(JDPolygon poly: getIntBasedPolygons(data, lower, upper, im, i1, j0, j1)) {
 				boolean isDisjunct = true;
-				for(int t=res.size()-1; t>=0 && isDisjunct; t--)
-					isDisjunct = !res.get(t).union(poly,0.0001d);
+				for(int t=res.size()-1; t>=0 && isDisjunct; t--) {
+					JDPolygon r = GeometryTools.union(poly, res.get(t), 0.0001d);
+					if(r==null) continue;
+					isDisjunct = true;
+					res.set(t, r);
+				}
 				if(isDisjunct)
 					res.add(poly);
 			}
@@ -1012,15 +1021,23 @@ public class JPhaseLayer2D extends JPlotsLayer {
 			int jm = (j1+1-j0) / 2 + j0;
 			for(JDPolygon poly: getIntBasedPolygons(data, lower, upper, i0, i1, j0, jm)) {
 				boolean isDisjunct = true;
-				for(int t=res.size()-1; t>=0 && isDisjunct; t--)
-					isDisjunct = !res.get(t).union(poly,0.0001d);
+				for(int t=res.size()-1; t>=0 && isDisjunct; t--) {
+					JDPolygon r = GeometryTools.union(poly, res.get(t), 0.0001d);
+					if(r==null) continue;
+					isDisjunct = true;
+					res.set(t, r);
+				}
 				if(isDisjunct)
 					res.add(poly);
 			}
 			for(JDPolygon poly: getIntBasedPolygons(data, lower, upper, i0, i1, jm, j1)) {
 				boolean isDisjunct = true;
-				for(int t=res.size()-1; t>=0 && isDisjunct; t--)
-					isDisjunct = !res.get(t).union(poly,0.0001d);
+				for(int t=res.size()-1; t>=0 && isDisjunct; t--) {
+					JDPolygon r = GeometryTools.union(poly, res.get(t), 0.0001d);
+					if(r==null) continue;
+					isDisjunct = true;
+					res.set(t, r);
+				}
 				if(isDisjunct)
 					res.add(poly);
 			}

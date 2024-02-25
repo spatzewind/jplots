@@ -40,6 +40,12 @@ public class JGroupShape extends JPlotShape {
 	public int childCount() {
 		return childs.size();
 	}
+	public JPlotShape getChild(int i) {
+		return childs.get(i);
+	}
+	public List<JPlotShape> allChildren() {
+		return childs;
+	}
 	
 	@Override
 	public void printStack(PrintWriter pw, String off) {

@@ -65,4 +65,14 @@ public class ColourSequenceJColourtable extends JColourtable {
 		pd -= p;
 		return colourmix(linearColours[p], linearColours[p + 1], pd);
 	}
+
+	public void setUnderflowColour(int c) {
+		underflowColour = c;
+	}
+	public void setOverflowColour(int c) {
+		overflowColour = c;
+	}
+	public void setUndefinedColour(int c) {
+		invalidColour = c;
+	}
 }

@@ -535,18 +535,12 @@ public class JPlotMath {
 		DateTime dax = DateTime.fromDouble(vax, unit, calendar);
 		int[] tin = din.toDate(calendar);
 		int[] tax = dax.toDate(calendar);
-		if (tin[2] > 0)
-			tin[2]--;
-		if (tax[2] > 0)
-			tax[2]--;
 		long diffA = (long) tax[2] - (long) tin[2];
 		if (diffA > 5) {
 			if (diffA < maxTickCount) {
 				double[] ticks = new double[(int) diffA + 3];
 				for (int j = 0; j <= diffA; j++) {
 					int y = j + tin[2];
-					if (y >= 0)
-						y++;
 					ticks[j + 2] = new DateTime(y + "-01-01 00:00:00", calendar).toDouble(unit, calendar);
 				}
 				ticks[0] = 0d;
@@ -559,8 +553,6 @@ public class JPlotMath {
 				double[] ticks = new double[temp.length];
 				for (int j = 2; j < ticks.length; j++) {
 					int y = (int) (temp[j]+0.5d) - (temp[j]<-0.5d?1:0);
-					if (y >= 0)
-						y++;
 					ticks[j] = new DateTime(y + "-01-01 00:00:00", calendar).toDouble(unit, calendar);
 				}
 				ticks[0] = 0d;
@@ -568,6 +560,8 @@ public class JPlotMath {
 				return ticks;
 			}
 		}
+		if(tin[2]>0) tin[2]--;
+		if(tax[2]>0) tax[2]--;
 		int diffM = 12 * ((int) diffA) + (tax[1] - tin[1]);
 		if (diffM > 5) {
 			if (diffM < maxTickCount) {
@@ -802,6 +796,14 @@ public class JPlotMath {
 		}
 
 		public String format(String _format, String _cal) {
+			double oriF = dayfraction; long oriI = days;
+			int prec = 100;
+			if(_format.contains("H")) prec =    1440;
+			if(_format.contains("M")) prec =   86400;
+			if(_format.contains("s")) prec = 8640000;
+			int dfl = (int) (dayfraction*prec + 0.5d);
+			if(dfl>=prec) { days++; dayfraction = (dfl+0.5d-prec) / prec; }
+			else dayfraction = (dfl+0.5d) / prec;
 			int[] dd = toDate(_cal);
 			String res = "" + _format + "";
 			// System.out.println("res=<"+res+"> and
@@ -868,7 +870,7 @@ public class JPlotMath {
 					if(dd[4]<1||dd[4]>12) M = "JFMAMJJASOND".charAt(dd[1]-1);
 					res = res.substring(0, a) + M + res.substring(b + 1);
 				} else {
-					String M = "JanFebMarAprMaiJunJulAugSepOctNovDec".substring(dd[1]*3-3, dd[1]*3);
+					String M = "JanFebMarAprMayJunJulAugSepOctNovDec".substring(dd[1]*3-3, dd[1]*3);
 					res = res.substring(0, a) + M + res.substring(b + 1);
 				}
 			}
@@ -877,6 +879,8 @@ public class JPlotMath {
 				int b = res.lastIndexOf("s");
 				res = res.substring(0, a) + PApplet.nf(dd[5], b + 1 - a) + res.substring(b + 1);
 			}
+			days = oriI;
+			dayfraction = oriF;
 			return res;
 		}
 

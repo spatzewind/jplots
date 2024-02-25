@@ -25,7 +25,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import jplots.JPlot;
-import processing.core.PConstants;
+import static jplots.JPlotConstants.*;
 import processing.core.PGraphics;
 import processing.core.PShape;
 import processing.core.PShapeSVG;
@@ -53,23 +53,23 @@ public class JLatexShape extends JPlotShape {
 	private String txt, txtstyle;
 	
 	public JLatexShape(String text) {
-		this(text, 0f, 0f, 12f, PConstants.LEFT, PConstants.TOP, JPlotShape.fillColour, 0, null);
+		this(text, 0f, 0f, 12f, LEFT, TOP, JPlotShape.fillColour, 0, null);
 	}
 
 	public JLatexShape(String text, int colour) {
-		this(text, 0f, 0f, 12f, PConstants.LEFT, PConstants.TOP, colour, 0, null);
+		this(text, 0f, 0f, 12f, LEFT, TOP, colour, 0, null);
 	}
 
 	public JLatexShape(String text, float x_pos, float y_pos) {
-		this(text, x_pos, y_pos, 12f, PConstants.LEFT, PConstants.TOP, JPlotShape.fillColour, 0, null);
+		this(text, x_pos, y_pos, 12f, LEFT, TOP, JPlotShape.fillColour, 0, null);
 	}
 
 	public JLatexShape(String text, float x_pos, float y_pos, int colour) {
-		this(text, x_pos, y_pos, 12f, PConstants.LEFT, PConstants.TOP, colour, 0, null);
+		this(text, x_pos, y_pos, 12f, LEFT, TOP, colour, 0, null);
 	}
 
 	public JLatexShape(String text, float x_pos, float y_pos, float size, int colour) {
-		this(text, x_pos, y_pos, size, PConstants.LEFT, PConstants.TOP, colour, 0, null);
+		this(text, x_pos, y_pos, size, LEFT, TOP, colour, 0, null);
 	}
 
 	public JLatexShape(String text, float x_pos, float y_pos, float size, int horizontal_alignement,
@@ -96,15 +96,15 @@ public class JLatexShape extends JPlotShape {
 		g.rotate(rotation);
 		float xoff = 0f;
 		switch(halign) {
-			case PConstants.LEFT:   xoff = -0.0f*sp.width; break;
-			case PConstants.CENTER: xoff = -0.5f*sp.width; break;
-			case PConstants.RIGHT:  xoff = -1.0f*sp.width; break;
+			case LEFT:   xoff = -0.0f*sp.width; break;
+			case CENTER: xoff = -0.5f*sp.width; break;
+			case RIGHT:  xoff = -1.0f*sp.width; break;
 		}
 		float yoff = 0f;
 		switch(valign) {
-			case PConstants.TOP:    yoff =  0.16666667f * txtSize - 0.0f*sp.height; break;
-			case PConstants.CENTER: yoff = -0.10000000f * txtSize - 0.5f*sp.height; break;
-			case PConstants.BOTTOM: yoff = -0.16666667f * txtSize - 1.0f*sp.height; break;
+			case TOP:    yoff =  0.16666667f * txtSize - 0.0f*sp.height; break;
+			case CENTER: yoff = -0.10000000f * txtSize - 0.5f*sp.height; break;
+			case BOTTOM: yoff = -0.16666667f * txtSize - 1.0f*sp.height; break;
 		}
 		g.shape(sp, xoff, yoff);
 		g.popMatrix();

@@ -48,10 +48,9 @@ public class JPolygonLayer extends JPlotsLayer {
 //			System.out.println("[DEBUG] JShapeLayer: begin reading shape file \""+connect.get("url")+"\"");
 		JDPoint[] coords = poly.c.clone();
 		for (int c = 0; c < coords.length; c++) {
-			double[] xy = { coords[c].x,  coords[c].y };
-			if (ax.isGeoAxis()) xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[1], xy[0], true, false);
-			if (ax.isXlogAxis()) xy[0] = Math.log10(coords[c].x);
-			if (ax.isYlogAxis()) xy[1] = Math.log10(coords[c].y);
+			double[] xy = inputProj.fromPROJtoLATLON(ax.isXlogAxis()?Math.log10(coords[c].x):coords[c].x,
+			                                         ax.isYlogAxis()?Math.log10(coords[c].y):coords[c].y,false,false);
+			if (ax.isGeoAxis()) xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[0], xy[1], false, false);
 			coords[c] = new JDPoint(xy[0], xy[1]);
 		}
 		JPlotShape.fill(pc);

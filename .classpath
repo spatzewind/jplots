@@ -6,9 +6,8 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/ProcessingLatex"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/GeoTools-26.3"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Processing3"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JKriging"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/ProcessingLatex"/>
 	<classpathentry kind="output" path="resources/code"/>
 </classpath>

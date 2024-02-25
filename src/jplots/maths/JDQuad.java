@@ -2014,11 +2014,24 @@ public class JDQuad {
 		return contains(p, 0.0001d);
 	}
 	public boolean contains(JDPoint p, double delta) {
+		if(p==null) return false;
 		if(p.x<xmin || p.x>xmax) return false;
 		if(p.y<ymin || p.y>ymax) return false;
 		double kk = 1d + delta;
 		double[] w = barycentricCoords(p);
 		return Math.abs(w[0])<=kk && Math.abs(w[1])<=kk;
+	}
+	public JDPoint closestPointInside(JDPoint p) {
+		if(contains(p)) return p;
+		JDPoint a = closestOnEdge(x[0],y[0],value[0], x[1],y[1],value[1], p.x,p.y);
+		JDPoint b = closestOnEdge(x[1],y[1],value[1], x[2],y[2],value[2], p.x,p.y);
+		JDPoint c = closestOnEdge(x[2],y[2],value[2], x[3],y[3],value[3], p.x,p.y);
+		JDPoint d = closestOnEdge(x[3],y[3],value[3], x[0],y[0],value[0], p.x,p.y);
+		double ad = p.dist2(a), bd = p.dist2(b), cd = p.dist2(c), dd = p.dist2(d);
+		if(ad<bd && ad<cd && ad<dd) return a;
+		if(bd<cd && bd<dd) return b;
+		if(cd<dd) return c;
+		return d;
 	}
 	public double[] barycentricCoords(JDPoint p) {
 		return barycentricCoords(p, 0.0001d);
@@ -2030,6 +2043,7 @@ public class JDQuad {
 		         D---C
 		 */
 		double u = Double.NaN, v = Double.NaN;
+		if(p==null) return new double[] {u,v};
 		if(parallelU) {
 			v = (p.x-mx)*vx + (p.y-my)*vy;
 			if(parallelV) {
@@ -2690,6 +2704,20 @@ public class JDQuad {
 		path.add(pointFromUV(m8));
 	}
 	
+	private JDPoint closestOnEdge(double x1, double y1, double v1, double x2, double y2, double v2, double px, double py) {
+		// (x1 + t*(x2-x1) - px)² + (y1 + t*(y2-y1) - py)² -> minimal
+		// d/dt[(a+bt)²] = d/dt[a²+2abt+b²t²] = 2ab + 2b²t
+		// ->
+		// (x1-px)*(x2-x1)+(x2-x1)²t + (y1-py)*(y2-y1) + (y2-y1)²t = 0
+		// [ (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) ] * t = [ (px-x1)*(x2-x1) + (py-y1)*(y2-y1) ]
+		if(Double.isNaN(v1) && Double.isNaN(v2)) return null;
+		double a = ((px-x1)*(x2-x1)+(py-y1)*(y2-y1)) / ((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+		if( a<0d ) a = 0d;
+		if(Double.isNaN(v1) && a<0.5001d) a = 0.5001d;
+		if( a>1d ) a = 1d;
+		if(Double.isNaN(v2) && a>0.4999d) a = 0.4999d;
+		return new JDPoint(x1+a*(x2-x1), y1+a*(y2-y1));
+	}
 	private void rotateIndecesBy(int num) {
 		if(num<0) num = (4-num) & 4;
 		if(num==0) return;

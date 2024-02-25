@@ -2034,6 +2034,14 @@ public class JDTriangle {
 			case 7: return Double.NaN;
 		}
 	}
+	public double[] getBounds() {
+		return new double[] {
+			Math.min(x[0],Math.min(x[1],x[2])),
+			Math.max(x[0],Math.max(x[1],x[2])),
+			Math.min(y[0],Math.min(y[1],y[2])),
+			Math.max(y[0],Math.max(y[1],y[2]))
+		};
+	}
 	
 	public double area() {
 		return GeometryTools.area(getCorners());
