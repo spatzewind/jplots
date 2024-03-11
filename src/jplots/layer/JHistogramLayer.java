@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import jplots.JPlot;
 import jplots.axes.JAxis;
+import jplots.axes.LogarithmicScale;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDPoint;
 import jplots.maths.JDPolygon;
@@ -82,8 +83,11 @@ public class JHistogramLayer extends JPlotsLayer {
 		}
 		minX=classbounds[0]; maxX=classbounds[classbounds.length-1];
 		minY=0d; maxY=JPlotMath.dmax(hist);
-		double Xin = ax.isXlogAxis() ? Math.log10(minX) : minX, Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
-		double Yin = ax.isYlogAxis() ? Math.log10(minY) : minY, Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
+		//TODO: deal with JMultiAxis
+		boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+		boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
+		double Xin = isXlog ? Math.log10(minX) : minX, Xax = isXlog ? Math.log10(maxX) : maxX;
+		double Yin = isYlog ? Math.log10(minY) : minY, Yax = isYlog ? Math.log10(maxY) : maxY;
 		double xs = p[2] / (Xax - Xin), ys = p[3] / (Yax - Yin);
 		AffineBuilder affine = new AffineBuilder().scale(invertAxisX ? -1d : 1d, invertAxisY ? 1d : -1d)
 				.translate(invertAxisX ? Xax : -Xin, invertAxisY ? -Yin : Yax).scale(xs, ys).translate(p[0], p[1]);

@@ -2,7 +2,6 @@ package jplots.layer;
 
 import jplots.JPlot;
 import jplots.axes.JAxis;
-import jplots.axes.JSingleAxis;
 import jplots.axes.LogarithmicScale;
 import jplots.maths.JPlotMath;
 import jplots.shapes.JGroupShape;
@@ -36,14 +35,12 @@ public class JAxisAlignedLineLayer extends JPlotsLayer {
 
 	@Override
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
-		if(!(ax instanceof JSingleAxis)) {
-			
-		}
-		boolean xlog = ax.g instanceof LogarithmicScale;
-		boolean ylog = scaleY instanceof LogarithmicScale;
+		//TODO: deal with JMultiAxis
+		boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+		boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
 		int[] p = ax.getSize();
-		double Xin = ax.isXlogAxis() ? Math.log10(minX) : minX, Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
-		double Yin = ax.isYlogAxis() ? Math.log10(minY) : minY, Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
+		double Xin = isXlog ? Math.log10(minX) : minX, Xax = isXlog ? Math.log10(maxX) : maxX;
+		double Yin = isYlog ? Math.log10(minY) : minY, Yax = isYlog ? Math.log10(maxY) : maxY;
 		double lln = 1d, llf = 0d, lpn = 0d, lpf = 0d, loff = 0d;
 		if ("-".equals(ls)) {
 			lln = 1000 * lw;
@@ -73,14 +70,14 @@ public class JAxisAlignedLineLayer extends JPlotsLayer {
 		int li = 0;
 		double vv, x1, x2, y1, y2;
 		if (isHorizontal) {
-			vv = ax.isYlogAxis() ? Math.log10(value) : value;
+			vv = isYlog ? Math.log10(value) : value;
 			y1 = p[1] + ys * (invertAxisY ? vv - Yin : Yax - vv);
 			y2 = y1;
 			if(y1<p[1] || y1>p[1]+p[3]) return;
 			x1 = p[0];
 			x2 = p[0] + p[2];
 		} else {
-			vv = ax.isXlogAxis() ? Math.log10(value) : value;
+			vv = isXlog ? Math.log10(value) : value;
 			x1 = p[0] + xs * (invertAxisX ? Xax - vv : vv - Xin);
 			x2 = x1;
 			if(x1<p[0] || x1>p[0]+p[2]) return;

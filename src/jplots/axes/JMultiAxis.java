@@ -33,6 +33,7 @@ public class JMultiAxis extends JAxis {
 	private boolean[] xRangeFix, yRangeFix, xAxInv, yAxInv, xLog, yLog, xTim, yTim;
 	private int[] subPosX, subPosY, subSizX, subSizY;
 	private double[] minX, maxX, minY, maxY;
+	protected AxisScale[] scaleX, scaleY;
 	private String[] titleX, titleY, unitX, unitY;
 	private String[] xTimUnit, yTimUnit, xTimCal, yTimCal, xTimFormat, yTimFormat;
 	

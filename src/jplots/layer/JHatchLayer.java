@@ -6,6 +6,7 @@ import java.util.List;
 
 import jplots.JPlot;
 import jplots.axes.JAxis;
+import jplots.axes.LogarithmicScale;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDEdge;
 import jplots.maths.JDPoint;
@@ -117,15 +118,18 @@ public class JHatchLayer extends JPlotsLayer {
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 //		System.out.println("Do hatching!");
 		int[] p = ax.getSize();
-		Xin = ax.isXlogAxis() ? Math.log10(minX) : minX;
-		Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
-		Yin = ax.isYlogAxis() ? Math.log10(minY) : minY;
-		Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
+		//TODO: deal with JMultiAxis
+		boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+		boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
+		Xin = isXlog ? Math.log10(minX) : minX;
+		Xax = isXlog ? Math.log10(maxX) : maxX;
+		Yin = isYlog ? Math.log10(minY) : minY;
+		Yax = isYlog ? Math.log10(maxY) : maxY;
 		double xs = p[2] / (Xax - Xin), ys = p[3] / (Yax - Yin);
 		// double tol = Math.max(Math.abs(maxX-minX), Math.abs(maxY-minY)) * 1.0e-12d;
 
 		// step 1: collect valid corners of grid and project them
-		collectValidPoints(ax.getGeoProjection(), ax.isXlogAxis(), ax.isYlogAxis(), ax.getPlot().isDebug());
+		collectValidPoints(ax.getGeoProjection(), isXlog, isYlog, ax.getPlot().isDebug());
 
 		// step 2: do delauney-triangulation
 		triangulate(ax);
@@ -192,14 +196,17 @@ public class JHatchLayer extends JPlotsLayer {
 	
 	private void triangulate(JAxis ax) {
 		boolean debug = ax.getPlot().isDebug();
+		//TODO: deal with JMultiAxis
+		boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+		boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
 		if (debug)
 			System.out.println("[DEBUG] JContourLayer: 2] triangulate ...");
 		if (input2d || ax.isGeoAxis()) {
 			JDelaunayTriangulator delaunay = new JDelaunayTriangulator(corners);
 			triangles = delaunay.getTriangles();
 		} else {
-			JGridTriangulator triangulator = new JGridTriangulator(ax.isXlogAxis() ? JPlotMath.log10(xarrayx) : xarrayx,
-					ax.isYlogAxis() ? JPlotMath.log10(yarrayy) : yarrayy, zarrayz);
+			JGridTriangulator triangulator = new JGridTriangulator(isXlog ? JPlotMath.log10(xarrayx) : xarrayx,
+					isYlog ? JPlotMath.log10(yarrayy) : yarrayy, zarrayz);
 			triangles = triangulator.getTriangles();
 		}
 		for(int i=triangles.size()-1; i>=0; i--) {

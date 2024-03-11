@@ -6,6 +6,7 @@ import java.util.List;
 
 import jplots.JPlot;
 import jplots.axes.JAxis;
+import jplots.axes.LogarithmicScale;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDEdge;
 import jplots.maths.JDLine;
@@ -115,10 +116,13 @@ public class JHatchLayer2D extends JPlotsLayer {
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 //		System.out.println("Do hatching!");
 		int[] q = ax.getSize();
-		Xin = ax.isXlogAxis() ? Math.log10(minX) : minX;
-		Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
-		Yin = ax.isYlogAxis() ? Math.log10(minY) : minY;
-		Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
+		//TODO: deal with JMultiAxis
+		boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+		boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
+		Xin = isXlog ? Math.log10(minX) : minX;
+		Xax = isXlog ? Math.log10(maxX) : maxX;
+		Yin = isYlog ? Math.log10(minY) : minY;
+		Yax = isYlog ? Math.log10(maxY) : maxY;
 		double xs = q[2] / (Xax - Xin), ys = q[3] / (Yax - Yin);
 		// double tol = Math.max(Math.abs(maxX-minX), Math.abs(maxY-minY)) * 1.0e-12d;
 
@@ -345,8 +349,9 @@ public class JHatchLayer2D extends JPlotsLayer {
 	}
 
 	private void collectValidPoints(JAxis ax, boolean debug) {
-		boolean xLog = ax.isXlogAxis();
-		boolean yLog = ax.isYlogAxis();
+		//TODO: deal with JMultiAxis
+		boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+		boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
 		int nx = 0, ny = 0;
 		if (input2d) {
 			ny = xarrayx2.length;
@@ -364,11 +369,11 @@ public class JHatchLayer2D extends JPlotsLayer {
 		for (int j = 0; j < ny; j++)
 			for (int i = 0; i < nx; i++) {
 				if (input2d) {
-					xy = inputProj.fromPROJtoLATLON(xLog ? Math.log10(xarrayx2[j][i]) : xarrayx2[j][i],
-							yLog ? Math.log10(yarrayy2[j][i]) : yarrayy2[j][i], false, false);
+					xy = inputProj.fromPROJtoLATLON(isXlog ? Math.log10(xarrayx2[j][i]) : xarrayx2[j][i],
+							isYlog ? Math.log10(yarrayy2[j][i]) : yarrayy2[j][i], false, false);
 				} else {
-					xy = inputProj.fromPROJtoLATLON(xLog ? Math.log10(xarrayx[i]) : xarrayx[i],
-							yLog ? Math.log10(yarrayy[j]) : yarrayy[j], false, false);
+					xy = inputProj.fromPROJtoLATLON(isXlog ? Math.log10(xarrayx[i]) : xarrayx[i],
+							isYlog ? Math.log10(yarrayy[j]) : yarrayy[j], false, false);
 				}
 				if(ax.isGeoAxis()) {
 					xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[0], xy[1], false, false);

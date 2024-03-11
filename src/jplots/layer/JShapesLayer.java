@@ -7,6 +7,7 @@ import org.locationtech.jts.geom.Coordinate;
 
 import jplots.JPlot;
 import jplots.axes.JAxis;
+import jplots.axes.LogarithmicScale;
 import jplots.helper.FileLoader;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDLine;
@@ -41,8 +42,11 @@ public class JShapesLayer extends JPlotsLayer {
 	@Override
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 		int[] p = ax.getSize();
-		double Xin = ax.isXlogAxis() ? Math.log10(minX) : minX, Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
-		double Yin = ax.isYlogAxis() ? Math.log10(minY) : minY, Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
+		//TODO: deal with JMultiAxis
+		boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+		boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
+		double Xin = isXlog ? Math.log10(minX) : minX, Xax = isXlog ? Math.log10(maxX) : maxX;
+		double Yin = isYlog ? Math.log10(minY) : minY, Yax = isYlog ? Math.log10(maxY) : maxY;
 		double xs = p[2] / (Xax - Xin), ys = p[3] / (Yax - Yin);
 		AffineBuilder affine = new AffineBuilder()
 				.scale(invertAxisX?-1d:1d, invertAxisY?1d:-1d).translate(invertAxisX?Xax:-Xin, invertAxisY?-Yin:Yax)
@@ -60,8 +64,8 @@ public class JShapesLayer extends JPlotsLayer {
 			for (int c = 0; c < points.length; c++) {
 				double[] xy = { points[c].x,  points[c].y };
 				if (ax.isGeoAxis()) xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[1], xy[0], true, false);
-				if (ax.isXlogAxis()) xy[0] = Math.log10(points[c].x);
-				if (ax.isYlogAxis()) xy[1] = Math.log10(points[c].y);
+				if (isXlog) xy[0] = Math.log10(points[c].x);
+				if (isYlog) xy[1] = Math.log10(points[c].y);
 				coords[c] = new JDPoint(xy[0], xy[1]);
 			}
 //			coordsSave.add(toCoords(coords));

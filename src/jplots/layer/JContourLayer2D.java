@@ -5,6 +5,7 @@ import java.util.List;
 
 import jplots.JPlot;
 import jplots.axes.JAxis;
+import jplots.axes.LogarithmicScale;
 import jplots.colour.JColourtable;
 import jplots.helper.GeometryTools;
 import jplots.maths.AffineBuilder;
@@ -212,10 +213,13 @@ public class JContourLayer2D extends JPlotsLayer {
 				}
 		}
 		int[] p = ax.getSize();
-		Xin = ax.isXlogAxis() ? Math.log10(minX) : minX;
-		Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
-		Yin = ax.isYlogAxis() ? Math.log10(minY) : minY;
-		Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
+		//TODO: deal with JMultiAxis
+		boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+		boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
+		Xin = isXlog ? Math.log10(minX) : minX;
+		Xax = isXlog ? Math.log10(maxX) : maxX;
+		Yin = isYlog ? Math.log10(minY) : minY;
+		Yax = isYlog ? Math.log10(maxY) : maxY;
 		double xs = p[2] / (Xax - Xin), ys = p[3] / (Yax - Yin);
 		// double tol = Math.max(Math.abs(maxX-minX), Math.abs(maxY-minY)) * 1.0e-12d;
 		AffineBuilder affine = new AffineBuilder().scale(invertAxisX ? -1d : 1d, invertAxisY ? 1d : -1d)

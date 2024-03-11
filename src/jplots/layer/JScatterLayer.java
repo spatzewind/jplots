@@ -6,6 +6,7 @@ import java.util.List;
 
 import jplots.JPlot;
 import jplots.axes.JAxis;
+import jplots.axes.LogarithmicScale;
 import jplots.helper.GeometryTools;
 import jplots.maths.JDPolygon;
 import jplots.maths.JPlotMath;
@@ -64,8 +65,11 @@ public class JScatterLayer extends JPlotsLayer {
 	@Override
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 		int[] p = ax.getSize();
-		double Xin = ax.isXlogAxis() ? Math.log10(minX) : minX, Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
-		double Yin = ax.isYlogAxis() ? Math.log10(minY) : minY, Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
+		//TODO: deal with JMultiAxis
+		boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+		boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
+		double Xin = isXlog ? Math.log10(minX) : minX, Xax = isXlog ? Math.log10(maxX) : maxX;
+		double Yin = isYlog ? Math.log10(minY) : minY, Yax = isYlog ? Math.log10(maxY) : maxY;
 		if ("o".equalsIgnoreCase(ls) || "@".equals(ls)) {
 			JPlotShape.fill(col);
 		} else {
@@ -80,8 +84,8 @@ public class JScatterLayer extends JPlotsLayer {
 		for (int i = 0; i < xarrayx.length; i++) {
 			if (!Double.isFinite(xarrayx[i]) || !Double.isFinite(yarrayy[i]))
 				continue;
-			double[] xy = inputProj.fromPROJtoLATLON(ax.isXlogAxis() ? Math.log10(xarrayx[i]) : xarrayx[i],
-					ax.isYlogAxis() ? Math.log10(yarrayy[i]) : yarrayy[i], false, true);
+			double[] xy = inputProj.fromPROJtoLATLON(isXlog ? Math.log10(xarrayx[i]) : xarrayx[i],
+					isYlog ? Math.log10(yarrayy[i]) : yarrayy[i], false, true);
 			if (ax.isGeoAxis())
 				xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[0], xy[1], false, true);
 			double x1 = p[0] + xs * (invertAxisX ? Xax - xy[0] : xy[0] - Xin);

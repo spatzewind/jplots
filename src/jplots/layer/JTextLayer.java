@@ -2,6 +2,7 @@ package jplots.layer;
 
 import jplots.JPlot;
 import jplots.axes.JAxis;
+import jplots.axes.LogarithmicScale;
 import jplots.maths.AffineBuilder;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JLatexShape;
@@ -45,14 +46,17 @@ public class JTextLayer extends JPlotsLayer {
 		double qy = this.y;
 		if(useAxis) {
 			int[] p = ax.getSize();
-			double Xin = ax.isXlogAxis() ? Math.log10(minX) : minX;
-			double Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
-			double Yin = ax.isYlogAxis() ? Math.log10(minY) : minY;
-			double Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
+			//TODO: deal with JMultiAxis
+			boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+			boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
+			double Xin = isXlog ? Math.log10(minX) : minX;
+			double Xax = isXlog ? Math.log10(maxX) : maxX;
+			double Yin = isYlog ? Math.log10(minY) : minY;
+			double Yax = isYlog ? Math.log10(maxY) : maxY;
 			double xs = p[2] / (Xax - Xin), ys = p[3] / (Yax - Yin);
 			double[] xy = {
-					ax.isXlogAxis() ? Math.log10(this.x) : this.x,
-					ax.isYlogAxis() ? Math.log10(this.y) : this.y
+					isXlog ? Math.log10(this.x) : this.x,
+					isYlog ? Math.log10(this.y) : this.y
 			};
 			if(ax.isGeoAxis()) {
 				xy = inputProj.fromPROJtoLATLON(xy[0], xy[1], false, false);

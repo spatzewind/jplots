@@ -5,6 +5,7 @@ import java.util.List;
 
 import jplots.JPlot;
 import jplots.axes.JAxis;
+import jplots.axes.LogarithmicScale;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDLine;
 import jplots.maths.JDPoint;
@@ -36,8 +37,11 @@ public class JPolygonLayer extends JPlotsLayer {
 	@Override
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 		int[] p = ax.getSize();
-		double Xin = ax.isXlogAxis() ? Math.log10(minX) : minX, Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
-		double Yin = ax.isYlogAxis() ? Math.log10(minY) : minY, Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
+		//TODO: deal with JMultiAxis
+		boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+		boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
+		double Xin = isXlog ? Math.log10(minX) : minX, Xax = isXlog ? Math.log10(maxX) : maxX;
+		double Yin = isYlog ? Math.log10(minY) : minY, Yax = isYlog ? Math.log10(maxY) : maxY;
 		double xs = p[2] / (Xax - Xin), ys = p[3] / (Yax - Yin);
 		AffineBuilder affine = new AffineBuilder()
 				.scale(invertAxisX?-1d:1d, invertAxisY?1d:-1d).translate(invertAxisX?Xax:-Xin, invertAxisY?-Yin:Yax)
@@ -48,8 +52,8 @@ public class JPolygonLayer extends JPlotsLayer {
 //			System.out.println("[DEBUG] JShapeLayer: begin reading shape file \""+connect.get("url")+"\"");
 		JDPoint[] coords = poly.c.clone();
 		for (int c = 0; c < coords.length; c++) {
-			double[] xy = inputProj.fromPROJtoLATLON(ax.isXlogAxis()?Math.log10(coords[c].x):coords[c].x,
-			                                         ax.isYlogAxis()?Math.log10(coords[c].y):coords[c].y,false,false);
+			double[] xy = inputProj.fromPROJtoLATLON(isXlog?Math.log10(coords[c].x):coords[c].x,
+			                                         isYlog?Math.log10(coords[c].y):coords[c].y,false,false);
 			if (ax.isGeoAxis()) xy = ax.getGeoProjection().fromLATLONtoPROJ(xy[0], xy[1], false, false);
 			coords[c] = new JDPoint(xy[0], xy[1]);
 		}

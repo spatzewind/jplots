@@ -2,6 +2,7 @@ package jplots.layer;
 
 import jplots.JPlot;
 import jplots.axes.JAxis;
+import jplots.axes.LogarithmicScale;
 import jplots.shapes.JGroupShape;
 import jplots.shapes.JImageShape;
 import jplots.transform.JProjection;
@@ -38,8 +39,11 @@ public class JImageLayer extends JPlotsLayer {
 	@Override
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 		int[] p = ax.getSize();
-		double Xin = ax.isXlogAxis() ? Math.log10(minX) : minX, Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
-		double Yin = ax.isYlogAxis() ? Math.log10(minY) : minY, Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
+		//TODO: deal with JMultiAxis
+		boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+		boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
+		double Xin = isXlog ? Math.log10(minX) : minX, Xax = isXlog ? Math.log10(maxX) : maxX;
+		double Yin = isYlog ? Math.log10(minY) : minY, Yax = isYlog ? Math.log10(maxY) : maxY;
 		double xs = p[2] / (Xax - Xin), ys = p[3] / (Yax - Yin);
 		double us = srcImg.width / (srcExt[2] - srcExt[0]), vs = srcImg.height / (srcExt[3] - srcExt[1]);
 		if (img == null) {
@@ -53,10 +57,8 @@ public class JImageLayer extends JPlotsLayer {
 			for (int i = 0; i < p[2]; i++) {
 				int idx = j * p[2] + i;
 				double[] xy = { invertAxisX ? Xax - i / xs : Xin + i / xs, invertAxisY ? Yin + j / ys : Yax - j / ys };
-				if (ax.isXlogAxis())
-					xy[0] = Math.pow(10d, xy[0]);
-				if (ax.isYlogAxis())
-					xy[1] = Math.pow(10d, xy[1]);
+				if (isXlog) xy[0] = Math.pow(10d, xy[0]);
+				if (isYlog) xy[1] = Math.pow(10d, xy[1]);
 				xy = ax.getGeoProjection().fromPROJtoLATLON(xy[0], xy[1], false, true);
 				xy = srcProj.fromLATLONtoPROJ(xy[0], xy[1], false, true);
 				if (Double.isNaN(xy[0]) || Double.isNaN(xy[1])) {

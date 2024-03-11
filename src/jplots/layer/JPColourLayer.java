@@ -5,6 +5,7 @@ import java.util.List;
 
 import jplots.JPlot;
 import jplots.axes.JAxis;
+import jplots.axes.LogarithmicScale;
 import jplots.colour.JColourtable;
 import jplots.helper.FormatTools;
 import jplots.maths.AffineBuilder;
@@ -146,12 +147,15 @@ public class JPColourLayer extends JPlotsLayer {
 			System.out.println("inputY:"); FormatTools.printMat(System.out, yCoord);
 			System.out.println("inputZ:"); FormatTools.printMat(System.out, zfield);
 		}
-		
+
+		//TODO: deal with JMultiAxis
+		boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+		boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
 		JDPoint[][] cnt2 = new JDPoint[jlen][ilen];
 		for(int j=0; j<jlen; j++)
 			for(int i=0; i<ilen; i++)
-				cnt2[j][i] = new JDPoint(ax.isXlogAxis()?Math.log10(xCoord[j][i]):xCoord[j][i],
-										 ax.isYlogAxis()?Math.log10(yCoord[j][i]):yCoord[j][i]);
+				cnt2[j][i] = new JDPoint(isXlog?Math.log10(xCoord[j][i]):xCoord[j][i],
+										 isYlog?Math.log10(yCoord[j][i]):yCoord[j][i]);
 		if(ax.isGeoAxis() && inputProj!=null) {
 			for(int j=0; j<jlen; j++)
 				for(int i=0; i<ilen; i++) {
@@ -161,10 +165,10 @@ public class JPColourLayer extends JPlotsLayer {
 					cnt2[j][i].y = xy[1];
 				}
 		}
-		Xin = ax.isXlogAxis() ? Math.log10(minX) : minX;
-		Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
-		Yin = ax.isYlogAxis() ? Math.log10(minY) : minY;
-		Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
+		Xin = isXlog ? Math.log10(minX) : minX;
+		Xax = isXlog ? Math.log10(maxX) : maxX;
+		Yin = isYlog ? Math.log10(minY) : minY;
+		Yax = isYlog ? Math.log10(maxY) : maxY;
 		double xs = p[2] / (Xax - Xin), ys = p[3] / (Yax - Yin);
 		// double tol = Math.max(Math.abs(maxX-minX), Math.abs(maxY-minY)) * 1.0e-12d;
 		AffineBuilder affine = new AffineBuilder().scale(invertAxisX ? -1d : 1d, invertAxisY ? 1d : -1d)

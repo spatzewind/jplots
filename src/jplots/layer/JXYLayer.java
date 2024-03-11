@@ -5,6 +5,7 @@ import java.util.List;
 
 import jplots.JPlot;
 import jplots.axes.JAxis;
+import jplots.axes.LogarithmicScale;
 import jplots.maths.AffineBuilder;
 import jplots.maths.JDLine;
 import jplots.maths.JDPoint;
@@ -59,8 +60,11 @@ public class JXYLayer extends JPlotsLayer {
 	@Override
 	public void createVectorImg(JAxis ax, int layernum, JGroupShape s) {
 		int[] p = ax.getSize();
-		double Xin = ax.isXlogAxis() ? Math.log10(minX) : minX, Xax = ax.isXlogAxis() ? Math.log10(maxX) : maxX;
-		double Yin = ax.isYlogAxis() ? Math.log10(minY) : minY, Yax = ax.isYlogAxis() ? Math.log10(maxY) : maxY;
+		//TODO: deal with JMultiAxis
+		boolean isXlog = (ax.getScaleX() instanceof LogarithmicScale);
+		boolean isYlog = (ax.getScaleY() instanceof LogarithmicScale);
+		double Xin = isXlog ? Math.log10(minX) : minX, Xax = isXlog ? Math.log10(maxX) : maxX;
+		double Yin = isYlog ? Math.log10(minY) : minY, Yax = isYlog ? Math.log10(maxY) : maxY;
 		double xs = p[2] / (Xax - Xin), ys = p[3] / (Yax - Yin);
 		AffineBuilder affine = new AffineBuilder().scale(invertAxisX ? -1d : 1d, invertAxisY ? 1d : -1d)
 				.translate(invertAxisX ? Xax : -Xin, invertAxisY ? -Yin : Yax).scale(xs, ys).translate(p[0], p[1]);
@@ -68,8 +72,8 @@ public class JXYLayer extends JPlotsLayer {
 		
 		JDPoint[] points = new JDPoint[xarrayx.length];
 		for(int i=0; i<xarrayx.length; i++) {
-			double x = ax.isXlogAxis() ? Math.log10(xarrayx[i]) : xarrayx[i];
-			double y = ax.isYlogAxis() ? Math.log10(yarrayy[i]) : yarrayy[i];
+			double x = isXlog ? Math.log10(xarrayx[i]) : xarrayx[i];
+			double y = isYlog ? Math.log10(yarrayy[i]) : yarrayy[i];
 			double[] xy = {x,y};
 			if (ax.isGeoAxis()) {
 				xy = inputProj.fromPROJtoLATLON(xy[0], xy[1], false, false);
